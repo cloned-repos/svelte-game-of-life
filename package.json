@@ -1,0 +1,40 @@
+{
+  "name": "svelte-game-of-life",
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "build": "svelte-kit build",
+    "check": "svelte-check --tsconfig ./tsconfig.json",
+    "check:watch": "svelte-check --tsconfig ./tsconfig.json --watch",
+    "dev": "svelte-kit dev",
+    "lint": "eslint --ignore-path .gitignore -c .eslintrc.cjs .",
+    "prepare": "ts-patch install -s",
+    "preview": "svelte-kit preview",
+    "test": "jest src"
+  },
+  "devDependencies": {
+    "@sveltejs/adapter-static": "^1.0.0-next.21",
+    "@sveltejs/kit": "^1.0.0-next.196",
+    "@testing-library/jest-dom": "^5.15.0",
+    "@testing-library/svelte": "^3.0.3",
+    "@tsconfig/svelte": "^2.0.1",
+    "@types/jest": "^27.0.2",
+    "@typescript-eslint/eslint-plugin": "^4.33.0",
+    "@typescript-eslint/parser": "^4.33.0",
+    "eslint": "^7.32.0",
+    "eslint-plugin-svelte3": "^3.2.1",
+    "jest": "^27.3.1",
+    "svelte": "^3.44.1",
+    "svelte-check": "^2.2.8",
+    "svelte-jester": "^2.1.5",
+    "svelte-preprocess": "^4.9.8",
+    "ts-jest": "^27.0.7",
+    "ts-patch": "^2.0.1",
+    "tslib": "^2.3.1",
+    "ttypescript": "^1.5.12",
+    "typescript": "^4.4.4",
+    "typescript-eslint-language-service": "^4.1.5",
+    "typescript-transform-paths": "^3.3.1"
+  },
+  "//": "force install svelte-jester on version 1.8.2, 2.1.1 is broken and being fixed"
+}

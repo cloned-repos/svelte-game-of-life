@@ -1,0 +1,33 @@
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Game Of Life</title>
+    <!-- REACT.JS -->
+    <script src="https://fb.me/react-15.1.0.js"></script>
+    <script src="https://fb.me/react-dom-15.1.0.js"></script>
+
+
+    <!-- MY CSS-->
+    <link href="css/life.css" rel="stylesheet">
+    <link rel="icon" href="./favicon.ico?v=2" />
+    <!-- MY BUNDLE -->
+   
+    </script>
+</head>
+
+<body>
+    <div id="flapout-container">
+
+
+    </div>
+    <!-- -->
+        <!--- flap out container-->
+    <div id="container-anchor" class="flex-row-flow flex-row-halign-center">
+
+    </div>
+   
+
+</body>
+
+</html>

@@ -1,0 +1,83 @@
+@import url(https://fonts.googleapis.com/css?family=Open+Sans:400,800,600,700,300|Raleway:400,900,800,700,600,500,300,200|Lato:400,300,100);
+
+
+:root {
+    /**/
+}
+
+/* reset */
+/* reset */
+/* reset */
+
+html,
+body,
+div,
+dl,
+dt,
+dd,
+ul,
+ol,
+p,
+li,
+a,
+form,
+fieldset,
+input[type="text"],
+input[type="search"],
+blockquote,
+th,
+td {
+    margin: 0;
+    padding: 0;
+}
+
+a {
+    outline: none;
+    text-decoration: none;
+    color: #000;
+}
+
+ul,
+ol {
+    list-style: none;
+}
+
+
+*:before,
+*:after,
+* {
+    box-sizing: border-box;
+}
+
+button,
+input {
+    line-height: normal;
+    outline: none;
+    border: none;
+}
+
+html,
+body {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+/* end of css reset  */
+
+body {
+    font-family: "Open Sans";
+    font-size: 16px;
+    background: #605ea1;
+    background-image: radial-gradient(circle farthest-corner at right bottom, #ac9cd5 0%, #8e7ec2 28%, #6561af 57%, #1a2565 100%);
+}
+
+
+#svelte {
+    padding: 1em 0;
+    height: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+}
