@@ -3,24 +3,27 @@
 </script>
 
 <script lang="ts">
-    let id = "" + ++pk;
-    export let value = "radio-btn" + pk;
-    export let checked = false;
-    export let selected = "radio-btn" + pk;
-    export let outerColor = "#C1FBC9";
-    export let innerColor = "#C1FBC9";
-    const name = "n" + selected; // <form name , no used here field use in groups for radiobuttons manditory
+    const id = `${++pk}`;
+    export let value: string|number = "radio-btn" + id;
+    export let initialChecked = false;
+    export let group: string;
 </script>
 
-<input type="radio" {id} {name} {value} {checked} bind:group={selected} on:change />
+<input
+    {id}
+    type="radio" 
+    name={group} 
+    value={value} 
+    checked={initialChecked} 
+    bind:group={group} 
+    on:change />
 <label
-    for={"" + id}
-    style="--inner-color:{innerColor};--outer-color:{outerColor}"
+    for={id}
 >
     <div class="radio-outer">
         <div class="radio-inner" />
     </div>
-    <span>
+    <span class="radio-text">
         <slot>
             {"radio-btn" + pk}
         </slot>
@@ -32,15 +35,71 @@
         display: none;
     }
 
+    /* radio text */
+    input[type="radio"] + label .radio-text
+    {
+        color: #AAAAAA;
+    }
+
+
+    input[type="radio"]:checked + label .radio-text
+    {
+        color: var(--inner-color);
+    }
+
+    .radio-text {
+        margin: 0 calc( var(--radio-button-size, 30px) / 3 );
+    }
+
+    /* radio button, radio outer */
+
+    .radio-outer {
+        display: inline-block;
+        border-radius: 50%;
+        border-width: 1px;
+        border-style: solid;
+        width: var(--radio-button-size, 30px);
+        height: var(--radio-button-size, 30px);
+        position: relative;
+    }
+
+    input[type="radio"] + label .radio-outer
+    {
+        border-color: rgb(170,170,170);
+    }
+
+    
+    input[type="radio"]:checked + label .radio-outer {
+        border-color: var(--outer-color);
+    }
+
+    /* radio button, radio inner */
+
+    .radio-inner {
+        position: absolute;
+        left: 20%;
+        right: 20%;
+        bottom: 20%;
+        top: 20%;
+        border-radius: 50%;
+        border: none;
+        background: var(--inner-color);
+    }
+
+    input[type="radio"] + label .radio-inner {
+        opacity: 0;
+    }
+
     input[type="radio"]:checked + label .radio-inner {
         opacity: 1;
     }
 
-    input[type="radio"]:not(:checked) + label .radio-inner {
-        opacity: 0;
-    }
+    /* transitions */
 
-    input[type="radio"] + label .radio-inner {
+    input[type="radio"] + label .radio-inner,
+    input[type="radio"] + label .radio-outer,
+    input[type="radio"] + label .radio-text
+    {
         transition: opacity 0.2s linear;
     }
 
@@ -52,24 +111,5 @@
         max-width: 100%;
         min-width: max-content;
     }
-    .radio-outer {
-        display: inline-block;
-        border: 2px solid var(--outer-color, purple);
-        border-radius: 50%;
-        width: var(--radio-button-size, 30px);
-        height: var(--radio-button-size, 30px);
-        position: relative;
-    }
-    .radio-inner {
-        position: absolute;
-        background: var(--inner-color, cyan);
-        left: 20%;
-        right: 20%;
-        bottom: 20%;
-        top: 20%;
-        border-radius: 50%;
-    }
-    span {
-        margin: 0 10px;
-    }
+    
 </style>

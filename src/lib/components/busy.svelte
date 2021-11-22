@@ -1,6 +1,7 @@
 <script>
     import Eliza from "elizabot";
     import { beforeUpdate, afterUpdate } from "svelte";
+    import Flapout from './Flapout';
 
     let div;
     let autoscroll;
