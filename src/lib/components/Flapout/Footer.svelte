@@ -1,5 +1,5 @@
 <script lang="ts">
-    import RadioButton from "../RadioButton.svelte";
+    import RadioButton from "./RadioButton.svelte";
 </script>
 
 <div class="footer">

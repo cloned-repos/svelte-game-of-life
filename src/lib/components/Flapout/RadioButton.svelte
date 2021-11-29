@@ -3,7 +3,7 @@
 </script>
 
 <script lang="ts">
-    const id = `${++pk}`;
+    const id = `radiobtn:${++pk}`;
     export let value: string|number = "radio-btn" + id;
     export let initialChecked = false;
     export let group: string;

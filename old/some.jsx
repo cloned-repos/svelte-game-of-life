@@ -37,7 +37,7 @@ function repeat_anim(queue) {
             this.status.generation = 0;
             this.start();
         },
-        reset: function () {
+        reset:function(){
             var s = this.status;
             s.generation = 0;
         },
@@ -82,37 +82,37 @@ function repeat_anim(queue) {
 
             //console.log(next_delay);
             /*setTimeout(function () {*/
-            requestAnimationFrame(function (time_stamp) {
-                status.prev_ts_stamp_delta = time_stamp - status.prev_time_st;
-                status.prev_time_st = time_stamp;
-                status.state = "running";
-                var work = queue.pop();
+                requestAnimationFrame(function (time_stamp) {
+                    status.prev_ts_stamp_delta = time_stamp - status.prev_time_st;
+                    status.prev_time_st = time_stamp;
+                    status.state = "running";
+                    var work = queue.pop();
 
-                if (typeof work == "string") {
-                    if (work == "stop") {
-                        status._promise = null; //clear it
-                        status.state = "stop";
-                        status.is_paused = false;
-                        status.generation = 0;
-                        if (promise) {
-                            promise.res("stopped");
+                    if (typeof work == "string") {
+                        if (work == "stop") {
+                            status._promise = null; //clear it
+                            status.state = "stop";
+                            status.is_paused = false;
+                            status.generation = 0;
+                            if (promise) {
+                                promise.res("stopped");
+                            }
+                            return;
                         }
-                        return;
+                        status.state = "error";
+                        promise.rej("error");
+                        throw new Error('Illegal command');
                     }
-                    status.state = "error";
-                    promise.rej("error");
-                    throw new Error('Illegal command');
-                }
-                //console.log({op_type:work.type});
-                work.op(status.is_paused);
-                if (work.type == "repeat") {
-                    queue.unshift(work);
-                }
-                if (work.tag == "next-frame" && !status.is_paused) {
-                    status.generation++;
-                }
-                start();
-            });
+                    //console.log({op_type:work.type});
+                    work.op(status.is_paused);
+                    if (work.type == "repeat") {
+                        queue.unshift(work);
+                    }
+                    if (work.tag == "next-frame" && !status.is_paused) {
+                        status.generation++;
+                    }
+                    start();
+                });
             /*}, next_delay);*/
         },
         pause_on: function () {
@@ -170,14 +170,14 @@ var life_game = {
     color3: "rgb(210,224,49)",
     selected_seed: null,
     nr_cells_processed: [0, 0, 0],
-    register_signal_handler: function (func) {
+    register_signal_handler:function(func){
         this.call_back = func;
         //decorate animation object
         this.animation.call_back = func;
 
     },
-    signal_performance_stats: function (msg) {
-        if (this.call_back instanceof Function) {
+    signal_performance_stats: function(msg){
+        if (this.call_back instanceof Function){
             this.call_back(msg);
         }
     },
@@ -225,10 +225,10 @@ var life_game = {
             this.canvas_elt_magnify.height = 5 * 6 * 2;
             srcctx = this.canvas_elt.getContext("2d");
             ctx = this.canvas_elt_magnify.getContext("2d");
-            ctx.imageSmoothingEnabled = false;
-            ctx.mozImageSmoothingEnabled = false;
-            ctx.webkitImageSmoothingEnabled = false;
-            ctx.msImageSmoothingEnabled = false;
+          ctx.imageSmoothingEnabled = false;
+    ctx.mozImageSmoothingEnabled = false;
+    ctx.webkitImageSmoothingEnabled = false;
+   ctx.msImageSmoothingEnabled = false;
             rc = this.get_color_from_frame(x, y);
             ctx.drawImage(this.canvas_elt, x - 6 * 3, y - 6 * 3, 30, 30, 0, 0, 5 * 12, 5 * 12);
             this.canvas_elt_magnify.style.left = (x - 5 * 6) + "px";
@@ -292,10 +292,10 @@ var life_game = {
         }
         return 2;
     },
-    seed_random_20pct: function () {
+    seed_random_20pct:function(){
         this.seed_random_percentage(0.2);
     },
-    seed_random_60pct: function () {
+    seed_random_60pct:function(){
         this.seed_random_percentage(0.6);
     },
     seed_random_percentage: function (pct) {
@@ -308,14 +308,14 @@ var life_game = {
         this.frame_work_todo_index.fill(0, 0);
 
         var dont_try = false;
-        if (pct > 0.2) {
+        if (pct >  0.2) {
             dont_try = true;
         }
         if (pct === undefined) {
             pct = 0.2;
         }
 
-        var count = pct * max_num;
+        var count = pct*max_num;
 
         var arr = new Array(max_num);
 
@@ -447,20 +447,20 @@ var life_game = {
     },
     color_index_to_color: function (_color) {
         switch (_color) {
-            case 0:
-                _color = this.grid_color;
-                break;
-            case 1:
-                _color = this.color1;
-                break;
-            case 2:
-                _color = this.color2;
-                break;
-            case 3:
-                _color = this.color3;
-                break;
-            default:
-                throw new Error('illegal color idx');
+        case 0:
+            _color = this.grid_color;
+            break;
+        case 1:
+            _color = this.color1;
+            break;
+        case 2:
+            _color = this.color2;
+            break;
+        case 3:
+            _color = this.color3;
+            break;
+        default:
+            throw new Error('illegal color idx');
         }
         return _color;
     },
@@ -508,7 +508,7 @@ var life_game = {
         var color;
         var xcor;
         var ycor
-        //ctx.clearRect(0,0,this.canvas_width,this.canvas_height);
+            //ctx.clearRect(0,0,this.canvas_width,this.canvas_height);
         var i;
         this.canvas_elt.style.visibility = 'hidden';
         this.cursor = this.cursor || {};
@@ -550,21 +550,21 @@ var life_game = {
             }
 
         } else
-            // 3.Any live cell with more than three live neighbours dies, as if by over-population.
-            if (!is_dead && nr > 3) {
-                rc = 0;
+        // 3.Any live cell with more than three live neighbours dies, as if by over-population.
+        if (!is_dead && nr > 3) {
+            rc = 0;
 
-            } else
-                // 2.Any live cell with two or three live neighbours lives on to the next generation.
-                if (!is_dead && (nr == 2 || nr == 3)) {
-                    rc = current_state; //dont change color
+        } else
+        // 2.Any live cell with two or three live neighbours lives on to the next generation.
+        if (!is_dead && (nr == 2 || nr == 3)) {
+            rc = current_state; //dont change color
 
-                } else
-                    // 1.Any live cell with fewer than two live neighbours dies, as if caused by under-population.
-                    if (!is_dead && nr < 2) {
-                        rc = 0; //dead
+        } else
+        // 1.Any live cell with fewer than two live neighbours dies, as if caused by under-population.
+        if (!is_dead && nr < 2) {
+            rc = 0; //dead
 
-                    }
+        }
         return rc;
     },
     _get_surrounding_cells: function (cell, coords) {
@@ -635,7 +635,7 @@ var life_game = {
             this.nr_cells_processed[0] = 0;
             this.nr_cells_processed[1] = 0;
             this.nr_cells_processed[2] = 0;
-            this.signal_performance_stats({ tag: "cell-stats", cells_processed: 0, cells_drawn: 0 });
+            this.signal_performance_stats({tag:"cell-stats",cells_processed:0,cells_drawn:0});
             return;
         }
 
@@ -651,7 +651,7 @@ var life_game = {
         } while (j < this.work_todo);
         this.work_todo = i;
         this.nr_cells_processed[0] = j;
-        this.signal_performance_stats({ tag: "cell-stats", cells_drawn: j, cells_processed: i });
+        this.signal_performance_stats({tag:"cell-stats",cells_drawn:j,cells_processed:i});
 
         if (this.work_todo == 0) {
             this.nr_cells_processed[1] = 0;
@@ -742,7 +742,7 @@ var life_game = {
 
 var rep = repeat_anim([{
     type: "repeat",
-    op: life_game.do_next_generation.bind(life_game),
+    op:life_game.do_next_generation.bind(life_game),
     tag: "next-frame"
 }]);
 
@@ -798,13 +798,13 @@ var util = {
         obj = obj || window;
         var running = false;
 
-        var func = function (original_evt) {
+        var func = function(original_evt) {
             if (running) {
                 return;
             }
             running = true;
-            requestAnimationFrame(function () {
-                var event = new CustomEvent(name, { 'detail': original_evt });
+            requestAnimationFrame(function() {
+                var event = new CustomEvent(name, {'detail': original_evt});
                 console.log('event:' + name);
                 obj.dispatchEvent(event);
                 running = false;
@@ -818,19 +818,19 @@ var util = {
         'use strict';
         var critical_section;
 
-        return function () {
+        return function() {
             if (critical_section) {
                 return undefined;
             }
 
             critical_section = true;
             var rc;
-            requestAnimationFrame(function () {
+            requestAnimationFrame(function() {
                 rc = func();
                 critical_section = false;
             });
 
-            return { rc: rc }; //it can make sense
+            return {rc: rc}; //it can make sense
         }
     },
 
@@ -841,7 +841,7 @@ var util = {
     generateUUID() {
         'use strict';
         var d = new Date().getTime();
-        var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+        var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
             var r = (d + Math.random() * 16) % 16 | 0;
             d = Math.floor(d / 16);
             return (c == 'x'
@@ -854,14 +854,14 @@ var util = {
 
 var FlapoutFooter = React.createClass({
     _ll(str) {
-        console.log(str + ":[" + this.constructor.displayName + "]");
+      //  console.log(str + ":[" + this.constructor.displayName + "]");
     },
     _msg_handler(msg) {
         throw new Error('[App] received an unknown message:' + msg);
     },
     _select_radio(evt) {
         var r_value = evt.target.value;
-        this.setState({ radio_selection: r_value });
+        this.setState({radio_selection: r_value});
         life_game.animation.pause_on();
         life_game.clear();
         switch (r_value) {
@@ -878,12 +878,12 @@ var FlapoutFooter = React.createClass({
         life_game.plot_index_buffer();
         /*life_game.animation.start_if_stopped();*/
     },
-    _clear_selection: function () {
-        this.setState({ radio_selection: '' });
+    _clear_selection: function() {
+        this.setState({radio_selection: ''});
     },
     getInitialState() {
         this._ll("getInitialState");
-        return ({ radio_01: util.generateUUID(), radio_02: util.generateUUID() });
+        return ({radio_01: util.generateUUID(), radio_02: util.generateUUID()});
     },
 
     componentWillMount() {
@@ -931,27 +931,20 @@ var FlapoutFooter = React.createClass({
                 <ul className="table select-radio">
                     <li>
                         <span>
-                            <input type="radio" id={this.state.radio_01} value="seed_20pct" checked={is_seed_20pct} name="selector" onChange={this._select_radio} />
+                            <input type="radio" id={this.state.radio_01} value="seed_20pct" checked={is_seed_20pct} name="selector" onChange={this._select_radio}/>
                             <label htmlFor={this.state.radio_01}>
                                 <span className="radio-text">Random seeding 20%</span>
-                                <div className="check">
+                              {<div className="check">
                                     <div>
                                         <div></div>
                                     </div>
-                                </div>
+                                </div>}
                             </label>
                         </span>
                     </li>
                     <li>
                         <span>
-                            <input
-                                type="radio"
-                                id={this.state.radio_02}
-                                value="seed_60pct"
-                                name="selector"
-                                checked={is_seed_60pct}
-                                onChange={this._select_radio}
-                            />
+                            <input type="radio" id={this.state.radio_02} value="seed_60pct" name="selector" checked={is_seed_60pct} onChange={this._select_radio}/>
                             <label htmlFor={this.state.radio_02}>
                                 <span className="radio-text">Random seeding 60%</span>
                                 <div className="check">
@@ -970,7 +963,7 @@ var FlapoutFooter = React.createClass({
 
 var FlapoutMain = React.createClass({
     _ll(str) {
-        console.log(str + ":[" + this.constructor.displayName + "]");
+        //console.log(str + ":[" + this.constructor.displayName + "]");
     },
 
     _toggle_play_pause(evt) {
@@ -988,7 +981,7 @@ var FlapoutMain = React.createClass({
         life_game.animation.pause_on();
         life_game.animation.reset();
         life_game.clear();
-        this.props.signal_parent({ tag: "clear_and_pause" });
+        this.props.signal_parent({tag: "clear_and_pause"});
         /*
         life_game.animation.stop().then(function() {
             life_game.clear();
@@ -1005,7 +998,7 @@ var FlapoutMain = React.createClass({
     },
     getInitialState() {
         this._ll("getInitialState");
-        return ({ input_id: util.generateUUID(), is_paused: false });
+        return ({input_id: util.generateUUID(), is_paused: false});
     },
     componentWillMount() {
         this._ll("componentWillMount");
@@ -1041,24 +1034,24 @@ var FlapoutMain = React.createClass({
                 <p className="section-heading">[control buttons]
                 </p>
                 <div className="toggle-button">
-                    <input id={this.state.input_id} type="checkbox" checked={is_paused} onChange={this._toggle_play_pause} />
+                    <input id={this.state.input_id} type="checkbox" checked={is_paused} onChange={this._toggle_play_pause}/>
                     <label htmlFor={this.state.input_id} className="play-and-stop">
                         <div>
                             <a ref="svg-pause" className="pause">
                                 <div>
                                     <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" viewBox="0 0 58 58">
-                                        <circle className="shaded" cx="29" cy="29" r="29" />
-                                        <rect className="empress" x="32.66" y="16" width="8" height="26" />
-                                        <rect className="empress" x="19.33" y="16" width="8" height="26" />
+                                        <circle className="shaded" cx="29" cy="29" r="29"/>
+                                        <rect className="empress" x="32.66" y="16" width="8" height="26"/>
+                                        <rect className="empress" x="19.33" y="16" width="8" height="26"/>
                                     </svg>
                                 </div>
                             </a>
                             <a ref="svg-play" className="play">
                                 <div>
                                     <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" viewBox="0 0 58 58">
-                                        <circle className="shaded" cx="29" cy="29" r="29" />
+                                        <circle className="shaded" cx="29" cy="29" r="29"/>
                                         <g>
-                                            <polygon className="empress" points="44,29 22,44 22,29.273 22,14" />
+                                            <polygon className="empress" points="44,29 22,44 22,29.273 22,14"/>
                                             <path className="empress" d="M22,45c-0.16,0-0.321-0.038-0.467-0.116C21.205,44.711,21,44.371,21,44V14
 c0-0.371,0.205-0.711,0.533-0.884c0.328-0.174,0.724-0.15,1.031,0.058l22,15C44.836,28.36,45,28.669,45,29s-0.164,0.64-0.437,0.826
 l-22,15C22.394,44.941,22.197,45,22,45z M23,15.893v26.215L42.225,29L23,15.893z"/>
@@ -1071,10 +1064,10 @@ l-22,15C22.394,44.941,22.197,45,22,45z M23,15.893v26.215L42.225,29L23,15.893z"/>
                     <a ref="svg-stop" className="stop" onClick={this._pause_and_clear}>
                         <div >
                             <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" viewBox="0 0 58 58">
-                                <circle className="shaded" cx="29" cy="29" r="29" />
+                                <circle className="shaded" cx="29" cy="29" r="29"/>
                                 <g>
-                                    <rect className="empress" x="16" y="16" width="26" height="26" />
-                                    <path className="empress" d="M43,43H15V15h28V43z M17,41h24V17H17V41z" />
+                                    <rect className="empress" x="16" y="16" width="26" height="26"/>
+                                    <path className="empress" d="M43,43H15V15h28V43z M17,41h24V17H17V41z"/>
                                 </g>
                             </svg>
                         </div>
@@ -1109,20 +1102,20 @@ l-22,15C22.394,44.941,22.197,45,22,45z M23,15.893v26.215L42.225,29L23,15.893z"/>
 
 var FlapoutHeader = React.createClass({
     _ll(str) {
-        console.log(str + ":[" + this.constructor.displayName + "]");
+        //console.log(str + ":[" + this.constructor.displayName + "]");
     },
 
     _open(evt) {
         var signal = this.props.signal_parent;
         if (signal) {
-            signal({ tag: "open" });
+            signal({tag: "open"});
         }
     },
 
     _close(evt) {
         var signal = this.props.signal_parent;
         if (signal) {
-            signal({ tag: "close" });
+            signal({tag: "close"});
         }
     },
 
@@ -1200,17 +1193,17 @@ var Flapout = React.createClass({
         var fps;
         switch (msg.tag) {
             case "generations-tick":
-                this.setState({ generations: msg.generation });
+                this.setState({generations: msg.generation});
                 break;
             case "fps":
                 /* { tag:"fps",delta:this.delta,num_ticks:this.tick_count } */
                 fps = (msg.delta == 0)
                     ? 0
                     : Math.round(msg.num_ticks * 1000 / msg.delta);
-                this.setState({ fps: fps });
+                this.setState({fps: fps});
                 break;
             case "cell-stats":
-                this.setState({ c_processed: msg.cells_processed, c_drawn: msg.cells_drawn });
+                this.setState({c_processed: msg.cells_processed, c_drawn: msg.cells_drawn});
                 break;
             case "open":
                 util.add_classes(this.refs["flap-window"], "extend");
@@ -1232,7 +1225,7 @@ var Flapout = React.createClass({
 
     getInitialState() {
         this._ll("getInitialState");
-        return { fps: "--", generations: 0, extend: true };
+        return {fps: "--", generations: 0, extend: true};
     },
 
     componentWillMount() {
@@ -1280,9 +1273,9 @@ var Flapout = React.createClass({
 
         return (
             <div ref="flap-window" className={class_names.join(' ')}>
-                <FlapoutHeader ref="flapoutHeader" fps={fps} signal_parent={this._msg_handler} /> {/*<!--main-->*/}
-                <FlapoutMain signal_parent={this._msg_handler} ref="flapoutMain" generations={generations} cells_processed={nr_processed} cells_drawn={nr_drawn} />
-                <FlapoutFooter ref="flapoutFooter" />
+                <FlapoutHeader ref="flapoutHeader" fps={fps} signal_parent={this._msg_handler}/> {/*<!--main-->*/}
+                <FlapoutMain signal_parent={this._msg_handler} ref="flapoutMain" generations={generations} cells_processed={nr_processed} cells_drawn={nr_drawn}/>
+                <FlapoutFooter ref="flapoutFooter"/>
             </div>
         );
     }
@@ -1320,19 +1313,19 @@ var Canvas = React.createClass({
 
         life_game.selected_seed();
         life_game.plot_index_buffer();
-        this.props.monitor_dialog._msg_handler({ tag: "resized" });
+        this.props.monitor_dialog._msg_handler({tag: "resized"});
     },
 
     _schedule_resize(evt) {
 
-        life_game.animation.queue.unshift({ type: "once", op: this._resize_canvas });
+        life_game.animation.queue.unshift({type: "once", op: this._resize_canvas});
         var type = (evt && evt.type)
             ? evt.type
             : "resize is not event-triggered";
-        this._ll({ tag: type });
+        this._ll({tag: type});
     },
 
-    _on_mouse_over_mouse_down: function (evt) {
+    _on_mouse_over_mouse_down: function(evt) {
         var _canvas = this.refs["main-canvas"];
         var rect = _canvas.getBoundingClientRect();
         var x = Math.max(0, evt.clientX - rect.left);
@@ -1361,9 +1354,9 @@ var Canvas = React.createClass({
     componentWillUnmount() {
         window.removeEventListener("resize", this.cancel_resize_key);
         this._ll("componentWillUnmount");
-        life_game.animation.stop().then(function () {
+        life_game.animation.stop().then(function() {
             this._ll("animation has stopped!");
-        }).catch(function (reason) {
+        }).catch(function(reason) {
             console.log("could not stop:" + reason);
         });
     },
@@ -1438,13 +1431,13 @@ var App = React.createClass({
 
     render() {
         this._ll("render");
-        return (<Canvas monitor_dialog={this.props.monitor_dialog} />);
+        return (<Canvas monitor_dialog={this.props.monitor_dialog}/>);
     }
 });
-window.onload = function () {
+window.onload = function() {
     var flapout = ReactDOM.render(
-        <Flapout />, document.getElementById("flapout-container"));
+        <Flapout/>, document.getElementById("flapout-container"));
     var canvasApp = ReactDOM.render(
-        <App monitor_dialog={flapout} />, document.getElementById("container-anchor"));
+        <App monitor_dialog={flapout}/>, document.getElementById("container-anchor"));
     console.log(life_game);
 }
