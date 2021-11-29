@@ -1,0 +1,180 @@
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+</head>
+
+<body>
+    <div id="con">
+        <div class="duobutton">
+            <!-- the button starts from this tag -->
+            <a>
+                <label>
+                    <input type="checkbox" id="-make unique per instance" checked>
+                    <svg class="face1" version="1.1" xmlns="http://www.w3.org/2000/svg"
+                        xmlnsXlink="http://www.w3.org/1999/xlink" viewBox="0 0 58 58">
+                        <circle class="shaded" cx="29" cy="29" r="29" />
+                        <rect class="empress" x="32.66" y="16" width="8" height="26" />
+                        <rect class="empress" x="19.33" y="16" width="8" height="26" />
+                    </svg>
+                    <svg class="face2" version="1.1" xmlns="http://www.w3.org/2000/svg"
+                        xmlnsXlink="http://www.w3.org/1999/xlink" viewBox="0 0 58 58">
+                        <circle class="shaded" cx="29" cy="29" r="29" />
+                        <g>
+                            <polygon class="empress" points="44,29 22,44 22,29.273 22,14" />
+                            <path class="empress" d="M22,45c-0.16,0-0.321-0.038-0.467-0.116C21.205,44.711,21,44.371,21,44V14
+c0-0.371,0.205-0.711,0.533-0.884c0.328-0.174,0.724-0.15,1.031,0.058l22,15C44.836,28.36,45,28.669,45,29s-0.164,0.64-0.437,0.826
+l-22,15C22.394,44.941,22.197,45,22,45z M23,15.893v26.215L42.225,29L23,15.893z" />
+                        </g>
+                    </svg>
+                </label>
+            </a>
+        </div>
+    </div>
+    <style>
+        /* general code style-ing */
+        @import url(https://fonts.googleapis.com/css?family=Open+Sans:400,800,600,700,300|Raleway:400,900,800,700,600,500,300,200|Lato:400,300,100);
+        @import url(https://fonts.googleapis.com/css?family=Ubuntu:700,500,400,300,300italic,400italic,500,500italic);
+        @import url(https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.css);
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            font-family: "Open Sans";
+            font-size: 12px;
+            background: black;
+        }
+
+        #con {
+            width: 150px;
+            height: 400px;
+            border: orange 4px solid
+        }
+
+
+       
+
+        .duobutton {
+             width: 100px;
+             height: 100px;
+             border: red solid 4px;
+        }
+
+        input[type=checkbox] {
+            display: none;
+        }
+
+        a {
+            user-select: none;
+            display: inline-block;
+            width: 100%;
+            height: 100%;
+            font-size: 0;
+        }
+
+
+        .duobutton>a>label {
+            display: inline-block;
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        /* checked display face1 , hide face2 */
+
+        .duobutton>a svg {
+            transition: all 0.2s linear;
+        }
+
+
+        .duobutton>a input[type=checkbox]:checked~svg.face1 {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+        }
+
+        .duobutton>a input[type=checkbox]:checked~svg.face2 {
+            position: absolute;
+            width: 0;
+            height: 0;
+            top: 50%;
+            left: 50%;
+        }
+
+        /* un-checked hide face1 , display face2 */
+
+        .duobutton>a input[type=checkbox]:not(:checked)~svg.face1 {
+            position: absolute;
+            width: 0;
+            height: 0;
+            top: 50%;
+            left: 50%;
+        }
+
+        .duobutton>a input[type=checkbox]:not(:checked)~svg.face2 {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+        }
+
+        /* face 1 and face 2 generic */
+
+        .duobutton>a input[type=checkbox] ~ svg .shaded {
+            fill: rgb(79, 91, 193);
+            fill-opacity: 0.3;
+        }
+
+        .duobutton>a input[type=checkbox] ~ svg .empress {
+            fill: rgb(79, 91, 193);
+            fill-opacity: 0.7;
+        }
+
+        
+        /* face 1 and face 2 selected */
+
+        .duobutton>a:active input[type=checkbox] ~ svg .shaded {
+            fill: rgb(79, 91, 193);
+            fill-opacity: 0.9;
+        }
+
+        .duobutton>a:active input[type=checkbox] ~ svg .empress {
+            fill: rgb(40, 17, 46);
+            fill-opacity: 0.5;
+        }
+
+    </style>
+    <script>
+
+        const chkbutton = document.getElementById("-make unique per instance");
+        chkbutton.addEventListener('change', e => {
+            console.log(e.target.checked);
+        });
+    </script>
+</body>
+<!--svg class="pauze-button" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink"
+viewBox="0 0 58 58">
+<circle class="shaded" cx="29" cy="29" r="29" />
+<rect class="empress" x="32.66" y="16" width="8" height="26" />
+<rect class="empress" x="19.33" y="16" width="8" height="26" />
+</svg-->
+
+</html>
