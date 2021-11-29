@@ -38,53 +38,29 @@
         left: 0;
     }
 
-    a.stop:active {
-            .shaded {
-                fill: rgb(79, 91, 193);
-                fill-opacity: 0.9;
-            }
+    a svg {
+        transition: all 0.2s linear;
+    }
 
-            .empress {
-                fill: rgb(40, 17, 46);
-                fill-opacity: 0.5;
-            }
-        }
+    a svg .shaded {
+        fill: rgb(79, 91, 193);
+        fill-opacity: 0.3;
+    }
 
-        a.stop div {
-            display: inline-block;
-        }
+    a svg .empress {
+        fill: rgb(79, 91, 193);
+        fill-opacity: 0.7;
+    }
 
-        a.stop div {
-            width: 30px;
-            height: 30px;
-            left: 0;
-            right: 0;
+    a:active svg .shaded {
+        fill: rgb(79, 91, 193);
+        fill-opacity: 0.9;
+    }
+    
+    a:active svg .empress {
+        fill: rgb(40, 17, 46);
+        fill-opacity: 0.5;
+    }
 
-            svg {
-                width: 100%;
-                height: 100%;
-
-                .shaded {
-                    fill: rgb(79, 91, 193);
-                    fill-opacity: 0.3;
-                }
-
-                .empress {
-                    fill: rgb(79, 91, 193);
-                    fill-opacity: 0.7;
-                }
-            }
-        }
-        
-        a.stop:active {
-            .shaded {
-                fill: rgb(79, 91, 193);
-                fill-opacity: 0.9;
-            }
-
-            .empress {
-                fill: rgb(40, 17, 46);
-                fill-opacity: 0.5;
-            }
-        }
+    
 </style>

@@ -63,6 +63,14 @@ l-22,15C22.394,44.941,22.197,45,22,45z M23,15.893v26.215L42.225,29L23,15.893z"
         overflow: hidden;
     }
 
+    a svg {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+    }
+
     a > label {
         display: inline-block;
         width: 100%;
