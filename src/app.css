@@ -1,10 +1,19 @@
-@import url(https://fonts.googleapis.com/css?family=Open+Sans:400,800,600,700,300|Raleway:400,900,800,700,600,500,300,200|Lato:400,300,100);
+
+@font-face {
+    font-family: 'Source Sans Pro';
+    /* 131 kb */
+    src: url("https://mdn.github.io/css-examples/font-features/SourceSansPro-Regular.otf") format("opentype");
+    font-weight: 400;
+    font-style: normal;
+}
+
 
 :root {
     --inner-color: #C1FBC9;
     --outer-color: #C1FBC9;
     --radio-button-size: 30px;
-    
+    --summary-font-family:"Source Sans Pro";
+    --summary-font-size: 12px;
 }
 
 /* reset */

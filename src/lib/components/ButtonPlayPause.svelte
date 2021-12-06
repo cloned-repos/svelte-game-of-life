@@ -1,16 +1,11 @@
-<script>
-    import { checkable } from "./../actions/checkable.js"; // esm module have explicit extention
+<script lang="ts">
+    import { checkable } from "../actions/checkable"; // esm module have explicit extention
+    let v:SvelteInputProps;
 </script>
 
-<a href on:click|stopPropagation>
+<span class:a={true}>
     <label>
-        <input
-            on:click|stopPropagation={() => {}}
-            use:checkable
-            on:checked
-            on:unchecked
-            type="checkbox"
-        />
+        <input use:checkable on:checked on:unchecked type="checkbox" />
         <svg
             class="face1"
             version="1.1"
@@ -41,7 +36,7 @@ l-22,15C22.394,44.941,22.197,45,22,45z M23,15.893v26.215L42.225,29L23,15.893z"
             </g>
         </svg>
     </label>
-</a>
+</span>
 
 <style>
     * {
@@ -52,26 +47,18 @@ l-22,15C22.394,44.941,22.197,45,22,45z M23,15.893v26.215L42.225,29L23,15.893z"
         display: none;
     }
 
-    a {
+    .a {
         user-select: none;
         display: inline-block;
-        width: 100%;
-        height: 100%;
+        width: var(--btn-size, 100%);
+        height: var(--btn-size, 100%);
         font-size: 0;
         color: inherit;
         text-decoration: none;
         overflow: hidden;
     }
 
-    a svg {
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        top: 0;
-        left: 0;
-    }
-
-    a > label {
+    .a > label {
         display: inline-block;
         width: 100%;
         height: 100%;
@@ -80,11 +67,11 @@ l-22,15C22.394,44.941,22.197,45,22,45z M23,15.893v26.215L42.225,29L23,15.893z"
 
     /* checked display face1 , hide face2 */
 
-    a svg {
+    .a svg {
         transition: all 0.2s linear;
     }
 
-    a input[type="checkbox"]:checked ~ svg.face1 {
+    .a input[type="checkbox"]:checked ~ svg.face1 {
         position: absolute;
         width: 100%;
         height: 100%;
@@ -92,7 +79,7 @@ l-22,15C22.394,44.941,22.197,45,22,45z M23,15.893v26.215L42.225,29L23,15.893z"
         left: 0;
     }
 
-    a input[type="checkbox"]:checked ~ svg.face2 {
+    .a input[type="checkbox"]:checked ~ svg.face2 {
         position: absolute;
         width: 0;
         height: 0;
@@ -102,7 +89,7 @@ l-22,15C22.394,44.941,22.197,45,22,45z M23,15.893v26.215L42.225,29L23,15.893z"
 
     /* un-checked hide face1 , display face2 */
 
-    a input[type="checkbox"]:not(:checked) ~ svg.face1 {
+    .a input[type="checkbox"]:not(:checked) ~ svg.face1 {
         position: absolute;
         width: 0;
         height: 0;
@@ -110,7 +97,7 @@ l-22,15C22.394,44.941,22.197,45,22,45z M23,15.893v26.215L42.225,29L23,15.893z"
         left: 50%;
     }
 
-    a input[type="checkbox"]:not(:checked) ~ svg.face2 {
+    .a input[type="checkbox"]:not(:checked) ~ svg.face2 {
         position: absolute;
         width: 100%;
         height: 100%;
@@ -120,24 +107,24 @@ l-22,15C22.394,44.941,22.197,45,22,45z M23,15.893v26.215L42.225,29L23,15.893z"
 
     /* face 1 and face 2 generic */
 
-    a input[type="checkbox"] ~ svg .shaded {
+    .a input[type="checkbox"] ~ svg .shaded {
         fill: rgb(79, 91, 193);
         fill-opacity: 0.3;
     }
 
-    a input[type="checkbox"] ~ svg .empress {
+    .a input[type="checkbox"] ~ svg .empress {
         fill: rgb(79, 91, 193);
         fill-opacity: 0.7;
     }
 
     /* face 1 and face 2 selected */
 
-    a:active input[type="checkbox"] ~ svg .shaded {
+    .a:active input[type="checkbox"] ~ svg .shaded {
         fill: rgb(79, 91, 193);
         fill-opacity: 0.9;
     }
 
-    a:active input[type="checkbox"] ~ svg .empress {
+    .a:active input[type="checkbox"] ~ svg .empress {
         fill: rgb(40, 17, 46);
         fill-opacity: 0.5;
     }
