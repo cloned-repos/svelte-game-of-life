@@ -1,6 +1,8 @@
 <script lang="ts">
     import { checkable } from "../actions/checkable"; // esm module have explicit extention
-    let v:SvelteInputProps;
+    
+    /// <reference path="../actions/svelte.actions.checkable.d.ts"
+   
 </script>
 
 <span class:a={true}>
