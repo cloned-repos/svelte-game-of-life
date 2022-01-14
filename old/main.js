@@ -1,8 +1,14 @@
-/**
- * Created by jacobbogers on 04-JULY-2016.
- */
+module.exports = {};
 //import ReactDOM from 'react-dom';
 //import React from 'react';
+// queue is some kind of message queue (no it is not), it will be "polled" in each animationFrame tick
+// Design should be    controller, state (and functions managing state), renderer (canvas wrapper), hourglass
+
+//   UI ->controller -> state
+//                   -> renderer (uses state) -> canvas
+//                   -> render hour glass (uses state, do not "snip it" from the canvas)
+//   UI <- state (show some stats in UI)               
+//   UI <- canvas
 
 function repeat_anim(queue) {
     'use strict';
@@ -12,23 +18,23 @@ function repeat_anim(queue) {
         tick_count: 0,
         time_b: 0,
         time_e: 0,
-        queue: queue,
+        queue,
         /*target_delta: 33,*/
         status: {
-            state: undefined,
-            _promise: undefined,
+            state: undefined, // "running" | "error" | "stop" | "seed_20pct" | "seed_60pct"
             generation: 0,
-            is_paused: undefined,
-            prev_ts_stamp_delta: 0,
-            prev_time_st: 0
+            is_paused: undefined, // is it "stop" but not clearing/resetting all state to initial values
+            prev_ts_stamp_delta: 0, // this is to show fps
+            prev_time_st: 0 // needed to calculate "prev_ts_stamp_delta"
         },
-        signal_performance_stats: function (msg) {
+        signal_performance_stats(msg) {
             if (this.call_back instanceof Function) {
                 this.call_back(msg);
             }
         },
-        start_if_stopped: function () {
+        start_if_stopped() {
             if (this.status.state === "running") {
+                // is this an issue?
                 if (this.is_paused()) {
                     this.pause_off();
                 }
@@ -37,20 +43,19 @@ function repeat_anim(queue) {
             this.status.generation = 0;
             this.start();
         },
-        reset: function () {
-            var s = this.status;
-            s.generation = 0;
+        reset() {
+            this.status.generation = 0;
         },
-        start: function () {
-            var status = this.status;
-            var promise = this.status._promise;
+        start() {
+
+            var status = this.status; // shortcut
             var start = this.start.bind(this);
             var now;
 
-            status.generation = status.generation || 0;
+            this.status.generation = this.status.generation || 0;
             this.signal_performance_stats({
                 tag: "generations-tick",
-                generation: status.generation
+                generation: this.status.generation
             });
             if (this.time_b == 0) {
                 this.time_e = 0;
@@ -70,92 +75,49 @@ function repeat_anim(queue) {
                         num_ticks: this.tick_count
                     });
                     this.tick_count = 0;
-                    //console.log(this.delta);
                 }
             }
-            /*var next_delay = Math.max(1, this.target_delta - status.prev_ts_stamp_delta);
-            if (next_delay < 0.2 * this.target_delta) {
-                next_delay = this.target_delta;
-            } else {
-                next_delay = next_delay; //for debugging
-            }*/
+            requestAnimationFrame((time_stamp) => {
+                this.status.prev_ts_stamp_delta = time_stamp - this.status.prev_time_st;
+                this.status.prev_time_st = time_stamp;
+                this.status.state = "running";
 
-            //console.log(next_delay);
-            /*setTimeout(function () {*/
-            requestAnimationFrame(function (time_stamp) {
-                status.prev_ts_stamp_delta = time_stamp - status.prev_time_st;
-                status.prev_time_st = time_stamp;
-                status.state = "running";
-                var work = queue.pop();
+                const work = queue.pop();
 
-                if (typeof work == "string") {
-                    if (work == "stop") {
-                        status._promise = null; //clear it
-                        status.state = "stop";
-                        status.is_paused = false;
-                        status.generation = 0;
-                        if (promise) {
-                            promise.res("stopped");
-                        }
-                        return;
-                    }
-                    status.state = "error";
-                    promise.rej("error");
-                    throw new Error('Illegal command');
+                if (work.type === "stop") {
+                    this.status.state = "stop";
+                    this.status.is_paused = false;
+                    this.status.generation = 0;
+                    return;
                 }
-                //console.log({op_type:work.type});
-                work.op(status.is_paused);
+                work.op(this.status);
                 if (work.type == "repeat") {
                     queue.unshift(work);
                 }
-                if (work.tag == "next-frame" && !status.is_paused) {
-                    status.generation++;
-                }
                 start();
             });
-            /*}, next_delay);*/
         },
-        pause_on: function () {
+        pause_on() {
             this.status.is_paused = true;
         },
-        is_paused: function () {
+        is_paused() {
             return (this.status.is_paused ? true : false);
         },
-        pause_off: function () {
+        pause_off() {
             this.status.is_paused = false;
         },
-        is_stopped: function () {
+        is_stopped() {
             return (this.status.state === "stop" ? true : false);
         },
-        stop: function () {
-            var status = this.status;
-            if (this.status._promise) {
-                return new Promise(function (res, rej) {
-                    return rej("already a stop action pending");
-                });
-
-            }
-            if (this.status.state != "running") {
-                return Promise.resolve("cannot stop, the state was not \"running\" ");
-            }
-            var p = new Promise(function (res, rej) {
-                status._promise = {
-                    res: res,
-                    rej: rej
-                };
-            });
-            queue.unshift('stop');
-            return p;
+        stop() {
+            queue.unshift({ type: 'stop' });
         }
     }
 }
 
-
-
-
 var life_game = {
-    animation: null,
-    canvas_elt: null,
+    animation: null, // not sure what is this
+    canvas_elt: null, // 
     blk_width: 0,
     blk_height: 0,
     grid_color: "rgb(245,247,249)",
@@ -170,49 +132,57 @@ var life_game = {
     color3: "rgb(210,224,49)",
     selected_seed: null,
     nr_cells_processed: [0, 0, 0],
+
     register_signal_handler: function (func) {
         this.call_back = func;
-        //decorate animation object
         this.animation.call_back = func;
-
     },
+
     signal_performance_stats: function (msg) {
-        if (this.call_back instanceof Function) {
-            this.call_back(msg);
+        if (!this.call_back) {
+            return;
         }
+        this.call_back(msg);
     },
-    do_next_generation: function (paused) {
-        if (paused) {
 
+    do_next_generation: function (status) {
+        if (status.paused) {
             this.mouse_mark();
             return;
         }
         this.next_frame_and_swap();
         this.plot_index_buffer();
         this.mouse_mark();
+        status.generation++;
     },
+    // what does this do?
     get_number_snail_items: function () {
         var nr_itms = 0;
+
+        // this happens when there was as buffer wrap around 
         if (this.snail_trail_wm < this.snail_trail_cursor) {
-            nr_itms = this.snail_trail_wm + (this.get_snail_length() - this.snail_trail_cursor);
+            
+            // we introduce zero (0) to make it more readable
+            // 
+            nr_itms = (this.snail_trail_wm - 0) + (this.get_snail_length() - this.snail_trail_cursor);
         } else {
+            // "wm" nr_items to be drawn
             nr_itms = this.snail_trail_wm - this.snail_trail_cursor;
         }
-        return nr_itms / 3;
+        return nr_itms / 3; // always an integer because "this.snail_trail_wm" and "this.snail_trail_cursor" are multipels of 3
 
     },
+    // the snail trail is (in the limit the same size as the grid (you visit every pixel once, ludicrous ofc))
+    // but it is actually some kind of mouse event queueBuffer
     get_snail_length: function () {
         return (this.snail_trail.length - this.snail_trail.length % 3);
     },
     snail_cursor_next: function () {
-        if (this.get_number_snail_items() === 0) {
+        if (this.get_number_snail_items() === 0) { // there is no lag
             return undefined;
         }
         var sl = this.get_snail_length();
-        this.snail_trail_cursor += 3;
-        if (this.snail_trail_cursor >= sl) {
-            this.snail_trail_cursor = 0;
-        }
+        this.snail_trail_cursor  = ( this.snail_trail_cursor + 3 ) % sl;
         return this.snail_trail_cursor;
     },
     draw_magnify: function (x, y) {
@@ -249,10 +219,13 @@ var life_game = {
         this.canvas_elt = canvas_elt;
         this.clear_screen();
         var grid_size = this.blk_width * this.blk_height;
+
         this.frame_current = new Uint8ClampedArray(grid_size);
         this.frame_next = new Uint8ClampedArray(grid_size);
-        this.frame_work_todo_index = new Int32Array(grid_size);
-        this.snail_trail = new Int32Array(grid_size);
+        this.frame_work_todo_index = new Int32Array(grid_size); // grid_size = maximum amount of work to do?
+
+        // these three variables make the state of the "snail_trail" work
+        this.snail_trail = new Int32Array(grid_size); // still what is this?
         this.snail_trail_wm = 0;
         this.snail_trail_cursor = 0;
         //
@@ -281,9 +254,11 @@ var life_game = {
     color_picker: function () {
         var c = Math.trunc(Math.random() * 8) + 1;
         //
-        //1 2 3 4 5 6 7 8
+        // pixel color probability distribution
+        //1 2 3 4 5 6 7 8  
         //1 1 2 2 2 2 3 3
         //
+        // color 1 = no pixel
         if (c < 3) {
             return 3;
         }
@@ -363,37 +338,65 @@ var life_game = {
         if (rc.color == undefined) {
             return; //do nothing, this is a sign the grid has been altered
         }
-        if (this.frame_current[rc.coords] == 0) {
+        // only add cell if position is empty
+        if (this.frame_current[rc.coords] === 0) {
             this.frame_work_todo_index[this.work_todo] = rc.coords;
             this.frame_current[rc.coords] = this.color_picker();
             this.work_todo++;
         }
     },
-    mouse_mark: function (x, y, btn_press) {
 
-        var ctx = this.canvas_elt.getContext("2d");
-        this.cursor = this.cursor || {};
+    process_ui_events(){
+        
+        const nr_items = this.get_number_snail_items(); // should be no more then 1
 
-        var new_coords, nr_items;
-        var xcor;
-        var ycor;
-        var color;
-        var i;
-        var snail_length;
-        var nr_itms;
-        var x;
-        var y;
-        var b;
+        // purge the lag in this micro-cycle
+        while (nr_items > 0) {
+            nr_items--;
+            const i = this.snail_trail_cursor;
+            this.snail_cursor_next();
+            const x = this.snail_trail[i];
+            const y = this.snail_trail[i + 1];
+            const b = this.snail_trail[i + 2];
+            this.restore_color(x, y);
+            if (b) {
+               this.add_cell(x, y);
+            }
+            if (nr_items === 0) {
+                this.draw_magnify(x, y); 
+                this.plot_red_marker(x, y); // does not add the red marker to the logical grid
+            }
+        }
+    },
 
-        snail_length = this.snail_trail.length - this.snail_trail.length % 3;
+  
+    // this is plotting magnifying glass
+    // do "do_next_generation" calls this function without any arguments
+    // the mouse-over and mouse-down event are calling this function
+    mouse_mark(x, y, btn_press) {
+        let nr_items;
+        let i;
+        
+        let b;
+        
+        const snail_end = this.snail_trail.length - this.snail_trail.length % 3; // absolute length
+        //
+        // scenario 1: looks close to initial start
+        // 0       cursor   wm     end 
+        // |-------|--------|------|        data between cursor and wm is not drawn
+        //
+        // scenario 2: cursor wrapped around but wm did not
+        // 0    wm           cursor end 
+        // |----|------------|------|       data between cursor and end is not drawn + data between 0 and wm is not drawn
+        
+
         if (Number.isInteger(x) && Number.isInteger(y)) {
-            if (this.snail_trail_wm == snail_length) { //no more space, round robin
-                if (this.snail_trail_cursor < 3) {
-                    console.log("to much data in the buffer to draw, not accepting mouse input");
-                    //oops I have to ignore this mouse move move
-                    return;
+            if (this.snail_trail_wm === snail_end) { //end of buffer, round robin
+                if (this.snail_trail_cursor < 3) { // can we do round robin?
+                    return; // THIS SHOULD NEVER HAPPEN PRACTICALLY, HUMANS NOT THAT FAST IN UI
                 }
-                this.snail_trail_wm = 3;
+                // place data in cursor
+                this.snail_trail_wm = 3; // next position is here
                 this.snail_trail[0] = x;
                 this.snail_trail[1] = y;
                 this.snail_trail[2] = btn_press ? 1 : 0;
@@ -404,47 +407,30 @@ var life_game = {
                 this.snail_trail[i + 2] = btn_press ? 1 : 0;
                 this.snail_trail_wm += 3;
             }
-            this.plot_red_marker(x, y);
-            this.draw_magnify(x, y);
-            return;
         }
-        //
-        //length=300, 0-299 is index
-        //cursor=30, wm=60  on nr-items = 30
-        //cursor=30 wm=30 nr-items = 30+  300-30 = 300
-        //cursor=30 wm=10 nr-items = 10 + 300-30 = 300-20=280
-        nr_items = this.get_number_snail_items();
+        
 
-        if (nr_items == 1) {
-            //if (this.status.capture == "entered") {
+        nr_items = this.get_number_snail_items(); // should be no more then 1
+
+        // purge the lag in this micro-cycle
+        while (nr_items > 0) {
+            nr_items--;
             i = this.snail_trail_cursor;
+            this.snail_cursor_next();
             x = this.snail_trail[i];
             y = this.snail_trail[i + 1];
             b = this.snail_trail[i + 2];
-            //possibly add it to the frame
+            this.restore_color(x, y);
             if (b) {
-                this.add_cell(x, y);
+               this.add_cell(x, y);
             }
-            this.draw_magnify(x, y);
-            this.plot_red_marker(x, y);
-            this.snail_trail[i + 2] = 0; //dont add it to the frame next time
-            return;
-        }
-        while (this.get_number_snail_items() > 1) {
-            i = this.snail_trail_cursor;
-            this.snail_cursor_next();
-            if (!Number.isInteger(i)) {
-                throw new Error('This should not happen!');
+            if (nr_items === 0) {
+                this.draw_magnify(x, y); 
+                this.plot_red_marker(x, y); // does not add the red marker to the logical grid
             }
-            x = this.snail_trail[i];
-            y = this.snail_trail[i + 1];
-            b = this.snail_trail[i + 2]; //TODO: make it permanent the frame
-            if (b) {
-                this.add_cell(x, y);
-            }
-            this.restore_color(x, y); //TODO: DO NOT restore color if it is permanent to the frame
         }
     },
+    //
     color_index_to_color: function (_color) {
         switch (_color) {
             case 0:
@@ -465,40 +451,48 @@ var life_game = {
         return _color;
     },
 
-    get_color_from_frame: function (x, y) {
-        var xcor = ((x - 1) - (x - 1) % 6) / 6;
-        var ycor = ((y - 1) - (y - 1) % 6) / 6;
-        var coords = xcor + ycor * this.blk_width;
-        var color = this.frame_current[coords];
+    get_color_from_frame: function (screenX, screenY) {
+        const xm = screenX-1;
+        const ym = screenY-1;
+
+        // screen coords to logical grid coordinates
+        
+        var xcor = (xm - xm % 6) / 6; // no rounding errors
+        var ycor = (ym - ym % 6) / 6; // why divide by 6
+        
+        var coords = xcor + ycor * this.blk_width; // column first matrix
+
+        var color = this.frame_current[coords]; // get color
+
         return ({
             color: color,
-            xcor: xcor,
-            ycor: ycor,
+            xcor:  xcor,
+            ycor:  ycor,
             coords: coords
-
         });
     },
 
     restore_color: function (x, y) {
         var ctx = this.canvas_elt.getContext("2d");
-        if (Number.isInteger(x) && Number.isInteger(y)) {
-            var rc = this.get_color_from_frame(x, y);
-            if (rc.color == undefined) {
-                return;
-            }
-            var color = this.color_index_to_color(rc.color);
-            ctx.fillStyle = color;
-            ctx.fillRect(1 + rc.xcor * 6, 1 + rc.ycor * 6, 4, 4);
+        var rc = this.get_color_from_frame(x, y);
+        if (rc.color === undefined){
+            return; // this is a sign the grid has been altered
         }
+        var color = this.color_index_to_color(rc.color);
+
+        ctx.fillStyle = color;
+        ctx.fillRect(1 + rc.xcor * 6, 1 + rc.ycor * 6, 4, 4);
     },
 
     plot_red_marker: function (x, y) {
-        var ctx = this.canvas_elt.getContext("2d");
-        if (Number.isInteger(x) && Number.isInteger(y)) {
-            var rc = this.get_color_from_frame(x, y);
-            ctx.fillStyle = "red";
-            ctx.fillRect(1 + rc.xcor * 6, 1 + rc.ycor * 6, 4, 4);
+        var rc = this.get_color_from_frame(x, y);
+        if (rc.color == undefined) {
+            return; //do nothing, this is a sign the grid has been altered
         }
+        var ctx = this.canvas_elt.getContext("2d");
+        ctx.fillStyle = "red";
+        ctx.fillRect(1 + rc.xcor * 6, 1 + rc.ycor * 6, 4, 4);
+
     },
 
     plot_index_buffer: function () {
@@ -508,10 +502,9 @@ var life_game = {
         var color;
         var xcor;
         var ycor
-        //ctx.clearRect(0,0,this.canvas_width,this.canvas_height);
+        // ctx.clearRect(0, 0, this.canvas_width,this.canvas_height );
         var i;
         this.canvas_elt.style.visibility = 'hidden';
-        this.cursor = this.cursor || {};
         for (i = 0; i < this.work_todo; i++) {
             coords = this.frame_work_todo_index[i];
             xcor = coords % this.blk_width;
@@ -555,7 +548,7 @@ var life_game = {
                 rc = 0;
 
             } else
-                // 2.Any live cell with two or three live neighbours lives on to the next generation.
+                // 2.Any l"ive cell with two or three live neighbours lives on to the next generation.
                 if (!is_dead && (nr == 2 || nr == 3)) {
                     rc = current_state; //dont change color
 
@@ -619,7 +612,7 @@ var life_game = {
         return false;
     },
 
-    next_frame_and_swap: function () {
+    next_frame_and_swap() {
         var i, j;
         var coords;
         var cells;
@@ -742,20 +735,17 @@ var life_game = {
 
 var rep = repeat_anim([{
     type: "repeat",
-    op: life_game.do_next_generation.bind(life_game),
+    op: life_game.do_next_generation.bind(life_game), // calculate next step in time
     tag: "next-frame"
 }]);
 
 life_game.animation = rep;
 
 var util = {
-    add_classes(elt, classnames) {
+    add_classes(elt, ...classnames) {
         var i;
         if (typeof elt == "string") {
             elt = document.getElementById(elt);
-        }
-        if (!(classnames instanceof Array)) {
-            classnames = [classnames];
         }
         for (i = 0; i < classnames.length; i++) {
             elt.classList.add(classnames[i]);
@@ -763,13 +753,10 @@ var util = {
         return elt;
     },
 
-    remove_classes(elt, classnames) {
+    remove_classes(elt, ...classnames) {
         var i;
         if (typeof elt === "string") {
             elt = document.getElementById(elt);
-        }
-        if (!(classnames instanceof Array)) {
-            classnames = [classnames];
         }
         for (i = 0; i < classnames.length; i++) {
             elt.classList.remove(classnames[i]);
@@ -777,65 +764,8 @@ var util = {
         return elt;
     },
 
-    contains_any_class(elt, classnames) {
-        var i;
-        if (typeof elt === "string") {
-            elt = document.getElementById(elt);
-        }
-        if (!(classnames instanceof Array)) {
-            classnames = [classnames];
-        }
-        for (i = 0; i < classnames.length; i++) {
-            if (elt.classList.contains(classnames[i])) {
-                return true;
-            }
-        }
-        return true;
-    },
-
-    throttle(type, name, obj) {
-        'use strict';
-        obj = obj || window;
-        var running = false;
-
-        var func = function (original_evt) {
-            if (running) {
-                return;
-            }
-            running = true;
-            requestAnimationFrame(function () {
-                var event = new CustomEvent(name, { 'detail': original_evt });
-                console.log('event:' + name);
-                obj.dispatchEvent(event);
-                running = false;
-            });
-        };
-        obj.addEventListener(type, func);
-        return func;
-    },
-
-    throttle_fun(func) {
-        'use strict';
-        var critical_section;
-
-        return function () {
-            if (critical_section) {
-                return undefined;
-            }
-
-            critical_section = true;
-            var rc;
-            requestAnimationFrame(function () {
-                rc = func();
-                critical_section = false;
-            });
-
-            return { rc: rc }; //it can make sense
-        }
-    },
-
     ll(str) {
-        console.log(str);
+        console.log('%c' + 'str', 'color: green');
     },
 
     generateUUID() {
@@ -854,7 +784,7 @@ var util = {
 
 var FlapoutFooter = React.createClass({
     _ll(str) {
-        console.log(str + ":[" + this.constructor.displayName + "]");
+        util.ll(str + ":[" + this.constructor.displayName + "]");
     },
     _msg_handler(msg) {
         throw new Error('[App] received an unknown message:' + msg);
@@ -970,7 +900,7 @@ var FlapoutFooter = React.createClass({
 
 var FlapoutMain = React.createClass({
     _ll(str) {
-        console.log(str + ":[" + this.constructor.displayName + "]");
+        util.ll(str + ":[" + this.constructor.displayName + "]");
     },
 
     _toggle_play_pause(evt) {
@@ -989,15 +919,6 @@ var FlapoutMain = React.createClass({
         life_game.animation.reset();
         life_game.clear();
         this.props.signal_parent({ tag: "clear_and_pause" });
-        /*
-        life_game.animation.stop().then(function() {
-            life_game.clear();
-            life_game.animation.start();
-            life_game.animation.pause_on();
-            this.props.signal_parent({tag:"clear_and_pause"});
-        }).catch(function(reason) {
-            console.log("could not stop:" + reason);
-        });*/
         return;
     },
     _msg_handler(msg) {
@@ -1195,6 +1116,7 @@ var Flapout = React.createClass({
         console.log(str + ":[" + this.constructor.displayName + "]");
     },
 
+    // commands from the UI
     _msg_handler(msg) {
         util.ll(JSON.stringify(msg));
         var fps;
@@ -1287,15 +1209,12 @@ var Flapout = React.createClass({
         );
     }
 });
+
 var Canvas = React.createClass({
     _ll(str) {
         console.log(str + ":[" + this.constructor.displayName + "]");
     },
 
-    _msg_handler(msg) {
-
-        throw new Error('[Canvas] received an unknown message:' + msg);
-    },
 
     _resize_canvas() {
         var _width = this.refs.surface.offsetWidth;
@@ -1324,7 +1243,6 @@ var Canvas = React.createClass({
     },
 
     _schedule_resize(evt) {
-
         life_game.animation.queue.unshift({ type: "once", op: this._resize_canvas });
         var type = (evt && evt.type)
             ? evt.type
@@ -1335,68 +1253,80 @@ var Canvas = React.createClass({
     _on_mouse_over_mouse_down: function (evt) {
         var _canvas = this.refs["main-canvas"];
         var rect = _canvas.getBoundingClientRect();
-        var x = Math.max(0, evt.clientX - rect.left);
-        var y = Math.max(0, evt.clientY - rect.top);
-        life_game.mouse_mark(x, y, (evt.buttons != 0));
+        var x = Math.max(0, evt.clientX - rect.left); // clamp it in x
+        var y = Math.max(0, evt.clientY - rect.top);  // clamp it in y
+        // post this mouse event (mouse over to show magnify glass tracking)
+        // optionally if button pressed place a dot on the grid
+        life_game.mouse_mark(x, y, (evt.type === 'mousedown'));
     },
 
     getInitialState() {
         this._ll("getInitialState");
-        return null;
+        return null; // there is no initial state
     },
 
-    componentWillMount() {
+    /*componentWillMount() {
         this._ll("componentWillMount");
-    },
+    },*/
 
-    componentWillReceiveProps(nextProps) {
+    /*componentWillReceiveProps(nextProps) {
         this._ll("componentWillReceiveProps");
-    },
-    componentWillUpdate(nextProps, nextState) {
+    },*/
+
+    /*componentWillUpdate(nextProps, nextState) {
         this._ll("componentWillUpdate");
     },
-    componentDidUpdate(prevProps, prevState) {
+    */
+
+    /*componentDidUpdate(prevProps, prevState) {
         this._ll("componentDidUpdate");
-    },
+    },*/
+
     componentWillUnmount() {
-        window.removeEventListener("resize", this.cancel_resize_key);
+        window.removeEventListener("resize", this._schedule_resize);
         this._ll("componentWillUnmount");
-        life_game.animation.stop().then(function () {
-            this._ll("animation has stopped!");
-        }).catch(function (reason) {
-            console.log("could not stop:" + reason);
-        });
+        life_game.animation.stop();
     },
+
     componentDidMount() {
         this._ll("componentDidMount");
-        //throttle global window resize event
-        //this.cancel_resize_key = util.throttle("resize", "throttleResize", window);
-        //window.addEventListener("throttleResize", this._schedule_resize);
         window.addEventListener("resize", this._schedule_resize);
-        this.cancel_resize_key = this._schedule_resize;
         this._resize_canvas();
     },
-    shouldComponentUpdate(nextProps, nextState) {
+
+    /*shouldComponentUpdate(nextProps, nextState) {
         this._ll("shouldComponentUpdate");
         return false;
-    },
+    },*/
+
     render() {
         this._ll("render");
         return (
             <div key="surface_000" ref="surface" className="inner-canvas">
-                <canvas key="canvas-333" ref="main-canvas" className="main-canvas" width="0px" height="0px" onMouseMove={this._on_mouse_over_mouse_down} onMouseDown={this._on_mouse_over_mouse_down}>Canvas!</canvas>
-                <canvas key="canvas-666" ref="magnify" className="magnify" width="0px" height="0px"></canvas>
+                
+                <canvas 
+                    key="canvas-333" 
+                    ref="main-canvas" 
+                    className="main-canvas" 
+                    width="0px" 
+                    height="0px" 
+                    onMouseMove={this._on_mouse_over_mouse_down} 
+                    onMouseDown={this._on_mouse_over_mouse_down}>Canvas!
+                </canvas>
+
+                <canvas key="canvas-666" ref="magnify" className="magnify" width="0px" height="0px">
+
+                </canvas>
             </div>
         );
     }
 });
+
+
 var App = React.createClass({
+
     _ll(str) {
         util.ll(str + ":[" + this.constructor.displayName + "]");
-    },
-
-    _msg_handler(msg) {
-        throw new Error('[App] received an unknown message:' + msg);
     },
 
     getInitialState() {
@@ -1441,10 +1371,14 @@ var App = React.createClass({
         return (<Canvas monitor_dialog={this.props.monitor_dialog} />);
     }
 });
+
+
 window.onload = function () {
-    var flapout = ReactDOM.render(
+    const flapout = ReactDOM.render(
         <Flapout />, document.getElementById("flapout-container"));
-    var canvasApp = ReactDOM.render(
+
+
+    ReactDOM.render(
         <App monitor_dialog={flapout} />, document.getElementById("container-anchor"));
-    console.log(life_game);
+
 }
