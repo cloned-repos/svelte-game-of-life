@@ -406,7 +406,6 @@ Events on the windows object
 - `sveltekit:navigation-start`: navigation has started
 - `sveltekit:navigation-end`: navigation has ended?
 
-
 ## Amp
 
 Set `svelte.config.amp` = `true`|`false` in svelte config;
@@ -426,7 +425,6 @@ Selects environment automaticly:
 `Cloudflare Pages`: `adapter-cloudflare`
 `Netlify`: `adapter-netlify`
 `Vercel`: `adapter-vercel`
-
 
 ### Nodejs
 
@@ -462,7 +460,7 @@ export default {
 }
 ```
 
-### Communite adapters
+### Community adapters
 
 Checkout this [page](https://sveltesociety.dev/components/#adapters)
 
