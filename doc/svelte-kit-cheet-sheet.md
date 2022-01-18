@@ -493,6 +493,123 @@ export default function(options){
 
 ## PAGE OPTIONS
 
+By default Sveltekit will render every on the server then send it to the client and then hydrate it.
+
+### `router`
+
+Disable client side routing for this page
+
+```html
+<script context="module">
+    export const router = false;
+</script>
+```
+
+Same as configfile `svelte.config.js` for all pages
+
+`config.kit.router: false`
+
+### `hydrate`
+
+Normally sveltekit hydrates your server-rendered html,
+
+Some pages not need javascript at all (about, blog post)
+
+```html
+<script context="module">
+    export const hydrate = false;
+</script>
+```
+
+Same as configfile `svelte.config.js` for all pages
+
+`config.kit.hydrate: false`
+
+> If `hydrate` and `router` are both `false`, SvelteKit will not add any javascript to the page. If also `ssr` is false then there will be no content generation for that page.
+
+### `prerender`
+
+Prerender the html at build time (this is not on "request time").
+
+If the entire app can be pre-rendered consider `adapter-static`
+
+```html
+<script context="module">
+	export const prerender = true;
+</script>
+```
+
+#### when not to prerender
+
+If you do need to specify which pages should be accessed by the prerenderer in `config.kit.prerender`. It is an array with entries, see **prerender config section**
+
+Any 2 users hitting a prerender page bust see the same data.
+
+Accessing `page.query` during pre-rendering is forbidden.
+
+#### route conflicts
+
+For example:
+
+- `src/routes/foo/index.js`
+- `src/routes/foo/bas.js`
+
+would try to create `foo` and `foo/bar` which is not possible.
+
+Try to create specify files not directories (/index.js)
+
+- `src/routes/foo/index.json.js` -> results in uri `foo.json`
+- `src/routes/foo/bar.json.js` -> results in uri `foo/bar.json`
+
+For pages use `foo/index.html` instead of `foo`
+
+## PACKAGING
+
+You can build libraries as well as app.
+
+1. The contents of `src/routes` is the public-facing stuff.
+2. `src/lib` contains your app's internal library.
+
+Running `svelte-kit package` ( `npm run package` ).
+and generate a `package` directory. (change with `config.package.dir`)
+
+This can be configured in `config.kit.package`
+
+all code in `/src/lib` is packaged, taking into account `exclude/include`.
+
+`package.json` will be copied (and stripped less for the followng fields, if missing they will be added)
+
+- `dependencies`
+- `type`
+- `exports`
+
+`src/lib/index.js` or/and (yes you can do both) `src/lib/index.svelte` will be treated as the package root
+
+```javascript
+import { Foo } from 'my-lib';
+
+import Foo from 'my-lib/Foo.svelte'
+```
+
+### Publishing
+
+publish generated package:
+
+```bash
+npm publish ./package
+```
+
+### Caveats
+
+Oh, this is an experimental feature, all other files (except for `*.ts` or `*.svelte`) are not processed and copied as is.
+
+## COMMAND LINE INTERFACE
+
+
+
+
+
+
 
 [cache-control]: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control
 [history-state]: https://developer.mozilla.org/en-US/docs/Web/API/History/pushState
