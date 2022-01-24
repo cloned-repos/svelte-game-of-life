@@ -1,0 +1,54 @@
+
+/* reset */
+/* reset */
+/* reset */
+
+html,
+body,
+div,
+dl,
+dt,
+dd,
+ul,
+ol,
+p,
+li,
+a,
+form,
+fieldset,
+input[type="text"],
+input[type="search"],
+blockquote,
+th,
+td {
+    margin: 0;
+    padding: 0;
+}
+
+a {
+    outline: none;
+    text-decoration: none;
+    color: #000;
+}
+
+
+*:before,
+*:after,
+* {
+    box-sizing: border-box;
+}
+
+button,
+input {
+    line-height: normal;
+    outline: none;
+    border: none;
+}
+
+html,
+body {
+  height: 100%;
+  width:100%;
+  margin: 0;
+  padding: 0;
+}

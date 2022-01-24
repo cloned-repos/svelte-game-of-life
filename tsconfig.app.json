@@ -1,0 +1,13 @@
+{
+    "extends": "./tsconfig.json",
+    "exclude":[
+        "**/__test__",
+        "node_modules",
+        ".vscode",
+        ".jest-cache",
+        ".metals",
+        ".svelte-kit",
+        "coverage",
+        "build"
+    ]
+}

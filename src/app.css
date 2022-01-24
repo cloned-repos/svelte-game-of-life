@@ -1,0 +1,22 @@
+@import url(https://fonts.googleapis.com/css?family=Open+Sans:400,800,600,700,300|Raleway:400,900,800,700,600,500,300,200|Lato:400,300,100);
+/*reset*/
+@import url(./_reset.css);
+
+:root {
+    --min-width-canvas: 600px;
+    --line-height-new-entry: 44px;
+    --line-height-new-entry-detail: 30px;
+}
+
+body {
+    background-color: #17232D;
+}
+
+#svelte {
+   height: 100%;
+   width: 100%;
+   display: flex;
+   flex-direction: row;
+   justify-content: center;
+   align-items: center;
+}

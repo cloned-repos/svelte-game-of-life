@@ -1,8 +1,9 @@
-<!-- src/routes/__layout.svelte -->
-<nav>
-	<a href="/">Home</a>
-	<a href="/about">About</a>
-	<a href="/settings">Settings</a>
-</nav>
+<script>
+	import '../app.css';
+</script>
+
+<svelte:head>
+	<title>Svelte Game of Life</title>
+</svelte:head>
 
 <slot></slot>
