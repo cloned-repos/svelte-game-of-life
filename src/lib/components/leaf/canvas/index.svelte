@@ -1,4 +1,5 @@
 <script lang="ts" context="module">
+	import type { GridData } from '$lib/components/controller/gol-engine';
 	const { max } = Math;
 	import { drawBlocks, resize, calcGridSize } from './canvas-helper';
 	import type { GridSize } from './canvas-helper';
@@ -144,7 +145,8 @@
 		);
 	}
 
-	export function update(colors: string[], updates: Uint16Array) {
+	export function update(data: GridData) {
+		const { updates, colors } = data;
 		if (!canvas) {
 			return;
 		}

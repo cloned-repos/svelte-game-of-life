@@ -1,12 +1,12 @@
 <script context="module" lang="ts">
 	export const prerender = true;
 
-	import { default as Engine, DrawInstruction } from '$lib/components/engine';
+	import { default as Engine, DrawInstruction } from '$lib/components/controller/gol-engine';
 </script>
 
 <script lang="ts">
 	// app
-	import Canvas from '$lib/components/Canvas.svelte';
+	import Canvas from '$lib/components/leaf/canvas/index.svelte';
 	import debug from 'debug';
 	import { onMount } from 'svelte';
 	
@@ -41,7 +41,7 @@
 			engine.seedGrid(0.2);
 			console.log('index/event/resize first draw after mount, clear and seed(0.2)');
 		}
-		nrCells = canvas.update(engine.getColors(), engine.getUpdateData());
+		nrCells = canvas.update(engine.gridData());
 		cnt++;
 	}
 
@@ -69,7 +69,7 @@
 				fps = Math.round(1000 / (ts - prevTs));
 			}
 			// JKF do Engine NextStep here
-			nrCells = canvas.update(engine.getColors(), engine.getUpdateData());
+			nrCells = canvas.update(engine.gridData());
 			prevTs = ts;
 			start(ts);
 		});
@@ -92,6 +92,8 @@
 	*/
 	let cnt = 0;
 	nrCells = 0;
+	gridWidth = 1;
+	gridHeight = 1;
 
 	$: {
 		if (canvas){
@@ -104,6 +106,8 @@
 
 	$: fraction = Math.round((1e5 * nrCells) / size) / 1e5;
 	$: size = gridWidth * gridHeight;
+
+	
 </script>
 
 <div class:outer-container={true}>

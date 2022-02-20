@@ -1,5 +1,3 @@
-const { trunc } = Math;
-
 export enum DrawInstruction {
     NOOP = 0,
     DRAW = 1,
@@ -25,7 +23,16 @@ const seedHistogram = [
 const emptyUint16Array = new Uint16Array(0);
 const emptyUint8ClampedArray = new Uint8ClampedArray(0);
 
-export default class Engine {
+export type GridData = {
+    grid: Uint8ClampedArray
+    index: Uint16Array
+    updates:Uint16Array
+    width: number
+    height: number
+    colors: string[]
+};
+
+export default class GOLEngine {
     private width = 0;
     private height = 0;
     private playField: Uint8ClampedArray;
@@ -39,25 +46,19 @@ export default class Engine {
     ) {
         this.colors = colors;
         this.playField = emptyUint8ClampedArray;
-        this.playFieldIndex =emptyUint16Array;
+        this.playFieldIndex = emptyUint16Array;
         this.updateIndex = emptyUint16Array;
     }
 
-    public getUpdateData() {
-        return this.updateIndex;
-    }
-
-    public gridData() {
+    public gridData(): GridData {
         return {
             grid: this.playField, // return copy
             index: this.playFieldIndex,
+            updates: this.updateIndex,
             width: this.width,
-            height: this.height
+            height: this.height,
+            colors: this.colors
         };
-    }
-
-    public getColors() {
-        return this.colors;
     }
 
     public updateGridSize(width: number, height: number) {
@@ -65,46 +66,14 @@ export default class Engine {
         return this.resizePlayField(newPlayField, width, height);
     }
 
-
-
-    /*
-        nr of draws * total number of blocks;     fraction of the blocks occupied
-        1	                                        0.645
-        0.95                                        0.6124
-        0.9                                         0.58297
-        0.8                                         0.550
-        0.7                                         0.50
-        0.6                                         0.45
-        0.5                                         0.393
-        0.4                                         0.32
-        0.3                                         0.259
-        0.2                                         0.180
-        0.1	                                        0.095
-        0.05                                        0.0488
-        0.02                                        0.0198
-    */
-
-    private createUpdateIndexArray(pct: number, newFieldSize: number) {
-        pct = Math.min(Math.max(pct, 0), 1);
-        let sizeFraction = seedHistogram.find(([percent, fraction], i) => {
-            return (pct < percent);
-        });
-
-        sizeFraction = sizeFraction || seedHistogram[seedHistogram.length - 1];
-        let absoluutSize = Math.trunc(sizeFraction[1] * this.playField.length*3);
-        absoluutSize = absoluutSize - (absoluutSize % 3);
-
-        const updateIndex = new Uint16Array(absoluutSize);
-        return updateIndex;
-    }
-
+    // this should ne its own pluggable class
     public seedGrid(pct: number = 0.2) {
         if (this.width === 0 || this.height === 0) {
             return emptyUint16Array;
         }
 
         // estimate size
-        const updateIndex = this.createUpdateIndexArray(pct, this.playField.length);
+        const updateIndex = this.createEmptyUpdateIndexArray(pct);
 
         this.playField.fill(0);
 
@@ -129,9 +98,43 @@ export default class Engine {
             }
         }
         // compact it
+        // initial positioning of the cells, the updateIndex is the same as the playFieldIndex (it is all initial creation of cells)
         this.updateIndex = updateIndex.slice(0, numSeeds);
+        this.playFieldIndex = this.updateIndex.slice(0, numSeeds);
         return updateIndex;
     }
+
+    /*
+        nr of draws * total number of blocks;     fraction of the blocks occupied
+        1	                                        0.645
+        0.95                                        0.6124
+        0.9                                         0.58297
+        0.8                                         0.550
+        0.7                                         0.50
+        0.6                                         0.45
+        0.5                                         0.393
+        0.4                                         0.32
+        0.3                                         0.259
+        0.2                                         0.180
+        0.1	                                        0.095
+        0.05                                        0.0488
+        0.02                                        0.0198
+    */
+
+    private createEmptyUpdateIndexArray(pct: number) {
+        pct = Math.min(Math.max(pct, 0), 1);
+        let sizeFraction = seedHistogram.find(([percent,], i) => {
+            return (pct < percent);
+        });
+
+        sizeFraction = sizeFraction || seedHistogram[seedHistogram.length - 1];
+        let absoluutSize = Math.trunc(sizeFraction[1] * this.playField.length * 3);
+        absoluutSize = absoluutSize - (absoluutSize % 3);
+
+        const updateIndex = new Uint16Array(absoluutSize);
+        return updateIndex;
+    }
+
 
     private colorPicker(): number {
         const c = Math.trunc(Math.random() * 8) + 1;
@@ -160,7 +163,7 @@ export default class Engine {
         const yMax = Math.min(newHeight, this.height);
 
         // never created before so we need to create everything initially
-        if (!this.playFieldIndex.length){
+        if (!this.playFieldIndex.length) {
             // 1st pass
             // copy matrix and count the cells that are not zero
             let indexCounter = 0
@@ -169,38 +172,38 @@ export default class Engine {
                     const isrc = y * this.width + x;
                     const itrg = y * newWidth + x;
                     const color = this.playField[isrc];
-                    if (color){
-                        npf[itrg] = color; 
+                    if (color) {
+                        npf[itrg] = color;
                         indexCounter++;
                     }
                 }
             }
             // 2nd pass
             // create Index, and fill in data
-            this.playFieldIndex = new Uint16Array(indexCounter*3);
+            this.playFieldIndex = new Uint16Array(indexCounter * 3);
             indexCounter = 0
             for (let y = 0; y < yMax; y++) {
                 for (let x = 0; x < xMax; x++) {
                     const itrg = y * newWidth + x;
                     const color = npf[itrg];
-                    if (color){
+                    if (color) {
                         this.playFieldIndex[indexCounter] = color;
-                        this.playFieldIndex[indexCounter+1] = x;
-                        this.playFieldIndex[indexCounter+2] = y;
+                        this.playFieldIndex[indexCounter + 1] = x;
+                        this.playFieldIndex[indexCounter + 2] = y;
                         indexCounter += 3;
                     }
                 }
             }
-        } 
-        else { 
+        }
+        else {
             // use existing indexCounter to your advantage to calculate new Index
             // 1st pass more efficient setting of cells in the new playField (npf)
             let indexCounter = 0;
-            for (let j = 0; j < this.playFieldIndex.length; j += 3){
+            for (let j = 0; j < this.playFieldIndex.length; j += 3) {
                 const color = this.playFieldIndex[j];
-                const x = this.playFieldIndex[j+1];
-                const y = this.playFieldIndex[j+2];
-                if (x >= xMax || y >= yMax ){
+                const x = this.playFieldIndex[j + 1];
+                const y = this.playFieldIndex[j + 2];
+                if (x >= xMax || y >= yMax) {
                     continue;
                 }
                 const itrg = y * newWidth + x;
@@ -208,25 +211,25 @@ export default class Engine {
                 indexCounter++;
             }
             // 2nd pass, create new Index and fill it
-            const npfi = new Uint16Array(indexCounter*3);
+            const npfi = new Uint16Array(indexCounter * 3);
             indexCounter = 0;
-            for (let j = 0; j < this.playFieldIndex.length; j += 3){
+            for (let j = 0; j < this.playFieldIndex.length; j += 3) {
                 const color = this.playFieldIndex[j];
-                const x = this.playFieldIndex[j+1];
-                const y = this.playFieldIndex[j+2];
-                if (x >= xMax || y >= yMax ){
+                const x = this.playFieldIndex[j + 1];
+                const y = this.playFieldIndex[j + 2];
+                if (x >= xMax || y >= yMax) {
                     continue;
                 }
-                if (color){
+                if (color) {
                     npfi[indexCounter] = color;
-                    npfi[indexCounter+1] = x;
-                    npfi[indexCounter+2] = y;
+                    npfi[indexCounter + 1] = x;
+                    npfi[indexCounter + 2] = y;
                     indexCounter += 3;
                 }
             }
             this.playFieldIndex = npfi;
         }
-       
+
 
         // parse it twice one to count one to set
         let newUpdateLength = 0;
