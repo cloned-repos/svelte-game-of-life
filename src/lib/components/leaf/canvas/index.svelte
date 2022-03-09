@@ -145,7 +145,7 @@
 		);
 	}
 
-	export function update(data: GridData) {
+	export function plotTheUpdates(data: GridData) {
 		const { updates, colors } = data;
 		if (!canvas) {
 			return;

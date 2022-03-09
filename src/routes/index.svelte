@@ -1,5 +1,6 @@
 <script context="module" lang="ts">
 	export const prerender = true;
+	const { min, max, trunc, round, random } = Math;
 
 	import { default as Engine, DrawInstruction } from '$lib/components/controller/gol-engine';
 </script>
@@ -41,7 +42,7 @@
 			engine.seedGrid(0.2);
 			console.log('index/event/resize first draw after mount, clear and seed(0.2)');
 		}
-		nrCells = canvas.update(engine.gridData());
+		nrCells = canvas.plotTheUpdates(engine.gridData());
 		cnt++;
 	}
 
@@ -50,26 +51,22 @@
 		// discovered when it is mounted the gw and gh are undefined
 		console.log(`index/onMount: gw=${gridWidth}, gh=${gridHeight}`);
 		console.log(`index/onMount: canvas.name=${canvas?.constructor?.name}`);
-		
+		canvas.clear();
+		engine.seedGrid(0.2);
+		console.log('index/onMount: seedGrid(0.2)');
 		//
 		start();
 	});
 
 	let fps = 0;
 
-	/*function delay(ts) {
-		return new Promise((resolve) => {
-			setTimeout(resolve, ts);
-		});
-	}*/
-
 	function start(prevTs: number = 0) {
 		requestAnimationFrame((ts) => {
 			if (prevTs) {
-				fps = Math.round(1000 / (ts - prevTs));
+				fps = round(1000 / (ts - prevTs));
 			}
 			// JKF do Engine NextStep here
-			nrCells = canvas.update(engine.gridData());
+			nrCells = canvas.plotTheUpdates(engine.gridData());
 			prevTs = ts;
 			start(ts);
 		});
@@ -104,15 +101,13 @@
 		cnt;
 	}
 
-	$: fraction = Math.round((1e5 * nrCells) / size) / 1e5;
+	$: fraction = round((1e5 * nrCells) / size) / 1e5;
 	$: size = gridWidth * gridHeight;
 
-	
 </script>
 
 <div class:outer-container={true}>
    <span>width:{gridWidth}, height:{gridHeight} fps:{fps}, nrBlocks={size} nrCells={nrCells} fraction={fraction}</span>
-
 	<div class:inner-container={true}>
 		<Canvas
 			bind:this={canvas}

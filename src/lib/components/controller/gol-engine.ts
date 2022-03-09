@@ -1,7 +1,53 @@
+import type Canvas from '../leaf/canvas.svelte';
+
+const { min, max, trunc, random } = Math;
+
+const INSTRUCTION_QUEUE_SIZE = 50;
+
 export enum DrawInstruction {
     NOOP = 0,
     DRAW = 1,
     DELETE = 2,
+}
+
+function instr16Bit(inst: string): number {
+    const val = inst[0].charCodeAt(0) * 256 +
+        inst[1] ? inst[1].charCodeAt(0) : 0;
+    return val;
+}
+
+const Instructions = {
+    cmdSeed(pct: number, arr: Uint16Array, offset: number): number {
+        arr[offset] = instr16Bit('SE');
+        arr[offset + 1] = pct;
+        return offset + 2;
+    },
+    sizeSeedCMD() {
+        return 3;
+    },
+    cmdClear(arr: Uint16Array, offset: number): number {
+        arr[offset] = instr16Bit('CL');
+        return offset + 1;
+    },
+    sizeClearCMD() {
+        return 2;
+    },
+    cmdPlotTheUpdates(arr: Uint16Array, offset: number): number {
+        arr[offset] = instr16Bit('PU');
+        return offset + 1;
+    },
+    sizePlotTheUpdatesCMD() {
+        return 2;
+    },
+    cmdResizeGridSize(w: number, h: number, arr: Uint16Array, offset: number): number {
+        arr[offset] = instr16Bit('GS');
+        arr[offset + 1] = w;
+        arr[offset + 2] = h;
+        return offset + 3;
+    },
+    sizeResizeGridSizeCMD() {
+        return 4;
+    }
 }
 
 const seedHistogram = [
@@ -24,11 +70,17 @@ const emptyUint16Array = new Uint16Array(0);
 const emptyUint8ClampedArray = new Uint8ClampedArray(0);
 
 export type GridData = {
+    // the (n x m) grid
     grid: Uint8ClampedArray
+    // index to the above "grid" property, field of non empty cells
     index: Uint16Array
-    updates:Uint16Array
+    // (visual) updates to the grid (deletes and creations) to bring "grid" and "index"
+    //      ,to a next state
+    updates: Uint16Array
+    // dimensions
     width: number
     height: number
+    // color palette
     colors: string[]
 };
 
@@ -39,6 +91,9 @@ export default class GOLEngine {
     private colors: string[];
     private updateIndex: Uint16Array;
     private playFieldIndex: Uint16Array;
+    private instructionQueue: Uint16Array;
+    private latestInstruction: number;
+    private canvas: Canvas;
 
     constructor(
         colors: string[] = ['rgb(245, 247, 249)', 'rgb(0, 166, 133)', 'rgb(0, 204, 187)', 'rgb(210, 224, 49)']
@@ -48,6 +103,20 @@ export default class GOLEngine {
         this.playField = emptyUint8ClampedArray;
         this.playFieldIndex = emptyUint16Array;
         this.updateIndex = emptyUint16Array;
+        // 50 should be more then enough
+        //  , if more then 50 instructions in the queue
+        //  , drop more instructions
+        //
+        this.instructionQueue = new Uint16Array(INSTRUCTION_QUEUE_SIZE);
+        this.latestInstruction = 0;
+    }
+
+    register(canvas: Canvas) {
+        this.canvas = canvas;
+    }
+
+    unregister() {
+        this.canvas = null;
     }
 
     public gridData(): GridData {
@@ -62,47 +131,20 @@ export default class GOLEngine {
     }
 
     public updateGridSize(width: number, height: number) {
-        const newPlayField = new Uint8ClampedArray(width * height);
-        return this.resizePlayField(newPlayField, width, height);
+        if (this.canGrowInstr(Instructions.sizeResizeGridSizeCMD())) {
+            this.latestInstruction = Instructions.cmdResizeGridSize(width, height, this.instructionQueue, this.latestInstruction);
+        }
     }
 
-    // this should ne its own pluggable class
-    public seedGrid(pct: number = 0.2) {
-        if (this.width === 0 || this.height === 0) {
-            return emptyUint16Array;
+    public seedGrid(pct: number) {
+        if (this.canGrowInstr(Instructions.sizeSeedCMD())) {
+            this.latestInstruction = Instructions.cmdSeed(pct, this.instructionQueue, this.latestInstruction);
         }
-
-        // estimate size
-        const updateIndex = this.createEmptyUpdateIndexArray(pct);
-
-        this.playField.fill(0);
-
-        const count = pct * this.playField.length;
-        let numSeeds = 0;
-        for (let i = 0; i < count; i++) {
-            const xcor = Math.trunc(Math.random() * this.width);
-            const ycor = Math.trunc(Math.random() * this.height);
-            const idx = xcor + ycor * this.width;
-
-            if (this.playField[idx] !== 0) {
-                continue;
-            }
-
-            this.playField[idx] = this.colorPicker();
-            updateIndex[numSeeds] = this.colorPicker();
-            updateIndex[numSeeds + 1] = xcor;
-            updateIndex[numSeeds + 2] = ycor;
-            numSeeds += 3;
-            if (numSeeds >= updateIndex.length) {
-                break;
-            }
-        }
-        // compact it
-        // initial positioning of the cells, the updateIndex is the same as the playFieldIndex (it is all initial creation of cells)
-        this.updateIndex = updateIndex.slice(0, numSeeds);
-        this.playFieldIndex = this.updateIndex.slice(0, numSeeds);
-        return updateIndex;
     }
+
+    // TODO finish placing commands on the command queue
+
+
 
     /*
         nr of draws * total number of blocks;     fraction of the blocks occupied
@@ -122,13 +164,13 @@ export default class GOLEngine {
     */
 
     private createEmptyUpdateIndexArray(pct: number) {
-        pct = Math.min(Math.max(pct, 0), 1);
+        pct = min(max(pct, 0), 1);
         let sizeFraction = seedHistogram.find(([percent,], i) => {
             return (pct < percent);
         });
 
         sizeFraction = sizeFraction || seedHistogram[seedHistogram.length - 1];
-        let absoluutSize = Math.trunc(sizeFraction[1] * this.playField.length * 3);
+        let absoluutSize = trunc(sizeFraction[1] * this.playField.length * 3);
         absoluutSize = absoluutSize - (absoluutSize % 3);
 
         const updateIndex = new Uint16Array(absoluutSize);
@@ -137,7 +179,7 @@ export default class GOLEngine {
 
 
     private colorPicker(): number {
-        const c = Math.trunc(Math.random() * 8) + 1;
+        const c = trunc(random() * 8) + 1;
         // c=[1,8]
         //
         // pixel color probability distribution
@@ -155,11 +197,11 @@ export default class GOLEngine {
     }
 
     private resizePlayField(npf: Uint8ClampedArray, newWidth: number, newHeight: number) {
-        if (newWidth === 0 || newHeight === 0) {
+        if (!newWidth || !newHeight) {
             return 0;
         }
 
-        const xMax = Math.min(newWidth, this.width);
+        const xMax = min(newWidth, this.width);
         const yMax = Math.min(newHeight, this.height);
 
         // never created before so we need to create everything initially
@@ -230,11 +272,9 @@ export default class GOLEngine {
             this.playFieldIndex = npfi;
         }
 
-
         // parse it twice one to count one to set
         let newUpdateLength = 0;
         for (let i = 0; i < this.updateIndex.length; i += 3) {
-            const c = this.updateIndex[i];
             const x = this.updateIndex[i + 1];
             const y = this.updateIndex[i + 2];
             if (x >= newWidth || y >= newHeight) {
@@ -267,5 +307,54 @@ export default class GOLEngine {
         this.playField = npf;
         this.updateIndex = newUpdateIndex;
         return prevSize;
+    } // resizePlayField
+
+    private canGrowInstr(needed: number): boolean {
+        return this.latestInstruction + needed > this.instructionQueue.length;
     }
+
+    private _updateGridSize(width: number, height: number) {
+        const newPlayField = new Uint8ClampedArray(width * height);
+        return this.resizePlayField(newPlayField, width, height);
+    }
+
+    // this should ne its own pluggable class
+    private _seedGrid(pct: number = 0.2) {
+        if (this.width === 0 || this.height === 0) {
+            return emptyUint16Array;
+        }
+
+        // estimate size
+        const updateIndex = this.createEmptyUpdateIndexArray(pct);
+
+        this.playField.fill(0);
+
+        const count = pct * this.playField.length;
+        let numSeeds = 0;
+        for (let i = 0; i < count; i++) {
+            const xcor = Math.trunc(Math.random() * this.width);
+            const ycor = Math.trunc(Math.random() * this.height);
+            const idx = xcor + ycor * this.width;
+
+            if (this.playField[idx] !== 0) {
+                continue;
+            }
+
+            this.playField[idx] = this.colorPicker();
+            updateIndex[numSeeds] = this.colorPicker();
+            updateIndex[numSeeds + 1] = xcor;
+            updateIndex[numSeeds + 2] = ycor;
+            numSeeds += 3;
+            if (numSeeds >= updateIndex.length) {
+                break;
+            }
+        }
+        // compact it
+        // initial positioning of the cells, the updateIndex is the same as the playFieldIndex (it is all initial creation of cells)
+        this.updateIndex = updateIndex.slice(0, numSeeds);
+        this.playFieldIndex = this.updateIndex.slice(0, numSeeds);
+        return updateIndex;
+    }
+
+
 }
