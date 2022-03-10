@@ -2,14 +2,14 @@
 	export const prerender = true;
 	const { min, max, trunc, round, random } = Math;
 
-	import { default as Engine, DrawInstruction } from '$lib/components/controller/gol-engine';
+	import { default as Engine } from '$lib/components/controller/gol-engine';
 </script>
 
 <script lang="ts">
 	// app
 	import Canvas from '$lib/components/leaf/canvas/index.svelte';
 	import debug from 'debug';
-	import { onMount } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 	
 	const ns = debug('main');
 	ns('hello'); // put in localStorage.debug = "main" and you will see the text
@@ -35,28 +35,28 @@
 		// this is how subsequent inforation about the grid reaches HOC, will be calculated on mount and dispatched
 		console.log(`index/event/resize ${type}, width(event)=${gw} , height(event)=${gh}, gridHeight=${gridHeight}, gridWidth=${gridWidth}`);
 		engine.updateGridSize(gw, gh);
-		
-		if (firstDrawAfterMount){
-			firstDrawAfterMount = false;
-			canvas.clear();
-			engine.seedGrid(0.2);
-			console.log('index/event/resize first draw after mount, clear and seed(0.2)');
-		}
-		nrCells = canvas.plotTheUpdates(engine.gridData());
+		engine.plotUpdates();
 		cnt++;
 	}
 
 	onMount(() => {
-		firstDrawAfterMount = true;
 		// discovered when it is mounted the gw and gh are undefined
+		firstDrawAfterMount = true;
+		engine.register(canvas);
+		// queue
+		engine.seedGrid(20);
+		engine.clear();
+		//
 		console.log(`index/onMount: gw=${gridWidth}, gh=${gridHeight}`);
 		console.log(`index/onMount: canvas.name=${canvas?.constructor?.name}`);
-		canvas.clear();
-		engine.seedGrid(0.2);
 		console.log('index/onMount: seedGrid(0.2)');
 		//
-		start();
+		//start();
 	});
+
+	onDestroy(()=>{
+		engine.unregister();
+	})
 
 	let fps = 0;
 
@@ -93,8 +93,6 @@
 	gridHeight = 1;
 
 	$: {
-		if (canvas){
-		}
 		//nrCells = engine.seedGrid(0.04).length;
 		nrCells = nrCells;
 		size = size;
@@ -107,7 +105,7 @@
 </script>
 
 <div class:outer-container={true}>
-   <span>width:{gridWidth}, height:{gridHeight} fps:{fps}, nrBlocks={size} nrCells={nrCells} fraction={fraction}</span>
+   <span>width:{gridWidth}, height:{gridHeight} {fps}, nrBlocks={size} {nrCells} {fraction}</span>
 	<div class:inner-container={true}>
 		<Canvas
 			bind:this={canvas}

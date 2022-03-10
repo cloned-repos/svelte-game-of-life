@@ -10,44 +10,15 @@ export enum DrawInstruction {
     DELETE = 2,
 }
 
+export type OpCodeAttributes = {
+    args: number;
+    fn: (...args: number[]) => unknown;
+};
+
 function instr16Bit(inst: string): number {
     const val = inst[0].charCodeAt(0) * 256 +
         inst[1] ? inst[1].charCodeAt(0) : 0;
     return val;
-}
-
-const Instructions = {
-    cmdSeed(pct: number, arr: Uint16Array, offset: number): number {
-        arr[offset] = instr16Bit('SE');
-        arr[offset + 1] = pct;
-        return offset + 2;
-    },
-    sizeSeedCMD() {
-        return 3;
-    },
-    cmdClear(arr: Uint16Array, offset: number): number {
-        arr[offset] = instr16Bit('CL');
-        return offset + 1;
-    },
-    sizeClearCMD() {
-        return 2;
-    },
-    cmdPlotTheUpdates(arr: Uint16Array, offset: number): number {
-        arr[offset] = instr16Bit('PU');
-        return offset + 1;
-    },
-    sizePlotTheUpdatesCMD() {
-        return 2;
-    },
-    cmdResizeGridSize(w: number, h: number, arr: Uint16Array, offset: number): number {
-        arr[offset] = instr16Bit('GS');
-        arr[offset + 1] = w;
-        arr[offset + 2] = h;
-        return offset + 3;
-    },
-    sizeResizeGridSizeCMD() {
-        return 4;
-    }
 }
 
 const seedHistogram = [
@@ -94,6 +65,7 @@ export default class GOLEngine {
     private instructionQueue: Uint16Array;
     private latestInstruction: number;
     private canvas: Canvas;
+    private opCodes: Map<number, OpCodeAttributes>;
 
     constructor(
         colors: string[] = ['rgb(245, 247, 249)', 'rgb(0, 166, 133)', 'rgb(0, 204, 187)', 'rgb(210, 224, 49)']
@@ -109,13 +81,50 @@ export default class GOLEngine {
         //
         this.instructionQueue = new Uint16Array(INSTRUCTION_QUEUE_SIZE);
         this.latestInstruction = 0;
+        this.opCodes = new Map(
+            [
+                [
+                    // grid resize
+                    instr16Bit('GR'),
+                    {
+                        args: 2,
+                        fn: this._updateGridSize.bind(this)
+                    }
+                ],
+                [
+                    // plot updates
+                    instr16Bit('PU'),
+                    {
+                        args: 0,
+                        fn: this._plotUpdates.bind(this)
+                    }
+                ],
+                [
+                    // clear canvas
+                    instr16Bit('CC'),
+                    {
+                        args: 0,
+                        fn: this._clearCanvas.bind(this)
+                    }
+
+                ],
+                [   // seeding
+                    instr16Bit('SE'),
+                    {
+                        args: 1,
+                        fn: this._seedGrid.bind(this)
+                    }
+                ]
+
+            ]
+        );
     }
 
-    register(canvas: Canvas) {
+    public register(canvas: Canvas) {
         this.canvas = canvas;
     }
 
-    unregister() {
+    public unregister() {
         this.canvas = null;
     }
 
@@ -131,15 +140,61 @@ export default class GOLEngine {
     }
 
     public updateGridSize(width: number, height: number) {
-        if (this.canGrowInstr(Instructions.sizeResizeGridSizeCMD())) {
-            this.latestInstruction = Instructions.cmdResizeGridSize(width, height, this.instructionQueue, this.latestInstruction);
-        }
+        return this.encodeCommand(instr16Bit('GR'), width, height);
+    }
+
+    public plotUpdates() {
+        return this.encodeCommand(instr16Bit('PU'));
+    }
+
+    public clear() {
+        return this.encodeCommand(instr16Bit('CC'));
     }
 
     public seedGrid(pct: number) {
-        if (this.canGrowInstr(Instructions.sizeSeedCMD())) {
-            this.latestInstruction = Instructions.cmdSeed(pct, this.instructionQueue, this.latestInstruction);
+        return this.encodeCommand(instr16Bit('SE'), pct);
+    }
+
+    public excuteQueue(n: number) {
+        let n2 = n;
+        while (this.latestInstruction > 0 && n2 > 0) {
+            let cursor = this.latestInstruction;
+            const key = this.instructionQueue[--cursor];
+            const opCodeAttr = this.opCodes.get(key);
+            if (!opCodeAttr) {
+                throw new Error(`Invalid opcode ${key} at position ${cursor}`);
+            }
+            const { args, fn } = opCodeAttr;
+            // A A A O -
+            cursor -= args;
+            this.latestInstruction = cursor;
+            fn(...this.instructionQueue.slice(cursor, cursor + args));
+            n2--;
         }
+        return n - n2;
+    }
+
+    private encodeCommand(...data: number[]): boolean | never {
+        const key = data[0];
+        const actualArgs = data.slice(1);
+        const opCodeAttr = this.opCodes.get(key);
+        if (!opCodeAttr) {
+            throw new Error(`Invalid opcode ${key}`);
+        }
+        if (opCodeAttr.args !== actualArgs.length) {
+            throw new Error(`Invalid number of arguments for ${key}, expected ${opCodeAttr.args} but got ${actualArgs.length}`);
+        }
+        const canGrow = this.canGrowInstr(opCodeAttr.args + 1);
+        if (!canGrow) {
+            return false;
+        }
+        let j = this.latestInstruction
+        for (let i = 0; i < actualArgs.length; i++) {
+            this.instructionQueue[j + i] = actualArgs[i];
+        }
+        this.instructionQueue[j + actualArgs.length] = key;
+        this.latestInstruction += (actualArgs.length + 1);
+        return true;
     }
 
     // TODO finish placing commands on the command queue
@@ -170,10 +225,10 @@ export default class GOLEngine {
         });
 
         sizeFraction = sizeFraction || seedHistogram[seedHistogram.length - 1];
-        let absoluutSize = trunc(sizeFraction[1] * this.playField.length * 3);
-        absoluutSize = absoluutSize - (absoluutSize % 3);
+        let absoluteSize = trunc(sizeFraction[1] * this.playField.length * 3);
+        absoluteSize = absoluteSize - (absoluteSize % 3);
 
-        const updateIndex = new Uint16Array(absoluutSize);
+        const updateIndex = new Uint16Array(absoluteSize);
         return updateIndex;
     }
 
@@ -202,7 +257,7 @@ export default class GOLEngine {
         }
 
         const xMax = min(newWidth, this.width);
-        const yMax = Math.min(newHeight, this.height);
+        const yMax = min(newHeight, this.height);
 
         // never created before so we need to create everything initially
         if (!this.playFieldIndex.length) {
@@ -310,7 +365,7 @@ export default class GOLEngine {
     } // resizePlayField
 
     private canGrowInstr(needed: number): boolean {
-        return this.latestInstruction + needed > this.instructionQueue.length;
+        return this.latestInstruction + needed < this.instructionQueue.length;
     }
 
     private _updateGridSize(width: number, height: number) {
@@ -354,6 +409,18 @@ export default class GOLEngine {
         this.updateIndex = updateIndex.slice(0, numSeeds);
         this.playFieldIndex = this.updateIndex.slice(0, numSeeds);
         return updateIndex;
+    }
+
+    private _plotUpdates() {
+        if (this.canvas) {
+            this.canvas.plotTheUpdates(this.gridData());
+        }
+    }
+
+    private _clearCanvas() {
+        if (this.canvas) {
+            this.canvas.clear();
+        }
     }
 
 

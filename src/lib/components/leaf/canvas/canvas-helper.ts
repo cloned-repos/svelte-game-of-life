@@ -136,7 +136,7 @@ o: {w: 918, h: 687, blk_w: 151, blk_h: 113}
 */
 
     if (n.blk_w >= o.blk_w && n.blk_h >= o.blk_h) {
-        console.log('scenario: ↓ ↘ →');
+        // console.log('scenario: ↓ ↘ →');
         // area A
         drawBlocks(
             ctx,
@@ -190,7 +190,7 @@ B = NA
 */
 
     if (n.blk_w >= o.blk_w && n.blk_h < o.blk_h) {
-        console.log('scenario: ↑ ↗ →');
+        // console.log('scenario: ↑ ↗ →');
         // area A
         drawBlocks(
             ctx,
@@ -227,7 +227,7 @@ A = NA
 B = NA
 */
     if (n.blk_w <= o.blk_w && n.blk_h <= o.blk_h) {
-        console.log('scenario: ← ↖ ↑');
+        // console.log('scenario: ← ↖ ↑');
         // no extra blocks to draw
         return true;
     }
@@ -252,7 +252,7 @@ B = Box(0, o.h, n.w, (n.h-o.h))
 */
 
     if (n.blk_w <= o.blk_w && n.blk_h >= o.blk_h) {
-        console.log('scenario: ← ↙ ↓');
+        // console.log('scenario: ← ↙ ↓');
         drawBlocks(
             ctx,
             0,

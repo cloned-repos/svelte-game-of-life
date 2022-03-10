@@ -3,6 +3,7 @@
 	const { max } = Math;
 	import { drawBlocks, resize, calcGridSize } from './canvas-helper';
 	import type { GridSize } from './canvas-helper';
+	let cntDestroyed = 0;
 </script>
 
 <script lang="ts">
@@ -56,7 +57,9 @@
 
 	onMount(() => {
 		// does canvas exist
-		//console.log('Canvas/life/onmount: canvas=' + canvas.constructor.name);
+		const currentSize = getGridSizeFromCanvasViewPort();
+
+		console.log('Canvas/life/onmount: canvas=', currentSize);
 		//console.log(`Canvas/life/onmount: grid-with=${gridWidth}, gridHeight=${gridHeight}`);
 		globalCTX = canvas.getContext('2d');
 		resizeObserver = new ResizeObserver(() => {
@@ -101,7 +104,7 @@
 
 	onDestroy(() => {
 		resizeObserver && resizeObserver.unobserve(canvas);
-		console.log('Canvas/life/destroyed: canvas=' + canvas?.constructor?.name);
+		console.log(`Canvas/life/destroyed/${cntDestroyed++}: canvas=${canvas?.constructor?.name}`);
 	});
 
 	export function sliceCanvas(
