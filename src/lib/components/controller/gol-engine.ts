@@ -84,6 +84,14 @@ export default class GOLEngine {
         this.opCodes = new Map(
             [
                 [
+                    // internal
+                    instr16Bit('_0'),
+                    {
+                        args: 0,
+                        fn: () => {}
+                    }
+                ],
+                [
                     // grid resize
                     instr16Bit('GR'),
                     {
@@ -172,6 +180,24 @@ export default class GOLEngine {
             n2--;
         }
         return n - n2;
+    }
+
+    /**
+     * analyzes and cleans the instruction queue
+     * 1. take the latest window resize , set the first window resize to this, make all other resizes NOOP
+     * 2. if there is a "clear", disregard everything before the clear
+     * 3. if there is an seed, disregard everything before the seed before the seed
+     * 4. if there is a "pause"
+     *      - merge all conway rules up to the pause in one update
+     *      - merge all mouse-cursor updates up to the pause
+     *      - remove all conway rules step after the pause (up to a potential continue)
+     *      - if there is a continue after the pause remove (NOOP) the steps up to the continue
+     *      - if there is no continue after the pause , NOOP everything till last command, shrink command queue till this pause
+     * 
+     * 5. cleaning done, execute     
+     */
+    private cleanUpQueue(){
+
     }
 
     private encodeCommand(...data: number[]): boolean | never {
