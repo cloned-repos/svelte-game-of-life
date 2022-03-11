@@ -10,15 +10,35 @@ export enum DrawInstruction {
     DELETE = 2,
 }
 
-export type OpCodeAttributes = {
-    args: number;
-    fn: (...args: number[]) => unknown;
-};
+export enum OpCodeSymbols {
+    GRID_RESIZE = 'G',
+    PLOT_UPDATES = 'P',
+    CLEAR_CANVAS = 'C',
+    SEED = 'S',
+    SKIP = 'N'
+}
 
-function instr16Bit(inst: string): number {
-    const val = inst[0].charCodeAt(0) * 256 +
-        inst[1] ? inst[1].charCodeAt(0) : 0;
-    return val;
+export const OpCodes = {
+    [OpCodeSymbols.GRID_RESIZE]: encode(OpCodeSymbols.GRID_RESIZE, 2),
+    [OpCodeSymbols.PLOT_UPDATES]: encode(OpCodeSymbols.PLOT_UPDATES, 0),
+    [OpCodeSymbols.CLEAR_CANVAS]: encode(OpCodeSymbols.CLEAR_CANVAS, 0),
+    [OpCodeSymbols.SEED]: encode(OpCodeSymbols.SEED, 1)
+}
+
+function encode(code: string, argLen: number): number {
+    return (code.charCodeAt(0) & 255) << 8 + (argLen & 255);
+}
+
+function decode(data: number): { code: string, len: number } {
+    return { code: String.fromCharCode((data & 0xFF00) >> 8), len: (data & 0x00FF) }
+}
+
+function isSkipCode(data: number): number | undefined {
+    return ((data & 0xFF00) >> 8) === OpCodeSymbols.SKIP.charCodeAt(0) ? (data | 0x00FF) : undefined;
+}
+
+function getCommand(data: number): string {
+    return OpCodeSymbols[String.fromCharCode((data & 0xFF00) >> 8)];
 }
 
 const seedHistogram = [
@@ -65,7 +85,7 @@ export default class GOLEngine {
     private instructionQueue: Uint16Array;
     private latestInstruction: number;
     private canvas: Canvas;
-    private opCodes: Map<number, OpCodeAttributes>;
+    private opCodes: Map<number, (...args: number[]) => void>;
 
     constructor(
         colors: string[] = ['rgb(245, 247, 249)', 'rgb(0, 166, 133)', 'rgb(0, 204, 187)', 'rgb(210, 224, 49)']
@@ -83,47 +103,14 @@ export default class GOLEngine {
         this.latestInstruction = 0;
         this.opCodes = new Map(
             [
-                [
-                    // internal
-                    instr16Bit('_0'),
-                    {
-                        args: 0,
-                        fn: () => {}
-                    }
-                ],
-                [
-                    // grid resize
-                    instr16Bit('GR'),
-                    {
-                        args: 2,
-                        fn: this._updateGridSize.bind(this)
-                    }
-                ],
-                [
-                    // plot updates
-                    instr16Bit('PU'),
-                    {
-                        args: 0,
-                        fn: this._plotUpdates.bind(this)
-                    }
-                ],
-                [
-                    // clear canvas
-                    instr16Bit('CC'),
-                    {
-                        args: 0,
-                        fn: this._clearCanvas.bind(this)
-                    }
-
-                ],
-                [   // seeding
-                    instr16Bit('SE'),
-                    {
-                        args: 1,
-                        fn: this._seedGrid.bind(this)
-                    }
-                ]
-
+                // grid resize
+                [OpCodes[OpCodeSymbols.GRID_RESIZE], this._updateGridSize.bind(this)],
+                // plot updates
+                [OpCodes[OpCodeSymbols.PLOT_UPDATES], this._plotUpdates.bind(this)],
+                // clear canvas
+                [OpCodes[OpCodeSymbols.CLEAR_CANVAS], this._clearCanvas.bind(this)],
+                // seeding
+                [OpCodes[OpCodeSymbols.SEED], this._seedGrid.bind(this)]
             ]
         );
     }
@@ -148,80 +135,143 @@ export default class GOLEngine {
     }
 
     public updateGridSize(width: number, height: number) {
-        return this.encodeCommand(instr16Bit('GR'), width, height);
+        return this.encodeCommand(OpCodes[OpCodeSymbols.GRID_RESIZE], width, height);
     }
 
     public plotUpdates() {
-        return this.encodeCommand(instr16Bit('PU'));
+        return this.encodeCommand(OpCodes[OpCodeSymbols.PLOT_UPDATES]);
     }
 
     public clear() {
-        return this.encodeCommand(instr16Bit('CC'));
+        return this.encodeCommand(OpCodes[OpCodeSymbols.CLEAR_CANVAS],);
     }
 
     public seedGrid(pct: number) {
-        return this.encodeCommand(instr16Bit('SE'), pct);
+        return this.encodeCommand(OpCodes[OpCodeSymbols.SEED], pct);
     }
 
-    public excuteQueue(n: number) {
+    public excute(n: number = this.latestInstruction) {
         let n2 = n;
-        while (this.latestInstruction > 0 && n2 > 0) {
-            let cursor = this.latestInstruction;
-            const key = this.instructionQueue[--cursor];
-            const opCodeAttr = this.opCodes.get(key);
-            if (!opCodeAttr) {
-                throw new Error(`Invalid opcode ${key} at position ${cursor}`);
+        let i = 0;
+        while (i < this.latestInstruction && n2 > 0) {
+            const opCode = this.instructionQueue[i];
+            const opCodeFn = this.opCodes.get(opCode);
+            const { code, len } = decode(opCode);
+            if (!opCodeFn) {
+                throw new Error(`Invalid opcode = { ${code}, ${len} } at position ${i}`);
             }
-            const { args, fn } = opCodeAttr;
             // A A A O -
-            cursor -= args;
-            this.latestInstruction = cursor;
-            fn(...this.instructionQueue.slice(cursor, cursor + args));
+            opCodeFn(...this.instructionQueue.slice(i + 1, i + len));
             n2--;
+            i += len + 1;
+        }
+        if (i > 0) {
+            this.instructionQueue = this.instructionQueue.slice(i, this.latestInstruction);
+            this.latestInstruction -= i;
         }
         return n - n2;
+    }
+
+    private encodeCommand(...data: number[]): boolean {
+        const command = data[0];
+        const args = data.slice(1);
+        const { code, len } = decode(command);
+
+        if (!OpCodes[code]) {
+            throw new Error(`Invalid opcode ${getCommand(command)}`);
+        }   
+        
+        if (len != args.length) {
+            throw new Error(`Code ${getCommand(command)} has invalid length: ${args.length} should be ${len}`);
+        }
+
+        const canGrow = this.canGrowInstr(len + 1);
+        if (!canGrow) {
+            return false;
+        }
+        // store it
+        let j = this.latestInstruction;
+        this.instructionQueue[j] = command;
+        for (let i = 0; i < args.length; i++) {
+            this.instructionQueue[j + i + 1] = args[i];
+        }
+        this.latestInstruction += len + 1;
+        return true;
     }
 
     /**
      * analyzes and cleans the instruction queue
      * 1. take the latest window resize , set the first window resize to this, make all other resizes NOOP
      * 2. if there is a "clear", disregard everything before the clear
-     * 3. if there is an seed, disregard everything before the seed before the seed
+     * 3. if there is an seed, disregard everything before the seed before the last seeding
      * 4. if there is a "pause"
      *      - merge all conway rules up to the pause in one update
      *      - merge all mouse-cursor updates up to the pause
      *      - remove all conway rules step after the pause (up to a potential continue)
      *      - if there is a continue after the pause remove (NOOP) the steps up to the continue
      *      - if there is no continue after the pause , NOOP everything till last command, shrink command queue till this pause
-     * 
      * 5. cleaning done, execute     
      */
-    private cleanUpQueue(){
 
+    // STEP 1. take the latest window resize , set the first window resize to this, make all other resizes NOOP
+    private condenseGridResizes() {
+        const resizes: { i: number, w: number, h: number }[] = [];
+        for (let i = 0; i < this.latestInstruction;) {
+            const { code, len } = decode(this.instructionQueue[i]);
+            if (code === OpCodeSymbols.GRID_RESIZE) {
+                const w = this.instructionQueue[i + 1];
+                const h = this.instructionQueue[i + 2];
+                resizes.push({ i, w, h });
+            }
+            i += len + 1;
+        }
+        // set to "skip" all resize commands 0..resizes.length-2, keep the last one
+        if (resizes.length === 0) {
+            return;
+        }
+        for (let j = 1; j < resizes.length; j++) {
+            this.instructionQueue[j] = encode(OpCodeSymbols.SKIP, 2);
+        }
+        const last = resizes[resizes.length - 1];
+        this.instructionQueue[last.i + 1] = last.w;
+        this.instructionQueue[last.i + 2] = last.h;
     }
 
-    private encodeCommand(...data: number[]): boolean | never {
-        const key = data[0];
-        const actualArgs = data.slice(1);
-        const opCodeAttr = this.opCodes.get(key);
-        if (!opCodeAttr) {
-            throw new Error(`Invalid opcode ${key}`);
+    // STEP 2: 
+    //  if there is a "clear",
+    //      - disregard everything drawn instruction before the last clear
+    //      - clear out the updateIndex
+    //  - except 
+    //      - grid resizes
+    
+    private condenseClearGrids() {
+        const clears: number[] = [];
+        for (let i = 0; i < this.latestInstruction; ) {
+            const { code, len } = decode(this.instructionQueue[i]);
+            if (code === OpCodeSymbols.CLEAR_CANVAS) {
+                clears.push(i);
+                i++;
+            }
+            i += len + 1;
         }
-        if (opCodeAttr.args !== actualArgs.length) {
-            throw new Error(`Invalid number of arguments for ${key}, expected ${opCodeAttr.args} but got ${actualArgs.length}`);
+        // anything to do?
+        if (clears.length === 0) {
+            return;
         }
-        const canGrow = this.canGrowInstr(opCodeAttr.args + 1);
-        if (!canGrow) {
-            return false;
+        // last clear
+        const last = clears[clears.length - 1];
+        for (let j = 0; j < last;) {
+            const { code, len } = decode(this.instructionQueue[j]);
+            if (code === OpCodeSymbols.GRID_RESIZE) {
+                j++;
+                continue;
+            }
+            this.instructionQueue[j] = encode(OpCodeSymbols.SKIP, len);
+            j += len + 1;
         }
-        let j = this.latestInstruction
-        for (let i = 0; i < actualArgs.length; i++) {
-            this.instructionQueue[j + i] = actualArgs[i];
-        }
-        this.instructionQueue[j + actualArgs.length] = key;
-        this.latestInstruction += (actualArgs.length + 1);
-        return true;
     }
+    
+  
 
     // TODO finish placing commands on the command queue
 

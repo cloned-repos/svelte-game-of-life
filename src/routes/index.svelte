@@ -2,7 +2,7 @@
 	export const prerender = true;
 	const { min, max, trunc, round, random } = Math;
 
-	import { default as Engine } from '$lib/components/controller/gol-engine';
+	import { default as Engine } from '$lib/components/controller/engine/gol-engine';
 </script>
 
 <script lang="ts">
