@@ -250,7 +250,6 @@ export default class GOLEngine {
             const { code, len } = decode(this.instructionQueue[i]);
             if (code === OpCodeSymbols.CLEAR_CANVAS) {
                 clears.push(i);
-                i++;
             }
             i += len + 1;
         }
@@ -260,22 +259,38 @@ export default class GOLEngine {
         }
         // last clear
         const last = clears[clears.length - 1];
-        for (let j = 0; j < last;) {
-            const { code, len } = decode(this.instructionQueue[j]);
+        for (let j = 0; j < last; j++) {
+            const { code, len } = decode(this.instructionQueue[clears[j]]);
             if (code === OpCodeSymbols.GRID_RESIZE) {
-                j++;
                 continue;
             }
-            this.instructionQueue[j] = encode(OpCodeSymbols.SKIP, len);
-            j += len + 1;
+            this.instructionQueue[clears[j]] = encode(OpCodeSymbols.SKIP, len);
         }
     }
     
-  
+    // STEP 3:
+    //  keep the last seed command, disregard all other seeding commands
+
+    private condenseSeedings(){
+        const seedings: number[] = [];
+        for (let i = 0; i < this.latestInstruction; ) {
+            const { code, len } = decode(this.instructionQueue[i]);
+            if (code === OpCodeSymbols.SEED) {
+                seedings.push(i);
+            }
+            i += len + 1;
+        }
+        // anything to do?
+        if (seedings.length === 0) {
+            return;
+        }
+        // last clear
+        for (let j = 0; j < seedings.length -1; j++) {
+            this.instructionQueue[seedings[j]] = encode(OpCodeSymbols.SKIP, 0);
+        }
+    }
 
     // TODO finish placing commands on the command queue
-
-
 
     /*
         nr of draws * total number of blocks;     fraction of the blocks occupied
