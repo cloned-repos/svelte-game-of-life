@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- got it from here: https://stackoverflow.com/questions/12905726/whats-the-best-way-to-simulate-a-dos-or-terminal-screen-in-a-web-page-->
 <html lang="en">
 	<head>
 		<meta charset="utf-8" />
@@ -62,10 +63,12 @@
 		</style>
 	</head>
 	<body>
+		<div style="width:100%; height: 100%; border: 4px solid orange;">
 		<div id="history" />
 		>
 		<div id="input" contenteditable="true" />
 		<button id="caret" for="input">&nbsp;</button>
+		</div>
 	</body>
 	<script>
 		const history = document.getElementById('history');
