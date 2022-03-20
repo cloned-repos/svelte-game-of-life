@@ -26,11 +26,11 @@ export const OpCodes = {
 }
 
 function encode(code: string, argLen: number): number {
-    return (code.charCodeAt(0) & 255) << 8 + (argLen & 255);
+    return ((code.charCodeAt(0) & 255) << 8) + (argLen & 255);
 }
 
-function decode(data: number): { code: string, len: number } {
-    return { code: String.fromCharCode((data & 0xFF00) >> 8), len: (data & 0x00FF) }
+function decode(data: number): { code: OpCodeSymbols, len: number } {
+    return { code: String.fromCharCode((data & 0xFF00) >> 8) as OpCodeSymbols, len: (data & 0x00FF) }
 }
 
 function isSkipCode(data: number): number | undefined {
@@ -39,6 +39,46 @@ function isSkipCode(data: number): number | undefined {
 
 function getCommand(data: number): string {
     return OpCodeSymbols[String.fromCharCode((data & 0xFF00) >> 8)];
+}
+
+function ifUndef<T>(v: T | undefined, r: T): T {
+    if (v === undefined) return r;
+    return v;
+}
+
+
+function* rangeIter(index: number[][], data: Uint16Array, options: { onlyIndex?: boolean, exemptsLast?: boolean }, ...exempts: OpCodeSymbols[]) {
+    if (index.length === 0) {
+        return;
+    }
+    const onlyIndex = ifUndef(options.onlyIndex, true);
+    const exemptsLast = ifUndef(options.exemptsLast, true);
+
+    const last = onlyIndex
+        ? index.length - (exemptsLast ? 1 : 0)
+        : index[index.length - (exemptsLast ? 1 : 0)][0];
+
+    for (
+        let j = 0;
+        (j < last && exemptsLast)
+        ||
+        (j <= last && !exemptsLast);
+        // 3rd part is empty
+    ) {
+        if (options.onlyIndex) {
+            const len = index[j][1];
+            const posInDataArray = index[j][0];
+            yield { index: posInDataArray, len };
+            j++;
+            continue;
+        }
+        const { code, len } = decode(data[j]);
+        if (code === OpCodeSymbols.SKIP || exempts.includes(code)) {
+            j += len + 1;
+            continue;
+        }
+        yield { index: j, len };
+    }
 }
 
 const seedHistogram = [
@@ -76,22 +116,41 @@ export type GridData = {
 };
 
 export default class GOLEngine {
-    private width = 0;
-    private height = 0;
-    private playField: Uint8ClampedArray;
-    private colors: string[];
-    private updateIndex: Uint16Array;
-    private playFieldIndex: Uint16Array;
+    public width = 0;
+    public height = 0;
+    public playField: Uint8ClampedArray;
+    //private colors: string[];
+    //private colorDistribution: number[];
+    public updateIndex: Uint16Array;
+    public playFieldIndex: Uint16Array; // index update -> playField
     private instructionQueue: Uint16Array;
-    private latestInstruction: number;
+    public latestInstruction: number;
     private canvas: Canvas;
     private opCodes: Map<number, (...args: number[]) => void>;
 
     constructor(
-        colors: string[] = ['rgb(245, 247, 249)', 'rgb(0, 166, 133)', 'rgb(0, 204, 187)', 'rgb(210, 224, 49)']
-
+        private colors: string[] = [
+            'rgb(245, 247, 249)',// empty (dead) cell
+            'rgb(0, 166, 133)', // random colors for live cells (see colorDistribution)
+            'rgb(0, 204, 187)',
+            'rgb(210, 224, 49)'
+        ],
+        // number of elements, is same as number of colors - 1 (because 1st one is dead cell color)
+        private colorDistribution: Float32Array = new Float32Array([2 / 8, 4 / 8, 2 / 8])
     ) {
-        this.colors = colors;
+        // normalize
+        const sum = this.colorDistribution.reduce((s, v) => v + s, 0);
+        const normalizedDistribution = this.colorDistribution.slice(0);
+        normalizedDistribution.forEach((v, i, arr) => {
+            if (i === 0) {
+                arr[i] = v / sum;
+                return;
+            }
+            arr[i] = arr[i - 1] + v / sum;
+        });
+
+        this.colorDistribution = normalizedDistribution;
+
         this.playField = emptyUint8ClampedArray;
         this.playFieldIndex = emptyUint16Array;
         this.updateIndex = emptyUint16Array;
@@ -115,11 +174,14 @@ export default class GOLEngine {
         );
     }
 
-    public register(canvas: Canvas) {
+    public register(canvas: Canvas): void {
         this.canvas = canvas;
+        this.canvas.$on('resized', ({ detail: { gridHeight: gh, gridWidth: gw } }: CustomEvent) => {
+            this.updateGridSize(gw, gh);
+        });
     }
 
-    public unregister() {
+    public unregister(): void {
         this.canvas = null;
     }
 
@@ -134,43 +196,283 @@ export default class GOLEngine {
         };
     }
 
-    public updateGridSize(width: number, height: number) {
+    public updateGridSize(width: number, height: number): boolean {
         return this.encodeCommand(OpCodes[OpCodeSymbols.GRID_RESIZE], width, height);
     }
 
-    public plotUpdates() {
+    public plotUpdates(): boolean {
         return this.encodeCommand(OpCodes[OpCodeSymbols.PLOT_UPDATES]);
     }
 
-    public clear() {
+    public clear(): boolean {
         return this.encodeCommand(OpCodes[OpCodeSymbols.CLEAR_CANVAS],);
     }
 
-    public seedGrid(pct: number) {
+    public seedGrid(pct: number): boolean {
+        pct *= pct < 1 ? 100 : 1;
         return this.encodeCommand(OpCodes[OpCodeSymbols.SEED], pct);
     }
 
-    public excute(n: number = this.latestInstruction) {
-        let n2 = n;
+    // mandatory to call "condenseInstructionsQueue" first
+    public execute(): void {
+        //
+        // execute resize instructions first
+        //
+        this.executeAllGridResizes();
         let i = 0;
-        while (i < this.latestInstruction && n2 > 0) {
+        while (i < this.latestInstruction) {
             const opCode = this.instructionQueue[i];
             const opCodeFn = this.opCodes.get(opCode);
             const { code, len } = decode(opCode);
-            if (!opCodeFn) {
-                throw new Error(`Invalid opcode = { ${code}, ${len} } at position ${i}`);
+            if (code !== OpCodeSymbols.SKIP) {
+                if (!opCodeFn) {
+                    throw new Error(`Invalid opcode = { ${code}, ${len} } at position ${i}`);
+                }
+                // A A A O -
+                opCodeFn.apply(this, this.instructionQueue.slice(i + 1, i + len + 1));
             }
-            // A A A O -
-            opCodeFn(...this.instructionQueue.slice(i + 1, i + len));
-            n2--;
             i += len + 1;
         }
         if (i > 0) {
-            this.instructionQueue = this.instructionQueue.slice(i, this.latestInstruction);
             this.latestInstruction -= i;
         }
-        return n - n2;
     }
+
+    private executeAllGridResizes() {
+        for (let i = 0; i < this.latestInstruction;) {
+            const { code, len } = decode(this.instructionQueue[i]);
+            if (code === OpCodeSymbols.GRID_RESIZE) {
+                const gw = this.instructionQueue[i + 1];
+                const gh = this.instructionQueue[i + 2];
+                this._updateGridSize(gw, gh);
+                this.instructionQueue[i] = encode(OpCodeSymbols.SKIP, len);
+            }
+            i += len + 1;
+        }
+    }
+
+    public debugGetCommandsInQueue(): string[][] {
+        const hrQueue: string[][] = [];
+        for (let i = 0; i < this.latestInstruction;) {
+            const { code, len } = decode(this.instructionQueue[i]);
+            const args = [];
+            for (let j = 0; j < len; j++) {
+                args.push(this.instructionQueue[i + j + 1]);
+            }
+            hrQueue.push([code, args.join(', ')]);
+            i += len + 1;
+        }
+        return hrQueue;
+    }
+
+
+    public condenseInstructionsQueue(): void {
+        // 1st pass
+        this.condenseGridResizes();
+        this.condenseClearGrids();
+        this.condenseSeedings();
+        this.condensePlots();
+        // 2nd pass
+        let cursor = 0;
+        let cleanCursor = 0;
+        // was there any condensing done?
+        while (cursor < this.latestInstruction) {
+            const { code, len } = decode(this.instructionQueue[cursor]);
+            if (code === OpCodeSymbols.SKIP) {
+                cursor += len + 1;
+                continue;
+            }
+            this.instructionQueue[cleanCursor] = this.instructionQueue[cursor];
+            for (let i = 1; i <= len; i++) {
+                this.instructionQueue[cleanCursor + i] = this.instructionQueue[cursor + i];
+            }
+            cleanCursor += len + 1;
+            cursor += len + 1;
+        }
+        this.latestInstruction = cleanCursor;
+    }
+
+    public nextStep(): void {
+        this.playField;
+        this.playFieldIndex;
+        this.updateIndex;
+
+        // step 1: next evolution
+        // 2 pass index so we can allocate typedArrays in determinism
+        let stayAlive = 0; // new and existing
+        let deaths = 0; // existing that died
+        let resurrect = 0;
+        let considered = 0;
+
+        // updateIndex will contain alive+deaths
+        // playFieldIndex will only contain alive cells
+        //console.log(`/nextStep, alive=${this.playFieldIndex.length / 3}`);
+        // first pass
+        for (let i = 0; i < this.playFieldIndex.length; i += 3) {
+            const colorCheck = this.playFieldIndex[i];
+            const x = this.playFieldIndex[i + 1];
+            const y = this.playFieldIndex[i + 2];
+            if (colorCheck === 0) {
+                throw new Error(`Internal Error, color 0 encountered at x=${x}, y=${y}`);
+            }
+            let sum = 0;
+            for (let xd = -1; xd <= 1; xd++) {
+                for (let yd = -1; yd <= 1; yd++) {
+                    // do not count yourself
+                    if (xd === 0 && yd === 0) {
+                        continue;
+                    }
+                    const coords = this.getCoords(x - xd, y - yd);
+                    const color = this.playField[coords];
+
+                    // consider for dead cell resurrection
+                    if (color === 0) {
+                        this.playField[coords] = this.colors.length + 2;
+                        considered++;
+                        // Any dead cell with exactly three live neighbors becomes a live cell, as if by reproduction.
+                        if (this.deadCellResurrection(x - xd, y - yd)) {
+                            this.playField[coords] = this.colors.length + 1;
+                            resurrect++;
+                        }
+                        continue;
+                    }
+                    // touched it before
+                    if (color > this.colors.length) {
+                        continue;
+                    }
+                    sum++;
+                }
+            }
+            // Any live cell with two or three live neighbours lives on to the next generation
+            if (sum === 3 || sum === 2) {
+                stayAlive++;
+                continue;
+            }
+            // Any live cell with fewer than two live neighbors dies (referred to as under population or exposure[1]).
+            // Any live cell with more than three live neighbors dies (referred to as over population or overcrowding).
+            this.playFieldIndex[i] = 0;
+            deaths++;
+        }// for
+        //console.log(`first pass: deaths=${deaths}, stayAlive=${stayAlive}, resurrect=${resurrect} changes=${deaths + resurrect}, aliveNext=${stayAlive + resurrect}, considered=${considered}, wasted=${considered - resurrect}`);
+
+        // second pass
+        const changes = new Uint16Array((deaths + resurrect) * 3);
+        const playFieldIndex = new Uint16Array((stayAlive + resurrect) * 3);
+        let cursorChanges = 0;
+        let playFieldIndexCursor = 0;
+        for (let i = 0; i < this.playFieldIndex.length; i += 3) {
+
+            const colorCheck = this.playFieldIndex[i];
+            const x = this.playFieldIndex[i + 1];
+            const y = this.playFieldIndex[i + 2];
+
+            // deleted
+            if (colorCheck === 0) {
+                changes[cursorChanges] = 0;
+                changes[cursorChanges + 1] = x;
+                changes[cursorChanges + 2] = y;
+                cursorChanges += 3;
+                const coords = y * this.width + x;
+                this.playField[coords] = 0;
+
+            } // stayAlive
+            else if (colorCheck < this.colors.length) {
+                playFieldIndex[playFieldIndexCursor] = colorCheck;
+                playFieldIndex[playFieldIndexCursor + 1] = x;
+                playFieldIndex[playFieldIndexCursor + 2] = y;
+                playFieldIndexCursor += 3;
+            }
+            // resurrection
+            for (let xd = -1; xd <= 1; xd++) {
+                for (let yd = -1; yd <= 1; yd++) {
+                    // do not count yourself
+                    if (xd === 0 && yd === 0) {
+                        continue;
+                    }
+                    //
+                    const coords = this.getCoords(x - xd, y - yd);
+                    const color = this.playField[coords];
+                    // failed resurrection
+                    if (color === this.colors.length + 2) {
+                        this.playField[coords] = 0;
+                        continue;
+                    }
+                    // resurrection succeeded
+                    if (color === this.colors.length + 1) {
+                        const newColor = this.colorPicker();
+                        const xm = coords % this.width;
+                        const ym = (coords - xm)/this.width;
+                        if (newColor === 0) {
+                            throw new Error(`Internal Error; new color picked is ${newColor} ofr (${x - xd}, ${y - yd})`);
+                        }
+                        this.playField[coords] = newColor;
+
+                        changes[cursorChanges] = newColor;
+                        changes[cursorChanges + 1] = xm;
+                        changes[cursorChanges + 2] = ym;
+                        cursorChanges += 3;
+
+                        playFieldIndex[playFieldIndexCursor] = newColor;
+                        playFieldIndex[playFieldIndexCursor + 1] = xm;
+                        playFieldIndex[playFieldIndexCursor + 2] = ym;
+                        playFieldIndexCursor += 3;
+                    }
+                }
+            }
+        }
+        this.playFieldIndex = playFieldIndex;
+        this.updateIndex = changes;
+    }
+
+
+    private deadCellResurrection(x: number, y: number): boolean {
+        const c0 = this.getColor(x + 1, y - 1);
+        const c1 = this.getColor(x + 0, y - 1);
+        const c2 = this.getColor(x - 1, y - 1);
+        //
+        const c3 = this.getColor(x - 1, y);
+        // c4 self is not considered
+        const c5 = this.getColor(x + 1, y);
+
+        const c6 = this.getColor(x - 1, y + 1);
+        const c7 = this.getColor(x + 0, y + 1);
+        const c8 = this.getColor(x + 1, y + 1);
+        const low = this.colors.length;
+        const sum =
+            ((c0 && c0 < low && 1) || 0)
+            +
+            ((c1 && c1 < low && 1) || 0)
+            +
+            ((c2 && c2 < low && 1) || 0)
+            +
+            ((c3 && c3 < low && 1) || 0)
+            +
+            ((c5 && c5 < low && 1) || 0)
+            +
+            ((c6 && c6 < low && 1) || 0)
+            +
+            ((c7 && c7 < low && 1) || 0)
+            +
+            ((c8 && c8 < low && 1) || 0)
+
+        if (sum === 3) {
+            return true;
+        }
+        return false;
+    }
+
+    private getCoords(x: number, y: number): number {
+        const xm = (x < 0 ? x + this.width : x) % this.width;
+        const ym = (y < 0 ? y + this.height : y) % this.height;
+        const coords = ym * this.width + xm;
+        return coords;
+    }
+
+    private getColor(x: number, y: number): number {
+        return this.playField[this.getCoords(x, y)];
+    }
+
+    private
 
     private encodeCommand(...data: number[]): boolean {
         const command = data[0];
@@ -179,18 +481,21 @@ export default class GOLEngine {
 
         if (!OpCodes[code]) {
             throw new Error(`Invalid opcode ${getCommand(command)}`);
-        }   
-        
+        }
+
         if (len != args.length) {
             throw new Error(`Code ${getCommand(command)} has invalid length: ${args.length} should be ${len}`);
         }
 
         const canGrow = this.canGrowInstr(len + 1);
         if (!canGrow) {
-            return false;
+            this.condenseInstructionsQueue();
+            if (!this.canGrowInstr(len + 1)) {
+                return false;
+            };
         }
         // store it
-        let j = this.latestInstruction;
+        const j = this.latestInstruction;
         this.instructionQueue[j] = command;
         for (let i = 0; i < args.length; i++) {
             this.instructionQueue[j + i + 1] = args[i];
@@ -204,37 +509,23 @@ export default class GOLEngine {
      * 1. take the latest window resize , set the first window resize to this, make all other resizes NOOP
      * 2. if there is a "clear", disregard everything before the clear
      * 3. if there is an seed, disregard everything before the seed before the last seeding
-     * 4. if there is a "pause"
+     * 4. if there is a "plot"
+     *      - only the last plot should be executed, other plots must be made NOOP
+     * 
+     * NORMAL MODE: (conway cells evolve over time, needs work)
+     * 
+     * 
+     * PAUSE MODE: (needs work)
      *      - merge all conway rules up to the pause in one update
      *      - merge all mouse-cursor updates up to the pause
      *      - remove all conway rules step after the pause (up to a potential continue)
      *      - if there is a continue after the pause remove (NOOP) the steps up to the continue
      *      - if there is no continue after the pause , NOOP everything till last command, shrink command queue till this pause
-     * 5. cleaning done, execute     
      */
 
     // STEP 1. take the latest window resize , set the first window resize to this, make all other resizes NOOP
-    private condenseGridResizes() {
-        const resizes: { i: number, w: number, h: number }[] = [];
-        for (let i = 0; i < this.latestInstruction;) {
-            const { code, len } = decode(this.instructionQueue[i]);
-            if (code === OpCodeSymbols.GRID_RESIZE) {
-                const w = this.instructionQueue[i + 1];
-                const h = this.instructionQueue[i + 2];
-                resizes.push({ i, w, h });
-            }
-            i += len + 1;
-        }
-        // set to "skip" all resize commands 0..resizes.length-2, keep the last one
-        if (resizes.length === 0) {
-            return;
-        }
-        for (let j = 1; j < resizes.length; j++) {
-            this.instructionQueue[j] = encode(OpCodeSymbols.SKIP, 2);
-        }
-        const last = resizes[resizes.length - 1];
-        this.instructionQueue[last.i + 1] = last.w;
-        this.instructionQueue[last.i + 2] = last.h;
+    private condenseGridResizes(): void {
+        this.condenseKeepLast(OpCodeSymbols.GRID_RESIZE);
     }
 
     // STEP 2: 
@@ -243,52 +534,40 @@ export default class GOLEngine {
     //      - clear out the updateIndex
     //  - except 
     //      - grid resizes
-    
+
     private condenseClearGrids() {
-        const clears: number[] = [];
-        for (let i = 0; i < this.latestInstruction; ) {
-            const { code, len } = decode(this.instructionQueue[i]);
-            if (code === OpCodeSymbols.CLEAR_CANVAS) {
-                clears.push(i);
-            }
-            i += len + 1;
-        }
-        // anything to do?
-        if (clears.length === 0) {
-            return;
-        }
-        // last clear
-        const last = clears[clears.length - 1];
-        for (let j = 0; j < last; j++) {
-            const { code, len } = decode(this.instructionQueue[clears[j]]);
-            if (code === OpCodeSymbols.GRID_RESIZE) {
-                continue;
-            }
-            this.instructionQueue[clears[j]] = encode(OpCodeSymbols.SKIP, len);
-        }
+        this.condenseKeepLast(OpCodeSymbols.CLEAR_CANVAS, false, true, OpCodeSymbols.GRID_RESIZE);
     }
-    
+
     // STEP 3:
     //  keep the last seed command, disregard all other seeding commands
+    private condenseSeedings() {
+        this.condenseKeepLast(OpCodeSymbols.SEED);
+    }
 
-    private condenseSeedings(){
-        const seedings: number[] = [];
-        for (let i = 0; i < this.latestInstruction; ) {
+    // 4. if there is a "plot"
+    //     - only the last plot should be executed, other plots must be made NOOP
+    private condensePlots(): void {
+        this.condenseKeepLast(OpCodeSymbols.PLOT_UPDATES);
+    }
+
+    private condenseKeepLast(opCode: OpCodeSymbols, onlyIndex = true, exemptsLast = true, ...exemptions: OpCodeSymbols[]): void {
+        const collector: number[][] = []
+        for (let i = 0; i < this.latestInstruction;) {
             const { code, len } = decode(this.instructionQueue[i]);
-            if (code === OpCodeSymbols.SEED) {
-                seedings.push(i);
+            if (code === opCode) {
+                collector.push([i, len]);
             }
             i += len + 1;
         }
-        // anything to do?
-        if (seedings.length === 0) {
-            return;
-        }
-        // last clear
-        for (let j = 0; j < seedings.length -1; j++) {
-            this.instructionQueue[seedings[j]] = encode(OpCodeSymbols.SKIP, 0);
+
+        const iter = rangeIter(collector, this.instructionQueue, { onlyIndex, exemptsLast }, ...exemptions);
+
+        for (const step of iter) {
+            this.instructionQueue[step.index] = encode(OpCodeSymbols.SKIP, step.len);
         }
     }
+
 
     // TODO finish placing commands on the command queue
 
@@ -309,9 +588,9 @@ export default class GOLEngine {
         0.02                                        0.0198
     */
 
-    private createEmptyUpdateIndexArray(pct: number) {
+    private provisionIndexArrayForSeeding(pct: number) {
         pct = min(max(pct, 0), 1);
-        let sizeFraction = seedHistogram.find(([percent,], i) => {
+        let sizeFraction = seedHistogram.find(([percent,]) => {
             return (pct < percent);
         });
 
@@ -325,21 +604,12 @@ export default class GOLEngine {
 
 
     private colorPicker(): number {
-        const c = trunc(random() * 8) + 1;
-        // c=[1,8]
-        //
-        // pixel color probability distribution
-        //1 2 3 4 5 6 7 8
-        //1 1 2 2 2 2 3 3
-        //
-        // color 0 = no pixel
-        if (c < 3) {
-            return 1;
+        const ran = random();
+        const idx = this.colorDistribution.findIndex(c => ran < c);
+        if (idx === -1) {
+            throw new Error(`Could not sample distribution: ${this.colorDistribution.join(',')}`);
         }
-        if (c > 6) {
-            return 3;
-        }
-        return 2;
+        return idx + 1;
     }
 
     private resizePlayField(npf: Uint8ClampedArray, newWidth: number, newHeight: number) {
@@ -465,13 +735,14 @@ export default class GOLEngine {
     }
 
     // this should ne its own pluggable class
-    private _seedGrid(pct: number = 0.2) {
+    private _seedGrid(pct = 0.2) {
+        if (pct > 1) pct /= 100;
         if (this.width === 0 || this.height === 0) {
             return emptyUint16Array;
         }
 
         // estimate size
-        const updateIndex = this.createEmptyUpdateIndexArray(pct);
+        const updateIndex = this.provisionIndexArrayForSeeding(pct);
 
         this.playField.fill(0);
 
@@ -512,6 +783,8 @@ export default class GOLEngine {
         if (this.canvas) {
             this.canvas.clear();
         }
+        this.playFieldIndex = emptyUint16Array;
+        this.updateIndex = emptyUint16Array;
     }
 
 

@@ -44,7 +44,7 @@ export function drawBlocks(
     cellWidth: number,
     cellContentWidth: number,
     cellContentHeight: number
-) {
+): void {
     if (
         (w <= 0 || h <= 0)
         ||
@@ -130,9 +130,6 @@ B = box(0, o.h, (o.w-0), (n.h-o.h))
 {o: {…}, n: {…}}
 n: {w: 918, h: 686, blk_w: 151, blk_h: 113}
 o: {w: 918, h: 687, blk_w: 151, blk_h: 113}
-
-
-
 */
 
     if (n.blk_w >= o.blk_w && n.blk_h >= o.blk_h) {

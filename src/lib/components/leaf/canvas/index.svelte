@@ -63,13 +63,19 @@
 		//console.log(`Canvas/life/onmount: grid-with=${gridWidth}, gridHeight=${gridHeight}`);
 		globalCTX = canvas.getContext('2d');
 		resizeObserver = new ResizeObserver(() => {
-			console.log(`Canvas/ResizeObserver: grid-with=${gridWidth}, gridHeight=${gridHeight}`);
-			// get current size of this canvas
-			const currentSize = getGridSizeFromCanvasViewPort();
-			// if we resize canvas with canvas.length, canvas.height, it gets cleared
-			// 	so make "backup"
+			//console.log(`Canvas/ResizeObserver: block-grid-with=${gridWidth}, gridHeight=${gridHeight}`);
+			//console.log(`Canvas/ResizeObserver: intrinic-pixel-width=${canvas.width}, intrinsic-pixel-height=${canvas.height}`);
+			//console.log(`Canvas/ResizeObserver: pixel-width=${canvas.clientWidth}, pixel-height=${canvas.clientHeight}`);
+			
+			// the canvas has a part that is "kneejurky" reflex,
+			// 		-> this part is intrinsic to the canvas not under control
+			//		-> of any HOC
+			const currentGridSize = getGridSizeFromCanvasViewPort();
+			//  if we resize canvas with canvas.length, canvas.height, it gets cleared
+			// 		so make "backup"
+			//      the default 1 is to make it not "break" the "getImageData" function
 			const backupData = globalCTX.getImageData(0, 0, canvas.width || 1, canvas.height || 1);
-			// set new dimensions
+			// set new intrinsic width
 			canvas.width = canvas.clientWidth;
 			canvas.height = canvas.clientHeight;
 			// put it back "backup" image
@@ -79,10 +85,16 @@
 			// update current props
 			gridHeight = newSize.blk_h;
 			gridWidth = newSize.blk_w;
-
+			// this function will paint new grid blocks if the canvas enlarged by resizing
+			// 	-> taking into account that grid blocks have a size, 
+			//	-> there is not always new additions of grid blocks when canvas grows by
+			//	-> a few pixels
+			//  
+			//  return value is true if there were blocks added (or deleted) from the grid
+			//		-> in any direction
 			const isResized = resize(
 				globalCTX,
-				currentSize,
+				currentGridSize,
 				newSize,
 				paddingY,
 				cellHeight,
@@ -92,19 +104,23 @@
 				cellContentHeight,
 				gridColor
 			);
+			// notify HOC if the "block grid" changed
 			if (isResized) {
 				dispatch('resized', { gridWidth: newSize.blk_w, gridHeight: newSize.blk_h });
 			}
-			console.log(
-				`Canvas/ResizeObserver: after resize dispatched,  grid-with=${gridWidth}, gridHeight=${gridHeight}`
-			);
+			//console.log(
+			//	`Canvas/ResizeObserver: after resize dispatched,  grid-with=${gridWidth}, gridHeight=${gridHeight}`
+			//);
+			
 		});
 		resizeObserver.observe(canvas);
 	});
 
 	onDestroy(() => {
 		resizeObserver && resizeObserver.unobserve(canvas);
-		console.log(`Canvas/life/destroyed/${cntDestroyed++}: canvas=${canvas?.constructor?.name}`);
+		const prefix = `Canvas/life/destroyed/${cntDestroyed++}`
+		console.log(`${prefix}: canvas=${canvas?.constructor?.name}`);
+		console.log(`${prefix}: globalCTX=${globalCTX}`);
 	});
 
 	export function sliceCanvas(
@@ -179,7 +195,6 @@
 			);
 		}
 	
-
 	function mouseMove(e: MouseEvent) {
 		dispatch('move', {
 			...calcGridSize(e, paddingX, paddingY, cellWidth, cellHeight, gridWidth, gridHeight),
