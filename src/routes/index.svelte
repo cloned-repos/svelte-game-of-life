@@ -4,83 +4,80 @@
 
 	import { afterNavigate } from '$app/navigation';
 	import { default as Engine } from '$lib/components/controller/engine/gol-engine';
+	import type { AnimationScheduler } from '$lib/components/controller/engine/scheduler';
+	import createAnimationTimeScheduler from '$lib/components/controller/engine/scheduler';
 </script>
 
 <script lang="ts">
-	// app
-	import Canvas from '$lib/components/leaf/canvas/index.svelte';
-	import debug from 'debug';
+	// svelte
 	import { onMount, onDestroy } from 'svelte';
 
-	const ns = debug('main');
-	ns('hello'); // put in localStorage.debug = "main" and you will see the text
-	let gridWidth: number;
-	let gridHeight: number;
-	let nrCells: number;
+	//3rd party
+	import debug from 'debug';
+
+	// app
+	import Canvas from '$lib/components/leaf/canvas/index.svelte';
+	
+
+	// logging
+	const log = debug('main');
+	
+	// to display statistics
+	let nrCells = 0;
+	let gridWidth = 1;
+	let gridHeight = 1;
+	let fps = 0;
+	let size = 0;
+	let checked = 0;
+	let died = 0;
+	let latestInstruction = 0;
+	let debugCommands: string[][] = [];
+	
+	// bind canvas (so we can pass this to the "engine")
 	let canvas: Canvas;
 
+	// engine
 	const engine = new Engine();
+
+	// animationScheduler
+	let timeScheduler: AnimationScheduler;
 
 	// handlers
 	function up(e: CustomEvent) {
-		//console.log(e.detail);
+		//log(e.detail);
 	}
 
 	function move(e: CustomEvent) {
-		//console.log(e.detail);
+		//log(e.detail);
 	}
 
-	// let the canvas tell the HOC what it its initial size is, and base a decision on that
-	/*function hasResized({ type, detail: { gridHeight: gh, gridWidth: gw } }: CustomEvent) {
-		// this is how subsequent inforation about the grid reaches HOC, will be calculated on mount and dispatched
-		console.log(
-			`index/event/resize ${type}, width(event)=${gw} , height(event)=${gh}, gridHeight=${gridHeight}, gridWidth=${gridWidth}`
-		);
-		//engine.updateGridSize(gw, gh);
-		//engine.plotUpdates();
-		//cnt++;
-	}*/
+	
 
 	onMount(() => {
 		// discovered when it is mounted the gw and gh are undefined
 		engine.register(canvas);
+		timeScheduler = createAnimationTimeScheduler(engine);
+		
 		// queue
 		engine.clear();
+
+		// maybe not do this by default?
 		engine.seedGrid(20);
+	    
+		
 		//
-		console.log(`index/onMount: gw=${gridWidth}, gh=${gridHeight}`);
-		console.log(`index/onMount: canvas.name=${canvas?.constructor?.name}`);
-		console.log('index/onMount: seedGrid(0.2)');
-		cnt++;
-		// next macrotask
-		//setTimeout(start);
+		log(`index/onMount: gw=${gridWidth}, gh=${gridHeight}`);
+		log(`index/onMount: canvas.name=${canvas?.constructor?.name}`);
+		log('index/onMount: seedGrid(0.2)');
+		
 	});
 
-	afterNavigate;
-
 	onDestroy(() => {
+		timeScheduler && timeScheduler.stop();
 		engine.unregister();
 	});
 
-	let fps = 0;
-	let activeAnimationFrame;
-	function start(prevTs: number = 0) {
-		activeAnimationFrame = requestAnimationFrame((ts) => {
-			if (prevTs) {
-				fps = round(1000 / (ts - prevTs));
-			}
-			engine.condenseInstructionsQueue();
-			engine.nextStep();
-			engine.plotUpdates();
-			engine.execute();
-			cnt++;
-			prevTs = ts;
-			if (activeAnimationFrame !== null){
-				start(ts);
-			}
-		});
-	}
-
+	
 	/*
 		1	  0.645
 		0.95  0.6124
@@ -96,126 +93,103 @@
 		0.05  0.0488
 		0.02  0.0198
 	*/
-	let cnt = 0;
-	nrCells = 0;
-	gridWidth = 1;
-	gridHeight = 1;
-	let latestInstruction = 0;
+	
+	
 
-	let debugCommands: string[][] = [];
 
-	$: {
-		//nrCells = engine.seedGrid(0.04).length;
-		nrCells = nrCells;
-		size = size;
-		debugCommands = engine.debugGetCommandsInQueue();
-		latestInstruction = engine.latestInstruction;
-		cnt;
-	}
-
-	$: fraction = round((1e5 * nrCells) / size) / 1e5;
-	$: size = gridWidth * gridHeight;
-
+	
 	function nextStep(e: MouseEvent) {
-		console.log('nextstep clicked');
+		log('nextstep clicked');
 		engine.nextStep();
 		engine.plotUpdates();
 		engine.execute();
-		cnt++;
+		const { debugCommands: _debugCommands, nrInstructionsInQueue } = engine.gridData();
+		debugCommands = _debugCommands;
+		latestInstruction = nrInstructionsInQueue;
 	}
 
 	function seed(e: MouseEvent) {
 		engine.seedGrid(50);
-		console.log('seed clicked');
-		cnt++;
+		log('seed clicked');
+		const { debugCommands: _debugCommands, nrInstructionsInQueue } = engine.gridData();
+		debugCommands = _debugCommands;
+		latestInstruction = nrInstructionsInQueue;
 	}
 
 	function preProcess(e: MouseEvent) {
-		console.log('preProcess clicked');
+		log('preProcess clicked');
 		engine.condenseInstructionsQueue();
-		cnt++;
+		const { debugCommands: _debugCommands, nrInstructionsInQueue } = engine.gridData();
+		debugCommands = _debugCommands;
+		latestInstruction = nrInstructionsInQueue;
 	}
 
 	function execute(e: MouseEvent) {
-		console.log('execute clicked');
+		log('execute clicked');
 		engine.execute();
-		cnt++;
+		const { debugCommands: _debugCommands, nrInstructionsInQueue } = engine.gridData();
+		debugCommands = _debugCommands;
+		latestInstruction = nrInstructionsInQueue;
 	}
 
 	function doPlot(e: MouseEvent) {
-		console.log('doPlot clicked', e);
+		log('doPlot clicked', e);
 		engine.plotUpdates();
-		cnt++;
+		const { debugCommands: _debugCommands, nrInstructionsInQueue } = engine.gridData();
+		debugCommands = _debugCommands;
+		latestInstruction = nrInstructionsInQueue;
 	}
 
 	function clear(_e: MouseEvent) {
-		console.log('clear clicked', _e);
+		log('clear clicked', _e);
 		engine.clear();
-		cnt++;
-	}
-
-	function testPattern(_e: MouseEvent) {
-		console.log('testpattern clicked', _e);
-		const data = engine.gridData();
-
-		/*
-	public gridData(): GridData {
-        return {
-            grid: this.playField, // return copy
-            index: this.playFieldIndex,
-            updates: this.updateIndex,
-            width: this.width,
-            height: this.height,
-            colors: this.colors
-        };
-    }
-	*/
-
-		const { width } = engine;
-		engine.playField.fill(0);
-		engine.playFieldIndex = new Uint16Array(9 * 3);
-		engine.updateIndex = new Uint16Array( 9*3 );
-		
-		// print single block
-		let cursorIndex = 0;
-		let cursorUpdates = 0;
-		for (let x = 0; x < 3; x++) {
-			for (let y = 0; y < 3; y++) {
-				const coords = width * y + x;
-				engine.playField[coords] = 2;
-				//
-				engine.playFieldIndex[cursorIndex] = 2;
-				engine.playFieldIndex[cursorIndex + 1] = x;
-				engine.playFieldIndex[cursorIndex + 2] = y;
-				cursorIndex += 3;
-				//
-				engine.updateIndex[cursorUpdates] = 2;
-				engine.updateIndex[cursorUpdates + 1] = x;
-				engine.updateIndex[cursorUpdates + 2] = y;
-				cursorUpdates += 3;
-			}
-		}
-
-
-
-
-		engine.plotUpdates();
-		cnt++;
+		const { debugCommands: _debugCommands, nrInstructionsInQueue } = engine.gridData();
+		debugCommands = _debugCommands;
+		latestInstruction = nrInstructionsInQueue;
 	}
 
 	function go(){
-		engine.plotUpdates();
-		engine.condenseInstructionsQueue();
-		engine.execute();
-		start();
+		timeScheduler.start( stats => {
+			const { fps: _fps, died: _died, survive, checked: _checked, birth, width, height, debugCommands: _debugCommands, nrInstructionsInQueue} = stats;
+			fps = _fps;
+			size = width*height;
+			nrCells = birth + survive;
+			died = _died;
+			checked = _checked;
+			debugCommands = _debugCommands;
+			latestInstruction = nrInstructionsInQueue;
+		});
+	}
+
+	function stop(){
+		timeScheduler.stop();
 	}
 </script>
 
 <div class:outer-container={true}>
-	<span>width:{gridWidth}, height:{gridHeight} {fps}, nrBlocks={size} {nrCells} {fraction}</span>
+	<table>
+		<tr>
+		<th>width</th>	
+		<th>height</th>
+		<th>fps</th>
+		<th>size</th>
+		<th>alive cells</th>
+		<th>deaths</th>
+		<th>checked</th>
+		</tr>
+		<tr>
+	      <td>{gridWidth}</td>
+		  <td>{gridHeight}</td>
+		  <td>{fps}</td>
+		  <td>{size}</td>
+		  <td>{nrCells}</td>
+		  <td>{died}</td>
+		  <td>{checked}</td>
+		<tr>
+	</table>
 	<div class:buttonbar={true}>
 		<button on:click={go}>START!</button>
-		<button on:click={testPattern}>test pattern</button>
+		<button on:click={stop}>STOP!</button>
 		<button on:click={nextStep}>next-step</button>
 		<button on:click={clear}>clear field</button>
 		<button on:click={seed}>seed</button>
@@ -244,6 +218,10 @@
 </div>
 
 <style>
+	table {
+		color: green;
+		font-family: monospace;
+	}
 	span {
 		color: white;
 		display: block;

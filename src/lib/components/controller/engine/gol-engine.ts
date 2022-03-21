@@ -4,13 +4,7 @@ const { min, max, trunc, random } = Math;
 
 const INSTRUCTION_QUEUE_SIZE = 50;
 
-export enum DrawInstruction {
-    NOOP = 0,
-    DRAW = 1,
-    DELETE = 2,
-}
-
-export enum OpCodeSymbols {
+enum OpCodeSymbols {
     GRID_RESIZE = 'G',
     PLOT_UPDATES = 'P',
     CLEAR_CANVAS = 'C',
@@ -31,10 +25,6 @@ function encode(code: string, argLen: number): number {
 
 function decode(data: number): { code: OpCodeSymbols, len: number } {
     return { code: String.fromCharCode((data & 0xFF00) >> 8) as OpCodeSymbols, len: (data & 0x00FF) }
-}
-
-function isSkipCode(data: number): number | undefined {
-    return ((data & 0xFF00) >> 8) === OpCodeSymbols.SKIP.charCodeAt(0) ? (data | 0x00FF) : undefined;
 }
 
 function getCommand(data: number): string {
@@ -111,8 +101,14 @@ export type GridData = {
     // dimensions
     width: number
     height: number
-    // color palette
-    colors: string[]
+    colors: string[],
+    // stats
+    survive: number
+    died: number
+    birth: number
+    checked: number
+    debugCommands: string[][]
+    nrInstructionsInQueue: number
 };
 
 export default class GOLEngine {
@@ -127,6 +123,12 @@ export default class GOLEngine {
     public latestInstruction: number;
     private canvas: Canvas;
     private opCodes: Map<number, (...args: number[]) => void>;
+
+    // stats
+    private survive: number;
+    private died: number;
+    private birth: number;
+    private checked: number;
 
     constructor(
         private colors: string[] = [
@@ -192,9 +194,18 @@ export default class GOLEngine {
             updates: this.updateIndex,
             width: this.width,
             height: this.height,
-            colors: this.colors
+            colors: this.colors,
+            //
+            survive: this.survive,
+            died: this.died,
+            birth: this.birth,
+            checked: this.checked,
+            nrInstructionsInQueue: this.latestInstruction,
+            debugCommands: this.debugGetCommandsInQueue()
         };
     }
+
+    
 
     public updateGridSize(width: number, height: number): boolean {
         return this.encodeCommand(OpCodes[OpCodeSymbols.GRID_RESIZE], width, height);
@@ -293,20 +304,18 @@ export default class GOLEngine {
     }
 
     public nextStep(): void {
-        this.playField;
-        this.playFieldIndex;
-        this.updateIndex;
 
-        // step 1: next evolution
-        // 2 pass index so we can allocate typedArrays in determinism
-        let stayAlive = 0; // new and existing
-        let deaths = 0; // existing that died
-        let resurrect = 0;
-        let considered = 0;
+        // next evolution
+        // 2 pass solution, (need to provision typed arrays)
+        
+        // the result of this function
+        // - "this.updateIndex" will contain births and deaths
+        // - "this.playFieldIndex" will contain births and survivals
 
-        // updateIndex will contain alive+deaths
-        // playFieldIndex will only contain alive cells
-        //console.log(`/nextStep, alive=${this.playFieldIndex.length / 3}`);
+        this.checked = 0;
+        this.survive = 0;
+        this.birth = 0;
+        this.died = 0;
         // first pass
         for (let i = 0; i < this.playFieldIndex.length; i += 3) {
             const colorCheck = this.playFieldIndex[i];
@@ -328,11 +337,11 @@ export default class GOLEngine {
                     // consider for dead cell resurrection
                     if (color === 0) {
                         this.playField[coords] = this.colors.length + 2;
-                        considered++;
+                        this.checked++;
                         // Any dead cell with exactly three live neighbors becomes a live cell, as if by reproduction.
                         if (this.deadCellResurrection(x - xd, y - yd)) {
                             this.playField[coords] = this.colors.length + 1;
-                            resurrect++;
+                            this.birth++;
                         }
                         continue;
                     }
@@ -345,19 +354,19 @@ export default class GOLEngine {
             }
             // Any live cell with two or three live neighbours lives on to the next generation
             if (sum === 3 || sum === 2) {
-                stayAlive++;
+                this.survive++;
                 continue;
             }
-            // Any live cell with fewer than two live neighbors dies (referred to as under population or exposure[1]).
-            // Any live cell with more than three live neighbors dies (referred to as over population or overcrowding).
+            // - Any live cell with fewer than two live neighbors dies (referred to as under population or exposure[1]).
+            // - Any live cell with more than three live neighbors dies (referred to as over population or overcrowding).
             this.playFieldIndex[i] = 0;
-            deaths++;
+            this.died++;
         }// for
         //console.log(`first pass: deaths=${deaths}, stayAlive=${stayAlive}, resurrect=${resurrect} changes=${deaths + resurrect}, aliveNext=${stayAlive + resurrect}, considered=${considered}, wasted=${considered - resurrect}`);
 
         // second pass
-        const changes = new Uint16Array((deaths + resurrect) * 3);
-        const playFieldIndex = new Uint16Array((stayAlive + resurrect) * 3);
+        const changes = new Uint16Array((this.died + this.birth) * 3);
+        const playFieldIndex = new Uint16Array((this.survive + this.birth) * 3);
         let cursorChanges = 0;
         let playFieldIndexCursor = 0;
         for (let i = 0; i < this.playFieldIndex.length; i += 3) {
