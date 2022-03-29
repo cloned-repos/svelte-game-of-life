@@ -9,14 +9,16 @@ enum OpCodeSymbols {
     PLOT_UPDATES = 'P',
     CLEAR_CANVAS = 'C',
     SEED = 'S',
-    SKIP = 'N'
+    SKIP = 'N',
+    NEXT_TICK = 'T'
 }
 
 export const OpCodes = {
     [OpCodeSymbols.GRID_RESIZE]: encode(OpCodeSymbols.GRID_RESIZE, 2),
     [OpCodeSymbols.PLOT_UPDATES]: encode(OpCodeSymbols.PLOT_UPDATES, 0),
     [OpCodeSymbols.CLEAR_CANVAS]: encode(OpCodeSymbols.CLEAR_CANVAS, 0),
-    [OpCodeSymbols.SEED]: encode(OpCodeSymbols.SEED, 1)
+    [OpCodeSymbols.SEED]: encode(OpCodeSymbols.SEED, 1),
+    [OpCodeSymbols.NEXT_TICK]: encode(OpCodeSymbols.NEXT_TICK, 0)
 }
 
 function encode(code: string, argLen: number): number {
@@ -171,7 +173,9 @@ export default class GOLEngine {
                 // clear canvas
                 [OpCodes[OpCodeSymbols.CLEAR_CANVAS], this._clearCanvas.bind(this)],
                 // seeding
-                [OpCodes[OpCodeSymbols.SEED], this._seedGrid.bind(this)]
+                [OpCodes[OpCodeSymbols.SEED], this._seedGrid.bind(this)],
+                // next step
+                [OpCodes[OpCodeSymbols.NEXT_TICK], this._nextStep.bind(this)]
             ]
         );
     }
@@ -205,7 +209,9 @@ export default class GOLEngine {
         };
     }
 
-    
+    public nextTick(): boolean {
+        return this.encodeCommand(OpCodes[OpCodeSymbols.NEXT_TICK]);
+    }
 
     public updateGridSize(width: number, height: number): boolean {
         return this.encodeCommand(OpCodes[OpCodeSymbols.GRID_RESIZE], width, height);
@@ -225,7 +231,10 @@ export default class GOLEngine {
     }
 
     // mandatory to call "condenseInstructionsQueue" first
-    public execute(): void {
+    public execute(
+        hookBeforePlotUpdates?: () => void,
+        hookAfterPlotUpdates?: () => void,
+    ): void {
         //
         // execute resize instructions first
         //
@@ -239,7 +248,12 @@ export default class GOLEngine {
                 if (!opCodeFn) {
                     throw new Error(`Invalid opcode = { ${code}, ${len} } at position ${i}`);
                 }
-                // A A A O -
+                if (code === OpCodeSymbols.PLOT_UPDATES && hookBeforePlotUpdates) {
+                    hookBeforePlotUpdates.call(this);
+                }
+                if (code === OpCodeSymbols.PLOT_UPDATES && hookAfterPlotUpdates) {
+                    hookAfterPlotUpdates.call(this);
+                }
                 opCodeFn.apply(this, this.instructionQueue.slice(i + 1, i + len + 1));
             }
             i += len + 1;
@@ -303,11 +317,11 @@ export default class GOLEngine {
         this.latestInstruction = cleanCursor;
     }
 
-    public nextStep(): void {
+    private _nextStep(): void {
 
         // next evolution
         // 2 pass solution, (need to provision typed arrays)
-        
+
         // the result of this function
         // - "this.updateIndex" will contain births and deaths
         // - "this.playFieldIndex" will contain births and survivals
@@ -410,7 +424,7 @@ export default class GOLEngine {
                     if (color === this.colors.length + 1) {
                         const newColor = this.colorPicker();
                         const xm = coords % this.width;
-                        const ym = (coords - xm)/this.width;
+                        const ym = (coords - xm) / this.width;
                         if (newColor === 0) {
                             throw new Error(`Internal Error; new color picked is ${newColor} ofr (${x - xd}, ${y - yd})`);
                         }
@@ -481,7 +495,6 @@ export default class GOLEngine {
         return this.playField[this.getCoords(x, y)];
     }
 
-    private
 
     private encodeCommand(...data: number[]): boolean {
         const command = data[0];

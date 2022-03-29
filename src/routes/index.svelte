@@ -2,7 +2,7 @@
 	export const prerender = true;
 	const { min, max, trunc, round, random } = Math;
 
-	import { afterNavigate } from '$app/navigation';
+	import type { Stats } from '$lib/components/controller/engine/scheduler';
 	import { default as Engine } from '$lib/components/controller/engine/gol-engine';
 	import type { AnimationScheduler } from '$lib/components/controller/engine/scheduler';
 	import createAnimationTimeScheduler from '$lib/components/controller/engine/scheduler';
@@ -17,11 +17,10 @@
 
 	// app
 	import Canvas from '$lib/components/leaf/canvas/index.svelte';
-	
 
 	// logging
 	const log = debug('main');
-	
+
 	// to display statistics
 	let nrCells = 0;
 	let gridWidth = 1;
@@ -32,7 +31,7 @@
 	let died = 0;
 	let latestInstruction = 0;
 	let debugCommands: string[][] = [];
-	
+
 	// bind canvas (so we can pass this to the "engine")
 	let canvas: Canvas;
 
@@ -51,25 +50,21 @@
 		//log(e.detail);
 	}
 
-	
-
 	onMount(() => {
 		// discovered when it is mounted the gw and gh are undefined
 		engine.register(canvas);
 		timeScheduler = createAnimationTimeScheduler(engine);
-		
+
 		// queue
 		engine.clear();
 
 		// maybe not do this by default?
 		engine.seedGrid(20);
-	    
-		
+
 		//
 		log(`index/onMount: gw=${gridWidth}, gh=${gridHeight}`);
 		log(`index/onMount: canvas.name=${canvas?.constructor?.name}`);
 		log('index/onMount: seedGrid(0.2)');
-		
 	});
 
 	onDestroy(() => {
@@ -77,7 +72,6 @@
 		engine.unregister();
 	});
 
-	
 	/*
 		1	  0.645
 		0.95  0.6124
@@ -93,17 +87,14 @@
 		0.05  0.0488
 		0.02  0.0198
 	*/
-	
-	
 
-
-	
 	function nextStep(e: MouseEvent) {
 		log('nextstep clicked');
-		engine.nextStep();
+		engine.nextTick();
 		engine.plotUpdates();
-		engine.execute();
+		engine.condenseInstructionsQueue();
 		const { debugCommands: _debugCommands, nrInstructionsInQueue } = engine.gridData();
+		// update this is how svelte makes things reactive
 		debugCommands = _debugCommands;
 		latestInstruction = nrInstructionsInQueue;
 	}
@@ -148,20 +139,37 @@
 		latestInstruction = nrInstructionsInQueue;
 	}
 
-	function go(){
-		timeScheduler.start( stats => {
-			const { fps: _fps, died: _died, survive, checked: _checked, birth, width, height, debugCommands: _debugCommands, nrInstructionsInQueue} = stats;
-			fps = _fps;
-			size = width*height;
-			nrCells = birth + survive;
-			died = _died;
-			checked = _checked;
-			debugCommands = _debugCommands;
-			latestInstruction = nrInstructionsInQueue;
+	function go() {
+		timeScheduler.registerHooks({
+			afterExecution() {
+				console.log(this);
+				this.nextTick();
+			},
+			metrics(stats: Stats) {
+				const {
+					fps: _fps,
+					died: _died,
+					survive,
+					checked: _checked,
+					birth,
+					width,
+					height,
+					debugCommands: _debugCommands,
+					nrInstructionsInQueue
+				} = stats;
+				fps = _fps;
+				size = width * height;
+				nrCells = birth + survive;
+				died = _died;
+				checked = _checked;
+				debugCommands = _debugCommands;
+				latestInstruction = nrInstructionsInQueue;
+			}
 		});
+		timeScheduler.start();
 	}
 
-	function stop(){
+	function stop() {
 		timeScheduler.stop();
 	}
 </script>
@@ -169,23 +177,23 @@
 <div class:outer-container={true}>
 	<table>
 		<tr>
-		<th>width</th>	
-		<th>height</th>
-		<th>fps</th>
-		<th>size</th>
-		<th>alive cells</th>
-		<th>deaths</th>
-		<th>checked</th>
+			<th>width</th>
+			<th>height</th>
+			<th>fps</th>
+			<th>size</th>
+			<th>alive cells</th>
+			<th>deaths</th>
+			<th>checked</th>
 		</tr>
 		<tr>
-	      <td>{gridWidth}</td>
-		  <td>{gridHeight}</td>
-		  <td>{fps}</td>
-		  <td>{size}</td>
-		  <td>{nrCells}</td>
-		  <td>{died}</td>
-		  <td>{checked}</td>
-		<tr>
+			<td>{gridWidth}</td>
+			<td>{gridHeight}</td>
+			<td>{fps}</td>
+			<td>{size}</td>
+			<td>{nrCells}</td>
+			<td>{died}</td>
+			<td>{checked}</td>
+		</tr><tr />
 	</table>
 	<div class:buttonbar={true}>
 		<button on:click={go}>START!</button>
