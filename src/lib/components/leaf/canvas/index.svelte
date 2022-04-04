@@ -108,10 +108,9 @@
 			if (isResized) {
 				dispatch('resized', { gridWidth: newSize.blk_w, gridHeight: newSize.blk_h });
 			}
-			//console.log(
-			//	`Canvas/ResizeObserver: after resize dispatched,  grid-with=${gridWidth}, gridHeight=${gridHeight}`
-			//);
-			
+			// console.log(
+			//	 `Canvas/ResizeObserver: after resize dispatched,  grid-with=${gridWidth}, gridHeight=${gridHeight}`
+			// );
 		});
 		resizeObserver.observe(canvas);
 	});
