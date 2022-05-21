@@ -1,9 +1,11 @@
-import type Canvas from '../leaf/canvas.svelte';
+import type Canvas from '../../leaf/canvas/index.svelte';
 
 const { min, max, trunc, random } = Math;
 
+//done
 const INSTRUCTION_QUEUE_SIZE = 50;
 
+//done
 enum OpCodeSymbols {
     GRID_RESIZE = 'G',
     PLOT_UPDATES = 'P',
@@ -13,6 +15,7 @@ enum OpCodeSymbols {
     NEXT_TICK = 'T'
 }
 
+//done
 export const OpCodes = {
     [OpCodeSymbols.GRID_RESIZE]: encode(OpCodeSymbols.GRID_RESIZE, 2),
     [OpCodeSymbols.PLOT_UPDATES]: encode(OpCodeSymbols.PLOT_UPDATES, 0),
@@ -21,34 +24,31 @@ export const OpCodes = {
     [OpCodeSymbols.NEXT_TICK]: encode(OpCodeSymbols.NEXT_TICK, 0)
 }
 
+//done
 function encode(code: string, argLen: number): number {
     return ((code.charCodeAt(0) & 255) << 8) + (argLen & 255);
 }
 
+//done
 function decode(data: number): { code: OpCodeSymbols, len: number } {
     return { code: String.fromCharCode((data & 0xFF00) >> 8) as OpCodeSymbols, len: (data & 0x00FF) }
 }
 
+//done
 function getCommand(data: number): string {
     return OpCodeSymbols[String.fromCharCode((data & 0xFF00) >> 8)];
 }
 
-function ifUndef<T>(v: T | undefined, r: T): T {
-    if (v === undefined) return r;
-    return v;
-}
-
-
-function* rangeIter(index: number[][], data: Uint16Array, options: { onlyIndex?: boolean, exemptsLast?: boolean }, ...exempts: OpCodeSymbols[]) {
-    if (index.length === 0) {
+//done
+function* rangeIter(commandsAtIndex: number[][], data: Uint16Array, onlyIndex = true, exemptsLast = true, ...exempts: OpCodeSymbols[]) {
+    if (commandsAtIndex.length === 0) {
         return;
     }
-    const onlyIndex = ifUndef(options.onlyIndex, true);
-    const exemptsLast = ifUndef(options.exemptsLast, true);
 
+    const lastIndex = commandsAtIndex.length - (exemptsLast ? 1 : 0);
     const last = onlyIndex
-        ? index.length - (exemptsLast ? 1 : 0)
-        : index[index.length - (exemptsLast ? 1 : 0)][0];
+        ? lastIndex
+        : commandsAtIndex[lastIndex][0];      
 
     for (
         let j = 0;
@@ -57,9 +57,9 @@ function* rangeIter(index: number[][], data: Uint16Array, options: { onlyIndex?:
         (j <= last && !exemptsLast);
         // 3rd part is empty
     ) {
-        if (options.onlyIndex) {
-            const len = index[j][1];
-            const posInDataArray = index[j][0];
+        if (onlyIndex) {
+            const len = commandsAtIndex[j][1];
+            const posInDataArray = commandsAtIndex[j][0];
             yield { index: posInDataArray, len };
             j++;
             continue;
@@ -73,6 +73,7 @@ function* rangeIter(index: number[][], data: Uint16Array, options: { onlyIndex?:
     }
 }
 
+//done
 const seedHistogram = [
     [1, 0.645],
     [0.95, 0.6124],
@@ -276,6 +277,7 @@ export default class GOLEngine {
         }
     }
 
+    // done
     public debugGetCommandsInQueue(): string[][] {
         const hrQueue: string[][] = [];
         for (let i = 0; i < this.latestInstruction;) {
@@ -290,7 +292,7 @@ export default class GOLEngine {
         return hrQueue;
     }
 
-
+    // done
     public condenseInstructionsQueue(): void {
         // 1st pass
         this.condenseGridResizes();
@@ -583,7 +585,7 @@ export default class GOLEngine {
             i += len + 1;
         }
 
-        const iter = rangeIter(collector, this.instructionQueue, { onlyIndex, exemptsLast }, ...exemptions);
+        const iter = rangeIter(collector, this.instructionQueue, onlyIndex, exemptsLast, ...exemptions);
 
         for (const step of iter) {
             this.instructionQueue[step.index] = encode(OpCodeSymbols.SKIP, step.len);
@@ -594,7 +596,7 @@ export default class GOLEngine {
     // TODO finish placing commands on the command queue
 
     /*
-        nr of draws * total number of blocks;     fraction of the blocks occupied
+        <nr of draws>/<total number of blocks>;     fraction of the blocks occupied
         1	                                        0.645
         0.95                                        0.6124
         0.9                                         0.58297
@@ -792,7 +794,6 @@ export default class GOLEngine {
         // initial positioning of the cells, the updateIndex is the same as the playFieldIndex (it is all initial creation of cells)
         this.updateIndex = updateIndex.slice(0, numSeeds);
         this.playFieldIndex = this.updateIndex.slice(0, numSeeds);
-        return updateIndex;
     }
 
     private _plotUpdates() {

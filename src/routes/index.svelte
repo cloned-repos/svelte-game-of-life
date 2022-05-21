@@ -1,11 +1,14 @@
 <script context="module" lang="ts">
 	export const prerender = true;
-	const { min, max, trunc, round, random } = Math;
+	//const { min, max, trunc, round, random } = Math;
 
 	import type { Stats } from '$lib/components/controller/engine/scheduler';
 	import { default as Engine } from '$lib/components/controller/engine/gol-engine';
 	import type { AnimationScheduler } from '$lib/components/controller/engine/scheduler';
 	import createAnimationTimeScheduler from '$lib/components/controller/engine/scheduler';
+
+	// engine
+	const engine = new Engine();
 </script>
 
 <script lang="ts">
@@ -29,27 +32,27 @@
 	let size = 0;
 	let checked = 0;
 	let died = 0;
+	
+	// nr of instructions in the queue
 	let latestInstruction = 0;
+	
+	// commands in the command queue
 	let debugCommands: string[][] = [];
 
 	// bind canvas (so we can pass this to the "engine")
 	let canvas: Canvas;
-
-	// engine
-	const engine = new Engine();
-
+	
 	// animationScheduler
 	let timeScheduler: AnimationScheduler;
 
 	// handlers
-	function up(e: CustomEvent) {
+	function canvasMouseUp(e: CustomEvent) {
 		//log(e.detail);
 	}
 
-	function move(e: CustomEvent) {
+	function canvasMouseMove(e: CustomEvent) {
 		//log(e.detail);
-	}
-
+	}	
 	onMount(() => {
 		// discovered when it is mounted the gw and gh are undefined
 		engine.register(canvas);
@@ -72,21 +75,6 @@
 		engine.unregister();
 	});
 
-	/*
-		1	  0.645
-		0.95  0.6124
-		0.9   0.58297
-		0.8   0.550
-		0.7   0.50
-		0.6   0.45
-		0.5   0.393
-		0.4   0.32
-		0.3   0.259
-		0.2   0.180
-		0.1	  0.095
-		0.05  0.0488
-		0.02  0.0198
-	*/
 
 	function nextStep(e: MouseEvent) {
 		log('nextstep clicked');
@@ -142,7 +130,6 @@
 	function go() {
 		timeScheduler.registerHooks({
 			afterExecution() {
-				console.log(this);
 				this.nextTick();
 			},
 			metrics(stats: Stats) {
@@ -191,7 +178,7 @@
 			<td>{fps}</td>
 			<td>{size}</td>
 			<td>{nrCells}</td>
-			<td>{died}</td>
+			<td>{died}</td>(())
 			<td>{checked}</td>
 		</tr><tr />
 	</table>
@@ -210,11 +197,12 @@
 			bind:this={canvas}
 			bind:gridWidth
 			bind:gridHeight
-			on:up={up}
-			on:move={move}
+			on:up={canvasMouseUp}
+			on:move={canvasMouseMove}
 			on:resized
 		/>
 	</div>
+	<!--
 	<div id="console">
 		<span>{latestInstruction}</span>
 		<ul>
@@ -223,34 +211,33 @@
 			{/each}
 		</ul>
 	</div>
+	-->
 </div>
 
 <style>
 	table {
+		grid-area: stats;
 		color: green;
 		font-family: monospace;
 	}
-	span {
-		color: white;
-		display: block;
-		flex-grow: 0;
-		font-size: 12px;
-	}
 	.outer-container {
-		border: 10px solid red;
 		width: 100%;
 		height: 100%;
-		align-items: stretch;
-		display: flex;
-		flex-direction: column;
+		display: grid;
+
+		grid: "stats stats stats"   
+			  "bar bar bar"         
+			  "canvas canvas canvas"		1fr
+			  "canvas canvas canvas"		1fr
+			  "canvas canvas canvas"		1fr
+			  / 1fr 1fr 1fr;
 	}
 	.buttonbar {
-		background: yellow;
+		grid-area: bar;
 	}
 
 	.inner-container {
-		writing-mode: vertical-lr;
-		border: 10px solid orange;
+		grid-area: canvas;
 		width: 100%;
 		height: 100%;
 		font-family: 'Raleway';

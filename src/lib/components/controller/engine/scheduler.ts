@@ -22,12 +22,12 @@ interface AnimationScheduler {
     }): void
 };
 
-let started = false;
-let nextAnimationFrame: number;
-const last120runs = new Float32Array(120);
 
 // hook
 function createAnimationTimeScheduler(engine: Engine): AnimationScheduler {
+
+    let started = false;
+    let nextAnimationFrame: number;
 
     let hookBeforeCondenseInstructionQueue: () => void;
     let hookBeforePlotUpdates: () => void;
@@ -36,25 +36,29 @@ function createAnimationTimeScheduler(engine: Engine): AnimationScheduler {
     let hookBeforeExecution: () => void;
     let hookAfterExecution: () => void;
 
+    const last120runs = new Float32Array(120);
+
     function run() {
-        // ts = since browser "refresh"
+        if (!started){
+            return;
+        }
         nextAnimationFrame = requestAnimationFrame(ts => {
             last120runs.copyWithin(1, 0); // shift, keep it simple and fast
             last120runs[0] = ts;
-            if (hookBeforeCondenseInstructionQueue ){
+            if (hookBeforeCondenseInstructionQueue) {
                 hookBeforeCondenseInstructionQueue.call(engine);
             }
             engine.condenseInstructionsQueue();
             engine.plotUpdates();
             // execute next step after updates
-            if (hookBeforeExecution){
+            if (hookBeforeExecution) {
                 hookBeforeExecution.call(engine);
             }
             engine.execute(
                 hookBeforePlotUpdates,
                 hookAfterPlotUpdates,
             );
-            if (hookAfterExecution){
+            if (hookAfterExecution) {
                 hookAfterExecution.call(engine);
             }
             if (hookStats) {
@@ -63,27 +67,9 @@ function createAnimationTimeScheduler(engine: Engine): AnimationScheduler {
                 const stats = { ...engine.gridData(), fps };
                 hookStats(stats);
             }
-            if (started) {
-                run();
-            }
+            run();
         });
     }
-
-    /*start(): void;
-    stop(): void;
-    fps(): number;
-    registerHooks(hooks: {
-        beforeCondenseIQ: (cb: () => void) => void,
-        beforePlotUpdates: (cb: () => void) => void,
-        afterPlotUpdates: (cb: () => void) => void,
-        metrics: (cb: (stats: Stats) => void) => void
-    }): void;
-    deRegisterHooks(hooks: {
-        beforeCondenseIQ: boolean,
-        beforePlotUpdates: boolean,
-        afterPlotUpdates: boolean,
-        metrics: boolean
-    }): void*/
 
     return {
         start() {
@@ -93,10 +79,9 @@ function createAnimationTimeScheduler(engine: Engine): AnimationScheduler {
             }
         },
         stop() {
-            if (started) {
-                started = false;
-                cancelAnimationFrame(nextAnimationFrame);
-            }
+            started = false;
+            cancelAnimationFrame(nextAnimationFrame);
+            nextAnimationFrame = null;
         },
         fps() {
             //  just use 2 samples for now, use more advanced filter over the 120 samples (should be around 2 sec)
@@ -108,11 +93,11 @@ function createAnimationTimeScheduler(engine: Engine): AnimationScheduler {
             hookBeforePlotUpdates = beforePlotUpdates;
             hookAfterPlotUpdates = afterPlotUpdates;
             hookStats = metrics;
-            hookBeforeExecution =  beforeExecution;
+            hookBeforeExecution = beforeExecution;
             hookAfterExecution = afterExecution;
         },
-        deRegisterHooks(hooks){
-            const  { beforeCondenseIQ, beforePlotUpdates, afterPlotUpdates, metrics } = hooks;
+        deRegisterHooks(hooks) {
+            const { beforeCondenseIQ, beforePlotUpdates, afterPlotUpdates, metrics } = hooks;
             if (beforeCondenseIQ) {
                 hookBeforeCondenseInstructionQueue = undefined;
             }
@@ -122,7 +107,7 @@ function createAnimationTimeScheduler(engine: Engine): AnimationScheduler {
             if (afterPlotUpdates) {
                 hookAfterPlotUpdates = undefined;
             }
-            if (metrics){
+            if (metrics) {
                 hookStats = undefined;
             }
         }
