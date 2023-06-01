@@ -16,7 +16,7 @@
 		createEventDispatcher
 	} from 'svelte';
 
-	let canvas: HTMLCanvasElement = null;
+	let canvas: HTMLCanvasElement;
 
 	export let cellWidth = 6;
 	export let cellHeight = 6;
@@ -25,12 +25,12 @@
 	export let paddingX = 4;
 	export let paddingY = 4;
 	export let gridColor = 'rgb(245, 247, 249)';
-	
+
 	export let gridHeight: number;
 	export let gridWidth: number;
 
-	let globalCTX: CanvasRenderingContext2D = null;
-	let resizeObserver: ResizeObserver = null;
+	let globalCTX: CanvasRenderingContext2D;
+	let resizeObserver: ResizeObserver;
 
 	beforeUpdate(() => {
 		//	console.log('%c Canvas/beforeUpdate', 'color:red;');
@@ -42,7 +42,7 @@
 
 	const dispatch = createEventDispatcher();
 
-	function getGridSizeFromCanvasViewPort(): GridSize | null {
+	function getGridSizeFromCanvasViewPort(): GridSize {
 		const blk_w =
 			(canvas.width - paddingX * 2 - ((canvas.width - paddingX * 2) % cellWidth)) / cellWidth;
 		const blk_h =
@@ -61,12 +61,12 @@
 
 		console.log('Canvas/life/onmount: canvas=', currentSize);
 		//console.log(`Canvas/life/onmount: grid-with=${gridWidth}, gridHeight=${gridHeight}`);
-		globalCTX = canvas.getContext('2d');
+		globalCTX = canvas.getContext('2d')!;
 		resizeObserver = new ResizeObserver(() => {
 			//console.log(`Canvas/ResizeObserver: block-grid-with=${gridWidth}, gridHeight=${gridHeight}`);
 			//console.log(`Canvas/ResizeObserver: intrinic-pixel-width=${canvas.width}, intrinsic-pixel-height=${canvas.height}`);
 			//console.log(`Canvas/ResizeObserver: pixel-width=${canvas.clientWidth}, pixel-height=${canvas.clientHeight}`);
-			
+
 			// the canvas has a part that is "kneejurky" reflex,
 			// 		-> this part is intrinsic to the canvas not under control
 			//		-> of any HOC
@@ -86,10 +86,10 @@
 			gridHeight = newSize.blk_h;
 			gridWidth = newSize.blk_w;
 			// this function will paint new grid blocks if the canvas enlarged by resizing
-			// 	-> taking into account that grid blocks have a size, 
+			// 	-> taking into account that grid blocks have a size,
 			//	-> there is not always new additions of grid blocks when canvas grows by
 			//	-> a few pixels
-			//  
+			//
 			//  return value is true if there were blocks added (or deleted) from the grid
 			//		-> in any direction
 			const isResized = resize(
@@ -117,7 +117,7 @@
 
 	onDestroy(() => {
 		resizeObserver && resizeObserver.unobserve(canvas);
-		const prefix = `Canvas/life/destroyed/${cntDestroyed++}`
+		const prefix = `Canvas/life/destroyed/${cntDestroyed++}`;
 		console.log(`${prefix}: canvas=${canvas?.constructor?.name}`);
 		console.log(`${prefix}: globalCTX=${globalCTX}`);
 	});
@@ -169,31 +169,31 @@
 			return;
 		}
 
-		if (updates.length % 3 !== 0){
-			throw new Error('updates.length not multiple or 3, '+ updates.length )
-		}
-		
-		for (let i = 0; i < updates.length; i+=3){
-			const idxColor = updates[i];
-			const xcor = updates[i+1];
-			const ycor = updates[i+2];
-			const realColor = colors[idxColor];
-			plot(xcor,ycor, realColor);
+		if (updates.length % 3 !== 0) {
+			throw new Error('updates.length not multiple or 3, ' + updates.length);
 		}
 
-		return updates.length/3;
+		for (let i = 0; i < updates.length; i += 3) {
+			const idxColor = updates[i];
+			const xcor = updates[i + 1];
+			const ycor = updates[i + 2];
+			const realColor = colors[idxColor];
+			plot(xcor, ycor, realColor);
+		}
+
+		return updates.length / 3;
 	}
 
-	function plot(x: number, y: number, color:string){
-			globalCTX.fillStyle = color;
-			globalCTX.fillRect(
-				paddingX + x * cellWidth,
-				paddingY + y * cellHeight,
-				cellContentWidth,
-				cellContentHeight
-			);
-		}
-	
+	function plot(x: number, y: number, color: string) {
+		globalCTX.fillStyle = color;
+		globalCTX.fillRect(
+			paddingX + x * cellWidth,
+			paddingY + y * cellHeight,
+			cellContentWidth,
+			cellContentHeight
+		);
+	}
+
 	function mouseMove(e: MouseEvent) {
 		dispatch('move', {
 			...calcGridSize(e, paddingX, paddingY, cellWidth, cellHeight, gridWidth, gridHeight),
@@ -212,11 +212,7 @@
 	}
 </script>
 
-<canvas
-	bind:this={canvas}
-	width={0}
-	height={0}
-/>
+<canvas bind:this={canvas} width={0} height={0} />
 
 <style>
 	canvas {
