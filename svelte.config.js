@@ -6,9 +6,7 @@ const config = {
 	// Consult https://github.com/sveltejs/svelte-preprocess
 	// for more information about preprocessors
 	preprocess: preprocess({
-		replace: [
-			['process.env.NODE_ENV', JSON.stringify(process.env.NODE_ENV)]
-		],
+		replace: [['process.env.NODE_ENV', JSON.stringify(process.env.NODE_ENV)]],
 		typescript: {
 			tsconfigFile: './tsconfig.app.json',
 			handleMixedImports: true
@@ -16,6 +14,14 @@ const config = {
 	}),
 	kit: {
 		adapter: adapter(),
+		csp: {
+			directives: {
+				'script-src': ['self']
+			},
+			reportOnly: {
+				'script-src': ['self']
+			}
+		}
 	}
 };
 

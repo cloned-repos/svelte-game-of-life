@@ -32,16 +32,16 @@
 	let size = 0;
 	let checked = 0;
 	let died = 0;
-	
+
 	// nr of instructions in the queue
 	let latestInstruction = 0;
-	
+
 	// commands in the command queue
 	let debugCommands: string[][] = [];
 
 	// bind canvas (so we can pass this to the "engine")
 	let canvas: Canvas;
-	
+
 	// animationScheduler
 	let timeScheduler: AnimationScheduler;
 
@@ -52,7 +52,7 @@
 
 	function canvasMouseMove(e: CustomEvent) {
 		//log(e.detail);
-	}	
+	}
 	onMount(() => {
 		// discovered when it is mounted the gw and gh are undefined
 		engine.register(canvas);
@@ -74,7 +74,6 @@
 		timeScheduler && timeScheduler.stop();
 		engine.unregister();
 	});
-
 
 	function nextStep(e: MouseEvent) {
 		log('nextstep clicked');
@@ -225,12 +224,13 @@
 		height: 100%;
 		display: grid;
 
-		grid: "stats stats stats"   
-			  "bar bar bar"         
-			  "canvas canvas canvas"		1fr
-			  "canvas canvas canvas"		1fr
-			  "canvas canvas canvas"		1fr
-			  / 1fr 1fr 1fr;
+		grid:
+			'stats stats stats'
+			'bar bar bar'
+			'canvas canvas canvas' 1fr
+			'canvas canvas canvas' 1fr
+			'canvas canvas canvas' 1fr
+			/ 1fr 1fr 1fr;
 	}
 	.buttonbar {
 		grid-area: bar;
