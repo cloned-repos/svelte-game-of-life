@@ -1,15 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<meta name="description" content="" />
-		<link rel="icon" href="%svelte.assets%/favicon.png" />
-		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<!-- this is my account personal font awesome kit: https://fontawesome.com/kits/60f339522b/use -->
-		<script src="https://kit.fontawesome.com/60f339522b.js" crossorigin="anonymous"></script>
-		%svelte.head%
-	</head>
-	<body>
-		%svelte.body%
-	</body>
+
+<head>
+	<meta charset="utf-8" />
+	<meta name="description" content="" />
+	<link rel="icon" href="%sveltekit.assets%/favicon.png" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<!-- this is my account personal font awesome kit: https://fontawesome.com/kits/60f339522b/use -->
+	<script src="https://kit.fontawesome.com/60f339522b.js" crossorigin="anonymous"></script>
+	%sveltekit.head%
+</head>
+
+<body data-sveltekit-preload-data="hover">
+	<div style="display: contents">%sveltekit.body%</div>
+</body>
+
 </html>

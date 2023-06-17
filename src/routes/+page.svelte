@@ -1,25 +1,48 @@
 <script context="module" lang="ts">
-	export const prerender = true;
+	import { animationFrameFired } from '$lib/store/animationFrameSlice';
+	import { store, startAnimFrameDispatcher } from '$lib/store';
+	import type { RootState } from '$lib/store';
+	import type { Store } from '@reduxjs/toolkit';
+	import type { AnimationState } from '$lib/store/animationFrameSlice';
+
+	/*export const prerender = true;
 	//const { min, max, trunc, round, random } = Math;
 
-	import type { Stats } from '$lib/components/controller/engine/scheduler';
+	import type { Stats } from '$lib/components/controller/engine/scheduler.ots';
 	import { default as Engine } from '$lib/components/controller/engine/gol-engine';
-	import type { AnimationScheduler } from '$lib/components/controller/engine/scheduler';
-	import createAnimationTimeScheduler from '$lib/components/controller/engine/scheduler';
+	import type { AnimationScheduler } from '$lib/components/controller/engine/scheduler.ots';
+	import createAnimationTimeScheduler from '$lib/components/controller/engine/scheduler.ots';
 
 	// engine
-	const engine = new Engine();
+	const engine = new Engine();*/
 </script>
 
 <script lang="ts">
-	// svelte
 	import { onMount, onDestroy } from 'svelte';
 
-	//3rd party
-	import debug from 'debug';
+	import { readable } from 'svelte/store';
 
+	function redux2SvelteReadbale<T extends RootState, S>(reduxStore: Store, selector: (s: T) => S) {
+		return {
+			subscribe(fn: (data: S) => void) {
+				fn(selector(reduxStore.getState()));
+				return reduxStore.subscribe(() => {
+					fn(selector(reduxStore.getState()));
+				});
+			}
+		};
+	}
+
+	const dt = redux2SvelteReadbale<RootState, AnimationState>(store, (store) => store.animFrame);
+
+	onMount(() => {
+		const cancel = startAnimFrameDispatcher();
+		return cancel;
+	});
+
+	/*
 	// app
-	import Canvas from '$lib/components/leaf/canvas/index.svelte';
+	import Canvas from '$lib/components/leaf/canvas/indexo.osvelte';
 
 	// logging
 	const log = debug('main');
@@ -158,6 +181,7 @@
 	function stop() {
 		timeScheduler.stop();
 	}
+	*/
 </script>
 
 <div class:outer-container={true}>
@@ -171,16 +195,19 @@
 			<th>deaths</th>
 			<th>checked</th>
 		</tr>
+
 		<tr>
-			<td>{gridWidth}</td>
-			<td>{gridHeight}</td>
-			<td>{fps}</td>
-			<td>{size}</td>
+			<td>{$dt.lastFired}</td>
+			<td>{$dt.count}</td>
+			<td>{$dt.dt}</td>
+			<!--<td>{size}</td>
 			<td>{nrCells}</td>
 			<td>{died}</td>(())
 			<td>{checked}</td>
+		-->
 		</tr><tr />
 	</table>
+	<!--
 	<div class:buttonbar={true}>
 		<button on:click={go}>START!</button>
 		<button on:click={stop}>STOP!</button>
@@ -191,7 +218,9 @@
 		<button on:click={execute}>execute command queue</button>
 		<button on:click={doPlot}>plot-the-results-of-executing-command-queue</button>
 	</div>
+-->
 	<div class:inner-container={true}>
+		<!--
 		<Canvas
 			bind:this={canvas}
 			bind:gridWidth
@@ -200,6 +229,7 @@
 			on:move={canvasMouseMove}
 			on:resized
 		/>
+		-->
 	</div>
 	<!--
 	<div id="console">
