@@ -173,7 +173,7 @@
 	*/
 </script>
 
-<div class:outer-container={true}>
+<div class="outer-container text-3xl font-bold underline">
 	<table>
 		<tr>
 			<th>width</th>
