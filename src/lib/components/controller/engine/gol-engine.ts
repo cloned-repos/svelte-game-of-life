@@ -206,7 +206,7 @@ export default class GOLEngine {
 			birth: this.birth,
 			checked: this.checked,
 			nrInstructionsInQueue: this.latestInstruction,
-			debugCommands: this.debugGetCommandsInQueue()
+			: this.debugGetCommandsInQueue()
 		};
 	}
 
@@ -703,7 +703,7 @@ export default class GOLEngine {
 			this.playFieldIndex = npfi;
 		}
 
-		// parse it twice one to count one to set
+		// parse it twice one to count and one to set
 		let newUpdateLength = 0;
 		for (let i = 0; i < this.updateIndex.length; i += 3) {
 			const x = this.updateIndex[i + 1];

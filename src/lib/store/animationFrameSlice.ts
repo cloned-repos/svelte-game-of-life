@@ -13,7 +13,7 @@ const initialState: AnimationState = {
 	dt: 0
 };
 
-export const animationFrameSlice = createSlice({
+const animationFrameSlice = createSlice({
 	name: 'requestAnimationFrame',
 	initialState,
 	reducers: {

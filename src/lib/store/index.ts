@@ -1,5 +1,6 @@
 import { configureStore } from '@reduxjs/toolkit';
 import animationFrameReducer, { animationFrameFired } from './animationFrameSlice';
+import type { EnhancedStore } from '@reduxjs/toolkit';
 
 export const store = configureStore({
 	reducer: {
@@ -27,5 +28,19 @@ export function startAnimFrameDispatcher() {
 	return () => {
 		stop = true;
 		cancelAnimationFrame(nextAnimationFrame);
+	};
+}
+
+export function redux2SvelteReadbale<T extends RootState, S>(
+	reduxStore: EnhancedStore,
+	selector: (s: T) => S
+) {
+	return {
+		subscribe(fn: (data: S) => void) {
+			fn(selector(reduxStore.getState()));
+			return reduxStore.subscribe(() => {
+				fn(selector(reduxStore.getState()));
+			});
+		}
 	};
 }

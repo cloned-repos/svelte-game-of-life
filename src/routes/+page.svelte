@@ -1,6 +1,6 @@
 <script context="module" lang="ts">
 	import { animationFrameFired } from '$lib/store/animationFrameSlice';
-	import { store, startAnimFrameDispatcher } from '$lib/store';
+	import { store, startAnimFrameDispatcher, redux2SvelteReadbale } from '$lib/store';
 	import type { RootState } from '$lib/store';
 	import type { Store } from '@reduxjs/toolkit';
 	import type { AnimationState } from '$lib/store/animationFrameSlice';
@@ -21,17 +21,6 @@
 	import { onMount, onDestroy } from 'svelte';
 
 	import { readable } from 'svelte/store';
-
-	function redux2SvelteReadbale<T extends RootState, S>(reduxStore: Store, selector: (s: T) => S) {
-		return {
-			subscribe(fn: (data: S) => void) {
-				fn(selector(reduxStore.getState()));
-				return reduxStore.subscribe(() => {
-					fn(selector(reduxStore.getState()));
-				});
-			}
-		};
-	}
 
 	const dt = redux2SvelteReadbale<RootState, AnimationState>(store, (store) => store.animFrame);
 
