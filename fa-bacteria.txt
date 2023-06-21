@@ -1,0 +1,33 @@
+fa-bacteria
+fa-book-reader
+fa-book-open
+fa-broom
+fa-area-chart
+fa-line-chart
+fa-circle-pause
+fa-circle-play
+fa-dice
+fa-eraser
+fa-step-forward
+fa-cog
+fa-sliders
+fa-terminal
+fa-user
+fa-search
+fa-microscope
+fa-vial-virus
+fa-vial
+fa-spray-can
+fa-running
+fa-bolt-lightning
+fa-random
+
+fa-brands fa-docker
+fa-brands fa-ethereum
+fa-brands fa-facebook-f
+fa-brands fa-flipboard
+fa-brands fa-facebook
+fa-brands fa-github
+fa-brands fa-instagram
+fa-brands fa-r-project
+fa-brands fa-twitter

@@ -244,8 +244,8 @@
 		display: grid;
 
 		grid:
-			'stats stats stats'
-			'bar bar bar'
+			'stats  stats  stats'
+			'bar    bar    bar'
 			'canvas canvas canvas' 1fr
 			'canvas canvas canvas' 1fr
 			'canvas canvas canvas' 1fr
