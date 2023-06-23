@@ -1,33 +1,33 @@
 fa-bacteria
-fa-book-reader
-fa-book-open
-fa-broom
-fa-area-chart
-fa-line-chart
-fa-circle-pause
-fa-circle-play
-fa-dice
-fa-eraser
-fa-step-forward
+    fa-book-reader
+[x]    fa-book-open
+    fa-broom
+    fa-area-chart
+[x] fa-line-chart
+[x] fa-circle-pause
+[x] fa-circle-play
+[x] fa-dice
+[x] fa-eraser
+[x] fa-step-forward
 fa-cog
 fa-sliders
-fa-terminal
+[x] fa-terminal
 fa-user
 fa-search
-fa-microscope
+[x] fa-microscope
 fa-vial-virus
 fa-vial
-fa-spray-can
+[x] fa-spray-can
 fa-running
 fa-bolt-lightning
-fa-random
+[x] fa-random
 
 fa-brands fa-docker
 fa-brands fa-ethereum
 fa-brands fa-facebook-f
 fa-brands fa-flipboard
-fa-brands fa-facebook
-fa-brands fa-github
+[x] fa-brands fa-facebook
+[x] fa-brands fa-github
 fa-brands fa-instagram
 fa-brands fa-r-project
-fa-brands fa-twitter
+[x] fa-brands fa-twitter

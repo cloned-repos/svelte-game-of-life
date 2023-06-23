@@ -31,7 +31,7 @@ export function startAnimFrameDispatcher() {
 	};
 }
 
-export function redux2SvelteReadbale<T extends RootState, S>(
+export function redux2SvelteReadable<T extends RootState, S>(
 	reduxStore: EnhancedStore,
 	selector: (s: T) => S
 ) {
