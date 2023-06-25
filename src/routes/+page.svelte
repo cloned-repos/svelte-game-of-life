@@ -19,3 +19,5 @@
 		return cancel; // same as useEffect in react, can return a function
 	});
 </script>
+
+<span>PAGE</span>

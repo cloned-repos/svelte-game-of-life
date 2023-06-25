@@ -10,6 +10,6 @@
 	.me {
 		border: 4px darkgreen dashed;
 		width: 100%;
-		grid-area: --var(grid-pos);
+		grid-area: var(--grid-pos);
 	}
 </style>

@@ -1,0 +1,155 @@
+canvas
+
+fillText(text, x, y)
+fillText(text, x, y, maxWidth)
+
+// properties
+
+// general
+ctx.canvas (the canvas object)
+ctx.filter = "blur(4px)" accepts CSS values
+
+
+// colors
+
+ctx.fillStyle = "blue";
+ctx.strokeStyle =
+ctx.shadowColor = "red";
+
+// font
+ctx.font = "bold 48px serif"
+ctx.fontKerning  = "auto"|"normal"|"none"
+* ctx.fontStretch = "ultra-condensed" // same as css property "fontStretch"
+* ctx.fontVariantCaps = like CSS property "font-variant-caps"
+
+ctx.globalAlpha = alpha applied to shaped and drawings before they are committed to canvas
+ctx.globalCompositeOperation = "xor";
+ctx.imageSmoothingEnabled = false; // to retain pixelart when zooming
+ctx.imageSmoothingQuality = 
+ctx.lineCap = butt | round | square |
+ctx.lineDashOffset
+// ctx.ctx.setLineDash([4, 2]);
+ctx.lineJoin = round | bevel | miter
+ctx.lineWidth
+ctx.miterLimit (default value is 10.0)
+ctx.shadowBlur = 15
+ctx.shadowColor = "red";
+ctx.shadowOffsetX = 25;
+ctx.shadowOffsetY = 25;
+ctx.strokeStyle = "blue";
+
+
+
+
+// text
+ctx.fillText(text, x, y, maxWidth)
+ctx.stokeText()
+ctx.measureText(),
+ctx.textBaseline
+*ctx.textRendering = "small-caps"|"all-small-caps" 	auto | optimizeSpeed | optimizeLegibility | geometricPrecision"
+ctx.textAlign = "left";
+ctx.direction = "ltr";
+*ctx.wordSpacing = "10px";
+
+methods
+
+arc(x,y, radius, startAngle, endAngle, counterClockwise?);
+arcTo(x1, y1, x2, y2, radius)
+beginPath()... stroke()
+bezierCurveTo(cp1x, cp1y, cp2x, cp2y, x, y), 
+//  (x,y) = end point
+//  staring point is the last point of the previous graph operation (i.e. moveTo)
+clearRect(x,y, width, height); // i.e. use beginPath after clearRect
+clip(path)
+clip(fillRule)
+clip(path, fillRule);
+// fillRule = nonzero | evenodd 
+// path = path2D path (look ath instance method on how to construct a path)
+// aka path = new Path2D(path?|svg-path?)
+closePath()
+// draws a straight line from the current point to the beginning of the Path2D
+createConicGradient(startAngle, x, y) 
+// returns canvasGradient object where you can define
+// the gradient even further with "<canvasGradient instance>.addColorStop()" methods
+createImageData(width, height), //create empty imagedata object with "width" and "height"
+createImageData(width, height, settings) // settings has one property "colorSpace"
+createImageData(imagedata) // copyes ONLY the "width" and "height" of the imagedata object
+createLinearGradient(x0, y0, x1, y1) 
+// returns CanvasGradient object
+createPattern(image, repetition)
+// image is video, img, image(svg), canvas, imageBitmap, OffscreenCanvas, VideoFrame
+createRadialGradient(x0, y0, r0, x1, y1, r1)
+// return is CanvasGradient
+drawFocusIfNeeded(element) 
+// tag element to check if it is focused or not, then draw focus ring around given path
+drawFocusIfNeeded(path, element)
+// same as above but a path to draw 
+drawImage(image, dx, dy)
+drawImage(image, dx, dy, dWidth, dHeight)
+drawImage(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight)
+// image = img | svgImage |video | canvas | imageBitmap | OffscreenCanvas | VideoFrame
+ellipse(x, y, radiusX, radiusY, rotation, startAngle, endAngle)
+ellipse(x, y, radiusX, radiusY, rotation, startAngle, endAngle, counterclockwise)
+fill()
+fill(path)
+fill(fillRule)
+fill(path, fillRule)
+// fillRule = nonzero| evenodd
+fillRect(x, y, width, height)
+fillText(text, x, y)
+fillText(text, x, y, maxWidth)
+getContextAttributes()
+// returns object with { alpha, colorSpace, desynchronzed, willReadFrequently }
+getImageDate()
+getLineDash()
+getTransform()
+// returns DOMMatrix
+// DOMMatrix props = 
+// { is2D, isIdentity, m11-m14, m21-m24, m31-m34, m41-m44,
+//      a=m11,b=m12,c=m21,d=m22,e=m41,f=m42 --> 4x4 matrix without zeros
+//}
+*experimental: isContextLost()
+isPointInPath(x, y)
+isPointInPath(x, y, fillRule)
+isPointInPath(path, x, y)
+isPointInPath(path, x, y, fillRule)
+// is specified point contained in the current path
+
+isPointInStroke(x, y)
+isPointInStroke(path, x, y)
+// is specified point contained in the stroke path
+lineTo(x, y)
+measureText(text)
+// returns TextMetrics Object
+moveTo(x, y)
+putImageData(imageData, dx, dy)
+putImageData(imageData, dx, dy, dirtyX, dirtyY, dirtyWidth, dirtyHeight)
+quadraticCurveTo(cpx, cpy, x, y)
+rect(x, y, width, height)
+reset()
+resetTransform()
+restore()
+rotate(angle)
+roundRect(x, y, width, height, radii)
+save()
+scale(x, y)
+[experimental *] scrollPathIntoView()
+[experimental *] scrollPathIntoView(path)
+
+setLineDash(segments)
+setTransform(a, b, c, d, e, f)
+setTransform(matrix)
+stroke()
+stroke(path)
+strokeRect(x, y, width, height)
+strokeText(text, x, y)
+strokeText(text, x, y, maxWidth)
+transform(a, b, c, d, e, f)
+translate(x, y)
+
+
+
+
+
+
+
