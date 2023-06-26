@@ -31,3 +31,7 @@ fa-brands fa-flipboard
 fa-brands fa-instagram
 fa-brands fa-r-project
 [x] fa-brands fa-twitter
+
+
+Skeleton load animation with linear gradient
+https://codepen.io/viktorstrate/full/yoBRLy
