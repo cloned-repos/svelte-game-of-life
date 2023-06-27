@@ -20,4 +20,22 @@
 	});
 </script>
 
-<span>PAGE</span>
+<div class="wrapper">
+	<canvas class="me">Alt text</canvas>
+</div>
+
+<style>
+	.wrapper {
+		opacity: 0.5;
+		min-height: 0;
+		border: 4px solid brown;
+	}
+	.me {
+		min-height: 0; /* --> chrome needs this */
+		border: 4px solid yellow;
+		width: 100%;
+		height: 100%;
+		display: block;
+		position: relative;
+	}
+</style>

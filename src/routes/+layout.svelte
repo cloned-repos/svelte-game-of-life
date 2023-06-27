@@ -12,17 +12,10 @@
 
 <div class="outer-container">
 	<ButtonActionBar pos="button_action_bar" />
-
 	<SideBar pos="sidebar" />
 	<Status pos="status" />
 	<Statistics pos="statistics" />
-	<!--
-	<Statistics pos="statistics" />
-	<Status pos="status" />
-	-->
-	<!--
-		<slot />
-	-->
+	<slot />
 </div>
 
 <style>
