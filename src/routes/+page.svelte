@@ -12,6 +12,7 @@
 </script>
 
 <script lang="ts">
+	// dt is like a svelte "readonly" store,
 	const dt = redux2SvelteReadable<RootState, AnimationState>(store, (store) => store.animFrame);
 
 	onMount(() => {
@@ -21,6 +22,7 @@
 </script>
 
 <div class="wrapper">
+	<h3>{$dt}</h3>
 	<!--
 		On Canvas
 		from:
@@ -46,13 +48,12 @@
 		position: relative;
 		z-index: -1;
 	}
-
-	.skeleton {
+	/*.skeleton {
 		background-color: #ccc;
 		background-image: linear-gradient(90deg, #ddd 0px, #e8e8e8 40px, #ddd 80px);
 		background-size: 600px;
 		animation: shine-avatar 1.6s infinite linear;
-	}
+	}*/
 	@keyframes shine-lines {
 		0% {
 			background-position: -100px;
