@@ -19,7 +19,6 @@
     "@fontsource/fira-mono": "5.0.2",
     "@fontsource/lato": "5.0.3",
     "@fontsource/open-sans": "5.0.3",
-    "@mangos/debug": "0.0.9-alpha",
     "@playwright/test": "1.34.3",
     "@reduxjs/toolkit": "2.0.0-beta.0",
     "@sveltejs/adapter-auto": "2.1.0",
@@ -46,6 +45,6 @@
     "vitest": "0.31.4"
   },
   "dependencies": {
-    "@mangos/debug-frontend": "0.0.1-rc4"
+    "@mangos/debug-frontend": "0.0.3"
   }
 }

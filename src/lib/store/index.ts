@@ -1,6 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit';
 import animationFrameReducer, { animationFrameFired } from './animationFrameSlice';
 import type { EnhancedStore } from '@reduxjs/toolkit';
+import type { Readable } from 'svelte/store';
 
 export const store = configureStore({
 	reducer: {
@@ -45,5 +46,5 @@ export function redux2SvelteReadable<T extends RootState, S>(
 				fn(selector(reduxStore.getState()));
 			});
 		}
-	};
+	} as Readable<S>;
 }

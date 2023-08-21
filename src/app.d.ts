@@ -7,6 +7,11 @@ declare global {
 		// interface PageData {}
 		// interface Platform {}
 	}
+	namespace svelte.JSX {
+		interface HTMLProps<T> {
+			cresize?: (e: CustomEvent<{ width: number; height: number }>) => void;
+		}
+	}
 }
 
 export {};
