@@ -1,8 +1,22 @@
 <script lang="ts">
 	import oresize_action from './actions';
+	import type { CanvasInfomation } from './actions';
+	import createNS from '@mangos/debug-frontend';
 
-	function handleEvent(e: CustomEvent<{ width: number; height: number }>) {
-		console.info('event: %o', e.detail);
+	const debug = createNS('canvas-text');
+
+	function handleEvent(e: CustomEvent<CanvasInfomation>) {
+		const ctx = (e.target as HTMLCanvasElement).getContext('2d')!;
+
+		const text = '00:00';
+		ctx.fillStyle = 'black';
+		ctx.direction = 'ltr';
+		ctx.font = '12px system-ui';
+		ctx.textAlign = 'left';
+		const textMetric = ctx.measureText(text);
+		debug('canvas-size: %o', e.detail);
+		debug('text-metric: %o', textMetric);
+		ctx.textBaseline = 'alphabetic';
 	}
 </script>
 
@@ -11,10 +25,6 @@
 </div>
 
 <style>
-	.me {
-		border: 4px purple dashed;
-	}
-
 	canvas {
 		min-height: 0; /* --> chrome needs this */
 		width: 100%;

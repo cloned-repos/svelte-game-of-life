@@ -4,6 +4,10 @@
 	import ButtonActionBar from '$lib/components/ButtonActionBar/index.svelte';
 	import Status from '$lib/components/Status/index.svelte';
 	import SideBar from '$lib/components/SideBar/index.svelte';
+	import createNS, { register } from '@mangos/debug-frontend';
+	import createBackEndMock from './debug-backend';
+	register(createBackEndMock());
+	const debug = createNS('app');
 </script>
 
 <svelte:head>

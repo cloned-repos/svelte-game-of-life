@@ -29,13 +29,16 @@
 		opacity: 0.5;
 		min-height: 0;
 		border: 4px solid brown;
+		display: flex;
+		flex-direction: column;
 	}
 	.me {
 		min-height: 0; /* --> only chrome needs this (tested on chrome and firefox)  */
 		border: 4px solid yellow;
 		width: 100%;
-		height: 100%;
+		height: min-content;
 		display: block;
+		height: 100%;
 		/*position: relative;*/
 	}
 </style>
