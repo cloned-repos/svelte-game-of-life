@@ -1,16 +1,45 @@
 <script lang="ts">
-	import Chart from '../Chart/index.svelte';
+	import createNS from '@mangos/debug-frontend';
+	import type { Readable } from 'svelte/motion';
+	import { createCanvasStore, createObserverForCanvas } from '$lib/store/canvas-resize-readable';
+	import type { ReadableCanvasStore } from '$lib/store/canvas-resize-readable';
+	import { onMount } from 'svelte';
+
+	// const inits
+	const debug = createNS('statistics/index.svelte');
+	//exports
 	export let pos: string;
+
+	//local
+	let internal: HTMLCanvasElement | null = null;
+	let store: ReadableCanvasStore;
+	let width = 'n/a';
+	onMount(() => {
+		debug('on mount');
+		debug('svelte canvas ref has value %o', internal);
+		const fnList: never[] = [];
+		const disposeObserver = createObserverForCanvas(internal!, fnList);
+		store = createCanvasStore(internal!, fnList);
+		return () => {
+			disposeObserver();
+		};
+	});
+	$: {
+		internal;
+		debug('internal is %o', internal);
+		width = !!internal ? getComputedStyle(internal)?.width : '2-na';
+	}
+	debug('roundWidth on renderloop(?) %s', typeof width);
 </script>
 
 <div style="--grid-pos: {pos}" class="me">
-	<span>Statistics</span>
-	<Chart class="me2">Some alt text</Chart>
+	<span>Statistics {width} {debug('rendering span?')}</span>
+	<canvas bind:this={internal} class={$$props.class}> {debug('rendering canvas?')}</canvas>
 </div>
 
 <style>
 	.me {
-		height: 100px;
+		height: 150px;
 		border: 4px darkkhaki dashed;
 		width: 100%;
 		grid-area: var(--grid-pos);
@@ -18,14 +47,10 @@
 		flex-direction: column;
 	}
 
-	:global(.me2) {
-		border: 4px red solid;
-		/*width: 100%;*/
-		/*flex-basis: 200px;*/
-		/*flex-grow: 1;*/
-		justify-self: stretch;
-		display: block;
-		height: auto;
-		min-height: 0;
+	canvas {
+		min-height: 0; /* --> chrome needs this */
+		width: 100%;
+		height: 100%;
+		align-self: stretch;
 	}
 </style>

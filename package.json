@@ -45,6 +45,6 @@
     "vitest": "0.31.4"
   },
   "dependencies": {
-    "@mangos/debug-frontend": "0.0.3"
+    "@mangos/debug-frontend": "0.0.4"
   }
 }

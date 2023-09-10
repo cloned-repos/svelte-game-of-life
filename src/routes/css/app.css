@@ -2,8 +2,8 @@
 @import '@fontsource/open-sans';
 @import '@fontsource/lato';
 @import '@easyfonts/league-junction-typeface';
-@import '@easyfonts/font-awesome-v6';
-
+/*@import '@easyfonts/font-awesome-v6';
+*/
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
