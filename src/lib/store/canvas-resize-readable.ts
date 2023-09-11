@@ -1,7 +1,8 @@
 import type { Readable } from 'svelte/store';
 import createNS from '@mangos/debug-frontend';
 
-const debug = createNS('canvas-resize-observable');
+const debugStore = createNS('canvas-resize-observable/store');
+const debugObd = createNS('canvas-resize-observable/observable');
 
 export type CanvasInfomation = {
 	physicalPixelHeight: number;
@@ -34,6 +35,7 @@ export function createCanvasStore(
 			if (fnList.indexOf(fn) > -1) {
 				throw new Error('already registered');
 			}
+			debugStore('passing state to store on initial subscribe [%o]', state);
 			fn(state);
 			fnList.push(fn);
 			return () => {
@@ -54,7 +56,7 @@ export function createObserverForCanvas(
 ) {
 	const observer = new ResizeObserver((entries) => {
 		if (entries.length !== 1) {
-			debug('[%s] there is not exactly 1 entry: %d', entries.length);
+			debugObd('[%s] there is not exactly 1 entry: %d', entries.length);
 			return;
 		}
 		const entry = entries[0]; // it's always there
@@ -66,6 +68,7 @@ export function createObserverForCanvas(
 		target.width = physicalPixelWidth;
 		target.height = physicalPixelHeight;
 		const state = { physicalPixelWidth, physicalPixelHeight, height, width };
+		debugObd('Observable passing state to store: [%o]', state);
 		fnList.forEach((fn) => fn(state));
 	});
 

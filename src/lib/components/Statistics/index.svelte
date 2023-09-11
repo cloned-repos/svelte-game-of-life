@@ -6,6 +6,7 @@
 
 	// const inits
 	const debug = createNS('statistics/index.svelte');
+	const debugMount = createNS('statistics/index.svelte/onMount');
 	//exports
 	export let pos: string;
 
@@ -14,20 +15,21 @@
 	let store: ReadableCanvasStore;
 	let width = 'n/a';
 	onMount(() => {
-		debug('on mount');
-		debug('svelte canvas ref has value %o', internal);
+		debugMount('on mount');
+		debugMount('svelte canvas ref has value %o', internal);
 		const fnList: never[] = [];
 		const disposeObserver = createObserverForCanvas(internal!, fnList);
 		store = createCanvasStore(internal!, fnList);
 		return () => {
+			debugMount('destroy function called');
 			disposeObserver();
 		};
 	});
-	$: {
-		internal;
-		debug('internal is %o', internal);
-		width = !!internal ? getComputedStyle(internal)?.width : '2-na';
-	}
+	// $: {
+	// 	internal;
+	// 	debug('internal is %o', internal);
+	// 	width = !!internal ? getComputedStyle(internal)?.width : '2-na';
+	// }
 	debug('roundWidth on renderloop(?) %s', typeof width);
 </script>
 
