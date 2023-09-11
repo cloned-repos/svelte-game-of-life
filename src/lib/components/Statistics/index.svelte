@@ -1,6 +1,5 @@
 <script lang="ts">
 	import createNS from '@mangos/debug-frontend';
-	import type { Readable } from 'svelte/motion';
 	import { createCanvasStore, createObserverForCanvas } from '$lib/store/canvas-resize-readable';
 	import type { ReadableCanvasStore } from '$lib/store/canvas-resize-readable';
 	import { onMount } from 'svelte';
@@ -33,7 +32,11 @@
 </script>
 
 <div style="--grid-pos: {pos}" class="me">
-	<span>Statistics {width} {debug('rendering span?')}</span>
+	<span
+		>Statistics {$store?.physicalPixelWidth}
+		{$store?.physicalPixelHeight}
+		{(debug('rendering span?'), width)}</span
+	>
 	<canvas bind:this={internal} class={$$props.class}> {debug('rendering canvas?')}</canvas>
 </div>
 
