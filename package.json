@@ -14,8 +14,8 @@
     "format": "prettier --plugin-search-dir . --write ."
   },
   "devDependencies": {
-    "@easyfonts/font-awesome-v6": "6.0.1",
-    "@easyfonts/league-junction-typeface": "1.0.2",
+    "@easyfonts/font-awesome-v6": "6.0.2",
+    "@easyfonts/league-junction-typeface": "1.0.3",
     "@fontsource/fira-mono": "5.0.2",
     "@fontsource/lato": "5.0.3",
     "@fontsource/open-sans": "5.0.3",

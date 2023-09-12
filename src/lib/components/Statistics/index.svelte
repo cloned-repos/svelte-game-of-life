@@ -35,7 +35,7 @@
 	<span
 		>Statistics {$store?.physicalPixelWidth}
 		{$store?.physicalPixelHeight}
-		{(debug('rendering span?'), width)}</span
+		{(debug('rendering span?'), width)} <span class="fa fa-battery-3" /></span
 	>
 	<canvas bind:this={internal} class={$$props.class}> {debug('rendering canvas?')}</canvas>
 </div>
