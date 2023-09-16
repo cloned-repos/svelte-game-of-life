@@ -3,10 +3,21 @@
 	import { createCanvasStore, createObserverForCanvas } from '$lib/store/canvas-resize-readable';
 	import type { ReadableCanvasStore } from '$lib/store/canvas-resize-readable';
 	import { onMount } from 'svelte';
+	import opentype from 'opentype.js';
 
+	import fontUrl from '../../../../node_modules/@easyfonts/league-junction-typeface/junction-regular.woff';
+
+	fetch(fontUrl)
+		.then((response) => response.arrayBuffer())
+		.then((bin) => {
+			const fontInfo = opentype.parse(bin);
+			debug('fontinfo: %o', fontInfo);
+		});
 	// const inits
 	const debug = createNS('statistics/index.svelte');
 	const debugMount = createNS('statistics/index.svelte/onMount');
+
+	debug('junction-regular-font "font" is %s', fontUrl);
 	//exports
 	export let pos: string;
 
@@ -20,6 +31,15 @@
 		const fnList: never[] = [];
 		const disposeObserver = createObserverForCanvas(internal!, fnList);
 		store = createCanvasStore(internal!, fnList);
+
+		const ctx = internal!.getContext('2d');
+		if (ctx) {
+			ctx.font = '100px Junction';
+			ctx.textBaseline = 'alphabetic';
+			const metrics = ctx.measureText('M');
+			debug('text Metrics: %o', metrics);
+		}
+
 		return () => {
 			debugMount('destroy function called');
 			disposeObserver();
@@ -30,6 +50,7 @@
 	// 	debug('internal is %o', internal);
 	// 	width = !!internal ? getComputedStyle(internal)?.width : '2-na';
 	// }
+
 	debug('roundWidth on renderloop(?) %s', typeof width);
 </script>
 

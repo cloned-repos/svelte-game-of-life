@@ -17,6 +17,9 @@ export type GridOperationalMetrics = {
 	died: number;
 	birth: number;
 	checked: number;
+	lastFired: number;
+	count: number;
+	dt: number;
 };
 
 const initialState: GridOperationalMetrics = {
@@ -31,7 +34,10 @@ const initialState: GridOperationalMetrics = {
 	survived: 0,
 	died: 0,
 	birth: 0,
-	checked: 0
+	checked: 0,
+	lastFired: 0,
+	count: 0,
+	dt: 0
 };
 /**
  * 

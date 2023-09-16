@@ -22,7 +22,7 @@ export function startAnimFrameDispatcher() {
 			cancelAnimationFrame(nextAnimationFrame);
 			return;
 		}
-		store.dispatch(animationFrameFired(ts));
+		//store.dispatch(animationFrameFired(ts));
 		nextAnimationFrame = requestAnimationFrame(run);
 	}
 	return () => {
@@ -35,8 +35,8 @@ export function redux2SvelteReadable<T extends RootState, S>(
 	reduxStore: EnhancedStore,
 	selector: (s: T) => S
 ) {
-	// this is the svelte store contract, 
-	// optionally: "set" method (to set the value) 
+	// this is the svelte store contract,
+	// optionally: "set" method (to set the value)
 	// because there is no set, it is like a "readlonly"
 	// import { readonly } from 'svelte/store'
 	return {
