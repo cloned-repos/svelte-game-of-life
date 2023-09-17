@@ -10,10 +10,6 @@
 	const debug = createNS('app');
 </script>
 
-<svelte:head>
-	<title>Svelte Game of Life</title>
-</svelte:head>
-
 <div class="outer-container">
 	<ButtonActionBar pos="button_action_bar" />
 	<SideBar pos="sidebar" />
