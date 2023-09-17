@@ -69,7 +69,7 @@ export function createObserverForCanvas(
 		target.height = physicalPixelHeight;
 		const state = { physicalPixelWidth, physicalPixelHeight, height, width };
 		debugObd('Observable passing state to store: [%o]', state);
-		fnList.forEach((fn) => fn(state));
+		fnList.forEach((fn) => fn.call(target, state));
 	});
 
 	observer.observe(canvas, { box: 'device-pixel-content-box' });

@@ -13,6 +13,31 @@
 
 <body data-sveltekit-preload-data="hover">
 	<div style="display: contents">%sveltekit.body%</div>
+	<script>
+		console.log('checking font loading');
+		const t0 = Date.now();
+
+		document.fonts.load('700 100px Junction').then(([fontData]) => {
+			console.log('font loadedf %s is %s', fontData.weight + '/' + fontData.family, fontData.status);
+		})
+
+		/*document.fonts.ready.then((ffs) => {
+			const tx = Date.now() - t0;
+			console.log('all fonts loaded ms=%s', tx, ffs);
+		});*/
+		let t1 = 0;
+		document.fonts.addEventListener("loading", (event) => {
+			t1 = Date.now();
+			console.log('%c font loading start', 'color:red');
+		});
+
+
+
+		document.fonts.addEventListener("loadingdone", (event) => {
+			t2 = Date.now() - t1;
+			console.log('%c font loading end ms=[%s]', 'color:red', t2);
+		});
+	</script>
 </body>
 
 </html>
