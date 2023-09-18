@@ -1,5 +1,8 @@
 <!-- runs on client and potentially on server -->
 <script context="module" lang="ts">
+	import font_bold from '../../node_modules/@easyfonts/league-junction-typeface/junction-bold.woff';
+	import font_regular from '../../node_modules/@easyfonts/league-junction-typeface/junction-regular.woff';
+	import font_light from '../../node_modules/@easyfonts/league-junction-typeface/junction-light.woff';
 	import Statistics from '$lib/components/Statistics/index.svelte';
 	import ButtonActionBar from '$lib/components/ButtonActionBar/index.svelte';
 	import Status from '$lib/components/Status/index.svelte';
@@ -9,6 +12,12 @@
 	register(createBackEndMock());
 	const debug = createNS('app');
 </script>
+
+<svelte:head>
+	<link rel="preload" href={font_bold} as="font" type="font/woff" />
+	<link rel="preload" href={font_regular} as="font" type="font/woff" />
+	<link rel="preload" href={font_light} as="font" type="font/woff" />
+</svelte:head>
 
 <div class="outer-container">
 	<ButtonActionBar pos="button_action_bar" />
