@@ -21,7 +21,7 @@
 
 <div class="wrapper">
 	{JSON.stringify($frame)}
-	<canvas class="me">Alt text</canvas>
+	<canvas class="me" />
 </div>
 
 <style>

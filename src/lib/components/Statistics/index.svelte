@@ -20,6 +20,8 @@
 
 	const fnList: never[] = [];
 
+	const { trunc, random } = Math;
+
 	//debug('text metrics: junction-regular-font "font" is %s', fontUrl);
 	//exports
 	export let pos: string;
@@ -198,14 +200,14 @@
 <div style="--grid-pos: {pos}" class="me">
 	Statistics
 	<ul>
-		<li>physical-width: {$store?.physicalPixelWidth}</li>
-		<li>physical-height: {$store?.physicalPixelHeight}</li>
-		<li>width: {$store?.width}</li>
-		<li>height: {$store?.height}</li>
+		<li>physical-width: {$store?.physicalPixelWidth ?? trunc(random() * 1e3)}</li>
+		<li>physical-height: {$store?.physicalPixelHeight ?? trunc(random() * 1e3)}</li>
+		<li>width: {$store?.width ?? trunc(random() * 1e3)}</li>
+		<li>height: {$store?.height ?? trunc(random() * 1e3)}</li>
 		<li><span class="fa fa-battery-3" /></li>
 		<li>{(debug('rendering ul > li'), width)}</li>
 	</ul>
-	<canvas bind:this={internal} class={$$props.class}> {debug('rendering canvas?')}</canvas>
+	<canvas bind:this={internal} class={$$props.class}>{debug('rendering canvas?') || ''}</canvas>
 </div>
 
 <style>
