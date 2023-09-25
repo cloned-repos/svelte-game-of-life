@@ -132,8 +132,13 @@ export default function line_chart(
 
 	return {
 		update: (newOptions: ChartOptions) => {
+			if (newOptions.font && newOptions.font !== internalState.font) {
+				queue.push(createCommand('font-check', newOptions.font));
+				processCommands(node, internalState, queue, 0);
+			}
 			//generateCommands, new data, change font, other things
 			//processCommands
+
 			debugAction('options update received');
 		},
 		destroy: () => {

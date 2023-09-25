@@ -7,7 +7,8 @@ import type {
 	LineChartCommands
 } from './types';
 import { createCommand } from './types';
-import { processCommandFontCheck } from './process-font-check';
+import processCommandFontCheck from './process-font-check';
+import processCommandFontLoading from './process-font-loading';
 
 const debug = createNS('process-commands');
 
@@ -18,55 +19,30 @@ export default function processCommands(
 	offset = 0
 ): void {
 	debug('queue is currently: %s', JSON.stringify(queue));
-	const command = queue[offset];
-	if (!command) {
-		debug('queue processing done: %o', queue);
+	if (queue[offset] === undefined) {
+		debug('queue processing done for now: %o', queue);
 		return;
 	}
-
-	if (command.type === 'font-check') {
-		queue.shift();
-		return processCommandFontCheck(canvas, command.payload, queue, internalState);
+	// process all font-checks, kick off font loading at the soonest (this this takes time)
+	let i = offset;
+	while (i < queue.length) {
+		const command = queue[i];
+		if (command.type === 'font-check') {
+			queue.splice(i, 1);
+			return processCommandFontCheck(canvas, command.payload, queue, internalState);
+		}
+		i++;
 	}
 
-	if (command.type === 'font-loading') {
-		// try to reconcile with a font-loaded or font-load-error
-		const length = queue.length;
-		let reconcile: CheckFontLoadErrorCommand | CheckFontLoadedCommand | undefined = undefined;
-		for (let i = offset + 1; i < queue.length; i++) {
-			const fle = queue[i];
-			if (fle.type === 'font-loaded' || fle.type === 'font-load-error') {
-				const fontSH = fle.type === 'font-loaded' ? fle.payload : fle.payload.font;
-				reconcile = fle;
-				if (fontSH === command.payload) {
-					queue.splice(i, 1);
-					queue.splice(offset, 1);
-					break;
-				}
-			}
+	// process all font loading
+	i = offset;
+	while (i < queue.length) {
+		const command = queue[i];
+		if (command.type === 'font-loading') {
+			i = processCommandFontLoading(i, queue, internalState);
+			continue;
 		}
-		const delta = length === queue.length ? 1 : 0;
-		let i = offset + delta;
-		for (; i < queue.length; i++) {
-			if (queue[i].type === 'font-loading') {
-				break;
-			}
-		}
-		if (i >= queue.length && reconcile) {
-			if (reconcile!.type === 'font-loaded') {
-				internalState.font = command.payload;
-				internalState.lastFontLoadError = null;
-				queue.push(createCommand('render'));
-			} else {
-				internalState.lastFontLoadError = {
-					font: reconcile!.payload.font,
-					ts: new Date().toISOString(),
-					error: reconcile!.payload.error
-				};
-				internalState.font = '';
-			}
-		}
-		return processCommands(canvas, internalState, queue, offset + delta);
+		i++;
 	}
 
 	// clean up all chart resize command except the last one
@@ -111,4 +87,5 @@ export default function processCommands(
 		}
 	}
 	debug('**queue is currently: %s', JSON.stringify(queue));
+	debug('**internal state is currently: %o', JSON.stringify(internalState));
 }

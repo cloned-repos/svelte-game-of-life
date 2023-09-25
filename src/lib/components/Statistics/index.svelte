@@ -2,7 +2,7 @@
 	import createNS from '@mangos/debug-frontend';
 	import { onMount } from 'svelte';
 	import line_chart from '$lib/charts/line-chart/action';
-	import type { CanvasSizeInfomation } from '$lib/charts/line-chart/types';
+	import type { CanvasSizeInfomation, ChartOptions } from '$lib/charts/line-chart/types';
 
 	// const inits
 	const debug = createNS('statistics/index.svelte');
@@ -171,6 +171,16 @@
 			debugMount('destroy function called');
 		};
 	});
+
+	let inputValue: string;
+	let chartProps: ChartOptions = { data: null, font: '700 14px Junction' };
+	function handleInputChange(e: Event) {
+		inputValue = (e.target as HTMLInputElement).value;
+	}
+
+	function setFontSHValue(e: Event) {
+		chartProps = { data: null, font: inputValue.trim() };
+	}
 </script>
 
 <div style="--grid-pos: {pos}" class="me">
@@ -183,10 +193,10 @@
 		<li><span class="fa fa-battery-3" /></li>
 		<li>{(debug('rendering ul > li'), width)}</li>
 	</ul>
-	<canvas
-		use:line_chart={{ data: null, font: '700 14px Junction' }}
-		class={$$props.class}
-		on:chart-resize={resizeNotification}>{(debug('rendering canvas?'), '')}</canvas
+	<input type="text" on:input={handleInputChange} bind:value={inputValue} />
+	<input type="button" value="set font shorthand" on:click={setFontSHValue} />
+	<canvas use:line_chart={chartProps} class={$$props.class} on:chart-resize={resizeNotification}
+		>{(debug('rendering canvas?'), '')}</canvas
 	>
 </div>
 

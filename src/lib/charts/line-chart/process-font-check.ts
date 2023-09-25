@@ -3,7 +3,7 @@ import { createCommand } from './types';
 
 import processCommands from './process-commands';
 
-export function processCommandFontCheck(
+export default function processCommandFontCheck(
 	canvas: HTMLCanvasElement,
 	fontSH: string,
 	queue: LineChartCommands[],
@@ -30,10 +30,9 @@ export function processCommandFontCheck(
 				})
 				.catch((error) => {
 					queue.push(createCommand('font-load-error', { font: fontSH, error }));
-					return processCommands(canvas, internalstate, queue);
 				});
 		}
-		return;
+		return processCommands(canvas, internalstate, queue);
 	} catch (error) {
 		queue.push(createCommand('font-load-error', { font: fontSH, error: error as DOMException }));
 		return processCommands(canvas, internalstate, queue);
