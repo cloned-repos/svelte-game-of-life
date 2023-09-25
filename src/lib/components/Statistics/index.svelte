@@ -1,34 +1,19 @@
 <script lang="ts">
 	import createNS from '@mangos/debug-frontend';
-	import { createCanvasStore, createObserverForCanvas } from '$lib/store/canvas-resize-readable';
-	import type { CanvasInfomation, ReadableCanvasStore } from '$lib/store/canvas-resize-readable';
 	import { onMount } from 'svelte';
-	import opentype from 'opentype.js';
+	import line_chart from '$lib/charts/line-chart/action';
+	import type { CanvasSizeInfomation } from '$lib/charts/line-chart/types';
 
-	//import fontUrl from '../../../../node_modules/@easyfonts/league-junction-typeface/junction-light.woff';
-	import { base } from '$app/paths';
-
-	/*fetch(fontUrl)
-		.then((response) => response.arrayBuffer())
-		.then((bin) => {
-			const fontInfo = opentype.parse(bin);
-			debug('text metrics, fontinfo: %o', fontInfo);
-		});*/
 	// const inits
 	const debug = createNS('statistics/index.svelte');
 	const debugMount = createNS('statistics/index.svelte/onMount');
 
-	const fnList: never[] = [];
-
 	const { trunc, random } = Math;
 
-	//debug('text metrics: junction-regular-font "font" is %s', fontUrl);
-	//exports
 	export let pos: string;
 
 	//local
 	let internal: HTMLCanvasElement | null = null;
-	let store: ReadableCanvasStore;
 	let width = 'n/a';
 
 	function metricsFrom(
@@ -45,25 +30,25 @@
 		return metrics;
 	}
 
+	let state: CanvasSizeInfomation;
+
+	function resizeNotification(event: CustomEvent<CanvasSizeInfomation>) {
+		state = event.detail;
+	}
+
 	onMount(() => {
 		debugMount('on mount');
-		debugMount('svelte canvas ref has value %o', internal);
 
-		const disposeObserver = createObserverForCanvas(internal!, fnList);
-		store = createCanvasStore(internal!, fnList);
-
-		let unsub: () => void;
-		let fontLoaded = 0;
-
-		unsub = store.subscribe(function somefn(this: HTMLCanvasElement, state: CanvasInfomation) {
+		/*unsub = store.subscribe(function somefn(this: HTMLCanvasElement, state: CanvasInfomation) {
 			if (!this) {
 				return;
 			}
+			const fontShortHand = '400 14px Junction';
 			debug('sub callback', fontLoaded);
 			if (fontLoaded === 0) {
 				debug('loading font');
 				fontLoaded = 1;
-				document.fonts.load('400 14px Junction').then(([fontData]) => {
+				document.fonts.load(fontShortHand).then(([fontData]) => {
 					debug('font loaded', fontData.weight);
 					fontLoaded = 2;
 					somefn.call(this, state);
@@ -74,7 +59,7 @@
 				return;
 			}
 			const ctx = this.getContext('2d')!;
-			const font = '400 14px Junction';
+			const font = fontShortHand;
 			const text = 'MÊ|&T{Qszdcy'; //MÊ|²{Qszdcy
 			const topMetrics = metricsFrom(font, text, 'top', ctx);
 			const middleMetrics = metricsFrom(font, text, 'middle', ctx);
@@ -123,7 +108,7 @@
 			ctx.fillText(text, offsetX, baseLineY);
 			ctx.restore();
 			// draw the text metrics guides
-			return;
+
 			ctx.save();
 			ctx.lineWidth = 1;
 			// baseline
@@ -181,33 +166,28 @@
 			// restore everything
 			ctx.restore();
 		});
-
+*/
 		return () => {
 			debugMount('destroy function called');
-			disposeObserver();
-			unsub && unsub();
 		};
 	});
-	// $: {
-	// 	internal;
-	// 	debug('internal is %o', internal);
-	// 	width = !!internal ? getComputedStyle(internal)?.width : '2-na';
-	// }
-
-	debug('roundWidth on renderloop(?) %s', typeof width);
 </script>
 
 <div style="--grid-pos: {pos}" class="me">
 	Statistics
 	<ul>
-		<li>physical-width: {$store?.physicalPixelWidth ?? trunc(random() * 1e3)}</li>
-		<li>physical-height: {$store?.physicalPixelHeight ?? trunc(random() * 1e3)}</li>
-		<li>width: {$store?.width ?? trunc(random() * 1e3)}</li>
-		<li>height: {$store?.height ?? trunc(random() * 1e3)}</li>
+		<li>physical-width: {state?.physicalPixelWidth}</li>
+		<li>physical-height: {state?.physicalPixelHeight}</li>
+		<li>width: {state?.width}</li>
+		<li>height: {state?.height}</li>
 		<li><span class="fa fa-battery-3" /></li>
 		<li>{(debug('rendering ul > li'), width)}</li>
 	</ul>
-	<canvas bind:this={internal} class={$$props.class}>{debug('rendering canvas?') || ''}</canvas>
+	<canvas
+		use:line_chart={{ data: null, font: '700 14px Junction' }}
+		class={$$props.class}
+		on:chart-resize={resizeNotification}>{(debug('rendering canvas?'), '')}</canvas
+	>
 </div>
 
 <style>
@@ -218,6 +198,7 @@
 		grid-area: var(--grid-pos);
 		display: flex;
 		flex-direction: column;
+		resize: both;
 	}
 
 	canvas {
@@ -225,5 +206,6 @@
 		width: 100%;
 		height: 100%;
 		align-self: stretch;
+		image-rendering: crisp-edges;
 	}
 </style>
