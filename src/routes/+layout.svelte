@@ -11,12 +11,16 @@
 	import createBackEndMock from './debug-backend';
 	register(createBackEndMock());
 	const debug = createNS('app');
+	import './css/app.css';
+	import '@easyfonts/font-awesome-v6/solid.css';
+	import '@easyfonts/font-awesome-v6/defs.css';
+	import '@easyfonts/league-junction-typeface';
 </script>
 
 <svelte:head>
-	<link rel="preload" href={font_bold} as="font" type="font/woff" />
-	<link rel="preload" href={font_regular} as="font" type="font/woff" />
-	<link rel="preload" href={font_light} as="font" type="font/woff" />
+	<link rel="preload" href={font_bold} as="font" type="font/woff" crossorigin="true" />
+	<link rel="preload" href={font_regular} as="font" type="font/woff" crossorigin="true" />
+	<link rel="preload" href={font_light} as="font" type="font/woff" crossorigin="true" />
 </svelte:head>
 
 <div class="outer-container">
@@ -28,8 +32,6 @@
 </div>
 
 <style>
-	@import './css/app.css';
-
 	:global(.outer-container) {
 		width: 100%;
 		height: 100%;

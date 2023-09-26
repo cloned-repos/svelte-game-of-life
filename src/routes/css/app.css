@@ -1,8 +1,6 @@
 /*@import '@fontsource/fira-mono';*/
-@import '@fontsource/open-sans';
-@import '@fontsource/lato';
-@import '@easyfonts/league-junction-typeface';
-@import '@easyfonts/font-awesome-v6';
+/*@import '@fontsource/open-sans';*/
+/*@import '@fontsource/lato';*/
 
 @tailwind base;
 @tailwind components;
