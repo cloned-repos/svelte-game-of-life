@@ -88,4 +88,5 @@ export default function processCommands(
 	}
 	debug('**queue is currently: %s', JSON.stringify(queue));
 	debug('**internal state is currently: %o', JSON.stringify(internalState));
+	// render chart data here
 }

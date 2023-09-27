@@ -3,6 +3,7 @@ import type { ActionReturn } from 'svelte/action';
 import createNS from '@mangos/debug-frontend';
 //
 import { createCommand } from './types';
+import { getDefaultAxis } from './helpers';
 
 import type {
 	LineChartCommands,
@@ -102,13 +103,13 @@ interface ChartAttributes {
 }
 
 export default function line_chart(
-	node: HTMLCanvasElement,
+	canvas: HTMLCanvasElement,
 	options: ChartOptions
 ): ActionReturn<ChartOptions, ChartAttributes> {
 	const fnList: ((ci: CanvasSizeInfomation) => void)[] = [];
 	const queue: LineChartCommands[] = [];
-	const destroyObserver = createObserverForCanvas(node, fnList);
-	const store = createCanvasStore(node, fnList);
+	const destroyObserver = createObserverForCanvas(canvas, fnList);
+	const store = createCanvasStore(canvas, fnList);
 
 	// push this command now, because "store.subscribe" will fire off a render
 	if (options.font) {
@@ -120,21 +121,23 @@ export default function line_chart(
 		lastFontLoadError: null,
 		// https://html.spec.whatwg.org/multipage/canvas.html#2dcontext
 		//  '10px sans-serif' is the default for canvas
-		font: options.font || '10px sans-serif'
+		font: options.font || '10px sans-serif',
+		xAxis: getDefaultAxis(),
+		yAxis: getDefaultAxis()
 	};
 
 	const disposeSubscription = store.subscribe((state) => {
 		debugAction('dispatching resize event: %o', state);
 		processChartResize(internalState, state, queue);
-		processCommands(node, internalState, queue, 0);
-		node.dispatchEvent(new CustomEvent('chart-resize', { detail: state }));
+		processCommands(canvas, internalState, queue, 0);
+		canvas.dispatchEvent(new CustomEvent('chart-resize', { detail: state }));
 	});
 
 	return {
 		update: (newOptions: ChartOptions) => {
 			if (newOptions.font && newOptions.font !== internalState.font) {
 				queue.push(createCommand('font-check', newOptions.font));
-				processCommands(node, internalState, queue, 0);
+				processCommands(canvas, internalState, queue, 0);
 			}
 			//generateCommands, new data, change font, other things
 			//processCommands

@@ -66,12 +66,36 @@ export function createCommand<
 
 export type ChartOptions = {
 	font?: string; // font shorthand
+	xAxis?: Axis;
+	yAxis?: Axis;
 	data: any;
+};
+
+export type LengthPercentage = string | number;
+
+export type MinMax = {
+	collapseVisibility?: boolean;
+	min?: LengthPercentage;
+	max: LengthPercentage;
+};
+
+export type Axis = {
+	label?: {
+		// same font family as the font shirthand but different size
+		fontSize: number | MinMax;
+	};
+	// if the yaxis font "descent" would overlap the x-axis label with this value then:
+	// 1. x-labels are not drawn
+	// or
+	// 2. y-labels are not drawn
+	tickSize?: number | MinMax;
 };
 
 export type ChartInternalState = {
 	size: CanvasSizeInfomation;
 	font: string; // font shortHand
+	xAxis: Axis;
+	yAxis: Axis;
 	lastFontLoadError: null | {
 		ts: string; // ISO date when the error happened
 		error: DOMException; // the Error from the browser

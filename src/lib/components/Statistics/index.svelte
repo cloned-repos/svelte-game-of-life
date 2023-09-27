@@ -173,7 +173,7 @@
 	});
 
 	let inputValue: string;
-	let chartProps: ChartOptions = { data: null, font: '700 14px Junction' };
+	let chartProps: ChartOptions = { data: null, font: 'menu' };
 	function handleInputChange(e: Event) {
 		inputValue = (e.target as HTMLInputElement).value;
 	}
