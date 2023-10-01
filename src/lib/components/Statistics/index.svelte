@@ -43,7 +43,7 @@
 	</ul>
 	<input type="text" on:input={handleInputChange} bind:value={inputValue} />
 	<input type="button" value="set font shorthand" on:click={setFontSHValue} />
-	<canvas use:line_chart={chartProps} class={$$props.class} on:chart-resize={resizeNotification}
+	<canvas use:line_chart={chartProps} on:chart-resize={resizeNotification}
 		>{(debug('rendering canvas?'), '')}</canvas
 	>
 </div>
@@ -56,6 +56,7 @@
 		grid-area: var(--grid-pos);
 		display: flex;
 		flex-direction: column;
+		overflow: hidden; /* otherwise resize not work */
 		resize: both;
 	}
 
