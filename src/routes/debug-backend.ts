@@ -6,6 +6,9 @@ export default function createBackEndMock() {
 			console.info(namespace + ', ' + formatter, ...args);
 		},
 		isEnabled(_namespace: string) {
+			if (_namespace === 'helper.ts/getfontMetrics') {
+				return false;
+			}
 			return true;
 		}
 	});

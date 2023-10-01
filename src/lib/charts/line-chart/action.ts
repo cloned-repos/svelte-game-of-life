@@ -3,7 +3,7 @@ import type { ActionReturn } from 'svelte/action';
 import createNS from '@mangos/debug-frontend';
 //
 import { createCommand } from './types';
-import { getDefaultAxis } from './helpers';
+import { getDefaultAxis, createFontShortHand, fontEquals } from './helpers';
 
 import type {
 	LineChartCommands,
@@ -41,8 +41,8 @@ function createObserverForCanvas(
 		const height = entry.borderBoxSize[0].blockSize;
 		const width = entry.borderBoxSize[0].inlineSize;
 		const target: HTMLCanvasElement = entry.target as HTMLCanvasElement;
-		target.width = width; //physicalPixelWidth;
-		target.height = height; //physicalPixelHeight;
+		target.width = physicalPixelWidth; //physicalPixelWidth;
+		target.height = physicalPixelHeight; //physicalPixelHeight;
 		const state = { physicalPixelWidth, physicalPixelHeight, height, width };
 		fnList.forEach((fn) => fn.call(target, state));
 	});
@@ -110,18 +110,31 @@ export default function line_chart(
 	const queue: LineChartCommands[] = [];
 	const destroyObserver = createObserverForCanvas(canvas, fnList);
 	const store = createCanvasStore(canvas, fnList);
+	const renderCTX = canvas.getContext('2d');
 
 	// push this command now, because "store.subscribe" will fire off a render
-	if (options.font) {
-		queue.push(createCommand('font-check', options.font));
+	const fontSH = createFontShortHand(options.font);
+	// fire up font check/load in parallel
+	if (fontSH) {
+		queue.push(createCommand('font-check', fontSH));
 	}
 
+	const ctx = canvas.getContext('2d', {
+		desynchronized: true,
+		willReadFrequently: true,
+		alpha: true
+	});
+	if (!ctx) {
+		throw new Error('could not create 2d rendering context for canvas');
+	}
 	const internalState: ChartInternalState = {
+		ctx,
 		size: store.sizeMetrics,
 		lastFontLoadError: null,
 		// https://html.spec.whatwg.org/multipage/canvas.html#2dcontext
 		//  '10px sans-serif' is the default for canvas
-		font: options.font || '10px sans-serif',
+		fontOptions: options.font ?? {},
+		fontSH,
 		xAxis: getDefaultAxis(),
 		yAxis: getDefaultAxis()
 	};
@@ -129,20 +142,20 @@ export default function line_chart(
 	const disposeSubscription = store.subscribe((state) => {
 		debugAction('dispatching resize event: %o', state);
 		processChartResize(internalState, state, queue);
-		processCommands(canvas, internalState, queue, 0);
+		processCommands(internalState, queue, 0);
 		canvas.dispatchEvent(new CustomEvent('chart-resize', { detail: state }));
 	});
 
 	return {
 		update: (newOptions: ChartOptions) => {
-			if (newOptions.font && newOptions.font !== internalState.font) {
-				queue.push(createCommand('font-check', newOptions.font));
-				processCommands(canvas, internalState, queue, 0);
+			debugAction('options update received, newOptions: %o', newOptions);
+			if (!fontEquals(newOptions.font, internalState.fontOptions)) {
+				internalState.fontOptions = newOptions.font || {};
+				const fontSH = createFontShortHand(newOptions.font);
+				debugAction('update/ new fontSH: [%s]', fontSH);
+				queue.push(createCommand('font-check', fontSH));
+				processCommands(internalState, queue, 0);
 			}
-			//generateCommands, new data, change font, other things
-			//processCommands
-
-			debugAction('options update received');
 		},
 		destroy: () => {
 			destroyObserver();

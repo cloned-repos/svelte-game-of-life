@@ -65,7 +65,7 @@ export function createCommand<
 }
 
 export type ChartOptions = {
-	font?: string; // font shorthand
+	font?: FontOptions; // font shorthand
 	xAxis?: Axis;
 	yAxis?: Axis;
 	data: any;
@@ -92,8 +92,10 @@ export type Axis = {
 };
 
 export type ChartInternalState = {
+	ctx: CanvasRenderingContext2D;
 	size: CanvasSizeInfomation;
-	font: string; // font shortHand
+	fontOptions: FontOptions; // font shortHand
+	fontSH: string; // inferred from fontOptions and cached
 	xAxis: Axis;
 	yAxis: Axis;
 	lastFontLoadError: null | {
@@ -109,3 +111,86 @@ export type CanvasSizeInfomation = {
 	width?: number;
 	height?: number;
 };
+
+/*
+[ 
+	[ <‘font-style’> || <font-variant-css21> || <‘font-weight’> || <‘font-stretch’> ]? 
+	<‘font-size’> [ / <‘line-height’> ]?
+	<‘font-family’> 
+] | caption | icon | menu | message-box | small-caption | status-bar
+
+<‘font-style’> = 	normal | italic | oblique
+<font-variant-css21> = [normal | small-caps]
+<‘font-weight’> =normal | bold | bolder | lighter | 100 | 200 | 300 | 400 | 500 | 600 | 700 | 800 | 900
+<‘font-stretch’> =	normal | ultra-condensed | extra-condensed | condensed | semi-condensed | semi-expanded | expanded | extra-expanded | ultra-expanded
+<‘font-size’> =	<absolute-size> | <relative-size> | <length-percentage>
+<absolute-size> =[ xx-small | x-small | small | medium | large | x-large | xx-large ]
+ <relative-size>=[ larger | smaller ]
+<length-percentage>= [ <length> | <percentage> ], where the <percentage> will resolve to a <length>.
+
+// normal and inherit are keywords
+// do not do lineheight, that has no meaning in canvas
+<'line-height> normal | <number> | <length> | <percentage> | inherit
+
+*/
+export type FontStyle = 'normal' | 'italic' | 'oblique';
+export type FontVariant = 'normal' | 'small-caps';
+export type FontWeight =
+	| 'normal'
+	| 'bold'
+	| 'lighter'
+	| '100'
+	| '200'
+	| '300'
+	| '400'
+	| '500'
+	| '600'
+	| '700'
+	| '800'
+	| '900';
+export type FontStretch =
+	| 'normal'
+	| 'ultra-condensed'
+	| 'extra-condensed'
+	| 'condensed'
+	| 'semi-condensed'
+	| 'semi-expanded'
+	| 'expanded'
+	| 'extra-expanded'
+	| 'ultra-expanded';
+
+export type FontSizeAbsolute =
+	| 'xx-small'
+	| 'x-small'
+	| 'small'
+	| 'medium'
+	| 'large'
+	| 'x-large'
+	| 'xx-large';
+
+export type FontSizeRelative = 'larger' | 'smaller';
+
+export type FontSizeLengthPercentage = `${number}%`;
+
+export type FontSizeLengthRem = `${number}rem`;
+
+export type FontSizeLengthem = `${number}em`;
+
+export type FontSizeLengthPx = `${number}px`;
+
+export type FontSize =
+	| FontSizeAbsolute
+	| FontSizeRelative
+	| FontSizeLengthPercentage
+	| FontSizeLengthRem
+	| FontSizeLengthem
+	| FontSizeLengthPx;
+
+export type FontOptions = Partial<{
+	style: FontStyle;
+	variant: FontVariant;
+	weight: FontWeight;
+	stretch: FontStretch;
+	size: FontSize;
+	family: string;
+}>;

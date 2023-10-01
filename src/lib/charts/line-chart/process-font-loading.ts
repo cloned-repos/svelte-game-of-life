@@ -37,7 +37,7 @@ export default function fontLoading(
 	}
 	if (i >= queue.length && reconcile) {
 		if (reconcile!.type === 'font-loaded') {
-			internalState.font = command.payload;
+			internalState.fontSH = command.payload;
 			internalState.lastFontLoadError = null;
 			queue.push(createCommand('render'));
 		} else {
@@ -46,7 +46,7 @@ export default function fontLoading(
 				ts: new Date().toISOString(),
 				error: reconcile!.payload.error
 			};
-			internalState.font = '';
+			internalState.fontSH = '';
 		}
 	}
 	return idx + delta;

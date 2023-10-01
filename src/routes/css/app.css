@@ -2,10 +2,7 @@
 /*@import '@fontsource/open-sans';*/
 /*@import '@fontsource/lato';*/
 /* autoprefixer: (on|off) */
-/*@tailwind base;
-@tailwind components;
-@tailwind utilities;
-*/
+
 @import '_reset.css';
 html,
 body {
