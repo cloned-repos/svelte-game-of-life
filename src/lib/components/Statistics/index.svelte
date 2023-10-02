@@ -26,7 +26,7 @@
 	function setFontSHValue(e: Event) {
 		chartProps = {
 			data: null,
-			font: { family: 'Junction', size: '100px', style: 'normal', weight: 'bold' }
+			font: { family: 'Junction', size: '10px', style: 'normal', weight: '200' }
 		};
 	}
 </script>
@@ -51,7 +51,7 @@
 <style>
 	.me {
 		height: 450px;
-		border: 4px darkkhaki dashed;
+		/*border: 4px darkkhaki dashed;*/
 		width: 100%;
 		grid-area: var(--grid-pos);
 		display: flex;

@@ -8,7 +8,7 @@
 
 <style>
 	.me {
-		border: 4px purple dashed;
+		/*border: 4px purple dashed;*/
 		width: 100%;
 		grid-area: var(--grid-pos);
 	}

@@ -75,19 +75,19 @@ export function createFontShortHand(opt: FontOptions = {}): string | never {
 	// fontvariant check
 	if (opt.variant) {
 		if (fontVariant.includes(opt.variant)) {
-			rc += ' ' + opt.variant;
+			rc += (rc ? ' ' : '') + opt.variant;
 		}
 	}
 
 	if (opt.weight) {
 		if (fontWeight.includes(opt.weight)) {
-			rc += ' ' + opt.weight;
+			rc += (rc ? ' ' : '') + opt.weight;
 		}
 	}
 
 	if (opt.stretch) {
 		if (fontStretch.includes(opt.stretch)) {
-			rc += ' ' + opt.stretch;
+			rc += (rc ? ' ' : '') + opt.stretch;
 		}
 	}
 
@@ -97,7 +97,7 @@ export function createFontShortHand(opt: FontOptions = {}): string | never {
 			case RegExpFontSizeREM.test(opt.size):
 			case RegExpFontSizeEM.test(opt.size):
 			case RegExpFontSizePCT.test(opt.size):
-				rc += ' ' + opt.size.toLocaleLowerCase();
+				rc += (rc ? ' ' : '') + opt.size.toLocaleLowerCase();
 				break;
 			default:
 				throw new Error(`invalid font size:${opt.size}`);

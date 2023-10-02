@@ -36,7 +36,7 @@
 		width: 100%;
 		height: 100%;
 		display: grid;
-		border: 4px black dashed;
+		/*border: 4px black dashed;*/
 		background-color: lightblue;
 		grid:
 			'sidebar statistics' auto

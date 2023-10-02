@@ -141,7 +141,7 @@ export default function processCommands(
 	debug('below %s', below);
 	debug('max cellHeight: %s', maxHeight);
 	const canvasHeight = internalState.ctx.canvas.height;
-	const textBaseLineMiddle = canvasHeight - below - 20;
+	const textBaseLineMiddle = canvasHeight - below - 12;
 	const _fontAscent = textBaseLineMiddle - (fontAscent - middle);
 	const _actualAscent = textBaseLineMiddle - (actualAscent - middle);
 	const _fontDescentAscent = textBaseLineMiddle + (fontDescent + middle);
