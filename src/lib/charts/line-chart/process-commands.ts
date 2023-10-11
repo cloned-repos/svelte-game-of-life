@@ -155,9 +155,9 @@ export default function processCommands(
 	drawText(ctx, textsampleForMetrics, 'black', 40, textBaseLineMiddle, 'middle');
 
 	// draw FontAscent orange
-	drawHorizontalLine(ctx, 0, _fontAscent, ctx.canvas.width, 'rgba(255,191,0, 0.5)');
+	//drawHorizontalLine(ctx, 0, _fontAscent, ctx.canvas.width, 'rgba(255,191,0, 0.5)');
 	// draw ActualAscent red
-	drawHorizontalLine(ctx, 0, _actualAscent, ctx.canvas.width, 'rgba(255,0,0, 0.5)');
+	//drawHorizontalLine(ctx, 0, _actualAscent, ctx.canvas.width, 'rgba(255,0,0, 0.5)');
 
 	// draw "top base line"
 	drawHorizontalLine(ctx, 0, _topBaseLine, ctx.canvas.width, 'rgba(255,0,255, 0.5)');
@@ -169,9 +169,9 @@ export default function processCommands(
 	drawHorizontalLine(ctx, 0, _alphaBeticLine, ctx.canvas.width, 'rgb(248, 131, 121)');
 
 	// draw FontDescent in orange
-	drawHorizontalLine(ctx, 0, _fontDescentAscent, ctx.canvas.width, 'rgba(255,191,0, 0.5)');
+	//drawHorizontalLine(ctx, 0, _fontDescentAscent, ctx.canvas.width, 'rgba(255,191,0, 0.5)');
 	// draw actualDescent in red
-	drawHorizontalLine(ctx, 0, _actualDescentAscent, ctx.canvas.width, 'rgba(255,0,0, 0.5)');
+	//drawHorizontalLine(ctx, 0, _actualDescentAscent, ctx.canvas.width, 'rgba(255,0,0, 0.5)');
 
 	debug('**queue is currently: %s', JSON.stringify(queue));
 	debug('**internal state is currently: %o', JSON.stringify(internalState));
