@@ -105,7 +105,7 @@ draw
 -- create data axis (scalar units),
 -- create time axis (time units,  ms, days, month, year, calculate data ticks)
 -- progressive draw axis elements (taking collision into account).
-
+-- lines (horizontal, vertical) can have margins too, these are actually boxes then need slightly different collision detection
 
 
 
