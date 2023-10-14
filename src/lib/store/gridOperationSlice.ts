@@ -78,7 +78,8 @@ const gridOperationalMetricsSlice = createSlice({
 			} = state;
 			const { width: newCanvasWidth, height: newCanvasHeight } = action.payload;
 			const blk_w =
-				(newCanvasWidth - paddingX * 2 - ((newCanvasWidth - paddingX * 2) % cellWidth)) / cellWidth;
+				(newCanvasWidth - paddingX * 2 - ((newCanvasWidth - paddingX * 2) % cellWidth)) /
+				cellWidth;
 			const blk_h =
 				(newCanvasHeight - paddingY * 2 - ((newCanvasHeight - paddingY * 2) % cellHeight)) /
 				cellHeight;
@@ -162,7 +163,9 @@ const gridOperationalMetricsSlice = createSlice({
 				const y = pfi[i + 2];
 				const idx = x + y * state.playFieldWidth;
 				if (color <= 0) {
-					console.error(`Internal Error, color ${color} encountered at x=${x}, y=${y}, idx=${idx}`);
+					console.error(
+						`Internal Error, color ${color} encountered at x=${x}, y=${y}, idx=${idx}`
+					);
 				}
 				let neighbours = 0;
 				const getCoordsRel = prepareGetCoordsRelative(
@@ -227,7 +230,9 @@ const gridOperationalMetricsSlice = createSlice({
 				const y = pfi[i + 2];
 				const idx = x + y * state.playFieldWidth;
 				if (color <= 0) {
-					console.error(`Internal Error, color ${color} encountered at x=${x}, y=${y}, idx=${idx}`);
+					console.error(
+						`Internal Error, color ${color} encountered at x=${x}, y=${y}, idx=${idx}`
+					);
 				}
 				let neighbours = 0;
 				const getCoordsRel = prepareGetCoordsRelative(

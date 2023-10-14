@@ -11,7 +11,10 @@
 </script>
 
 <script lang="ts">
-	const frame = redux2SvelteReadable<RootState, AnimationState>(store, (store) => store.animFrame);
+	const frame = redux2SvelteReadable<RootState, AnimationState>(
+		store,
+		(store) => store.animFrame
+	);
 
 	onMount(() => {
 		const cancel = startAnimFrameDispatcher();

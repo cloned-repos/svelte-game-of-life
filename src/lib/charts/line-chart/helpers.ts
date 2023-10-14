@@ -184,7 +184,11 @@ export function getfontMetrics(ctx: CanvasRenderingContext2D, fontSH: string) {
 	const middleBaselineFromFontAscent = fontAlphabeticAscent - fontMiddleAscent;
 	//const middleBaselineFromActualAscent = actualAlphabeticAscent - actualMiddleAscent;
 
-	debugMetrics('%cmiddleBaselineFromFontAscent [%s]', 'color:orange', middleBaselineFromFontAscent);
+	debugMetrics(
+		'%cmiddleBaselineFromFontAscent [%s]',
+		'color:orange',
+		middleBaselineFromFontAscent
+	);
 
 	// these 2 are be the approx the same
 	const bottomBaselineFromFontDescent = fontAlphabeticDescent - fontBottomDescent;

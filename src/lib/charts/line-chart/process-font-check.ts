@@ -39,6 +39,8 @@ export default function processCommandFontCheck(
 				queue.push(createCommand('font-load-error', { font: fontSH, error }));
 			});
 	} catch (error) {
-		queue.push(createCommand('font-load-error', { font: fontSH, error: error as DOMException }));
+		queue.push(
+			createCommand('font-load-error', { font: fontSH, error: error as DOMException })
+		);
 	}
 }

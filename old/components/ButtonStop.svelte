@@ -1,62 +1,62 @@
 <span class:a={true} on:click>
-    <svg
-        version="1.1"
-        xmlns="http://www.w3.org/2000/svg"
-        xmlnsXlink="http://www.w3.org/1999/xlink"
-        viewBox="0 0 58 58"
-    >
-        <circle class="shaded" cx="29" cy="29" r="29" />
-        <g
-            ><rect class="empress" x="16" y="16" width="26" height="26" /><path
-                class="empress"
-                d="M43,43H15V15h28V43z M17,41h24V17H17V41z"
-            /></g
-        >
-    </svg>
+	<svg
+		version="1.1"
+		xmlns="http://www.w3.org/2000/svg"
+		xmlnsXlink="http://www.w3.org/1999/xlink"
+		viewBox="0 0 58 58"
+	>
+		<circle class="shaded" cx="29" cy="29" r="29" />
+		<g
+			><rect class="empress" x="16" y="16" width="26" height="26" /><path
+				class="empress"
+				d="M43,43H15V15h28V43z M17,41h24V17H17V41z"
+			/></g
+		>
+	</svg>
 </span>
 
 <style>
-    * {
-        box-sizing: border-box;
-    }
+	* {
+		box-sizing: border-box;
+	}
 
-    .a {
-        user-select: none;
-        display: block;
-        width: var(--btn-size, 100%);
-        height: var(--btn-size, 100%);
-        font-size: 0;
-        color: inherit;
-        text-decoration: none;
-        overflow: hidden;
-        position: relative;
-    }
+	.a {
+		user-select: none;
+		display: block;
+		width: var(--btn-size, 100%);
+		height: var(--btn-size, 100%);
+		font-size: 0;
+		color: inherit;
+		text-decoration: none;
+		overflow: hidden;
+		position: relative;
+	}
 
-    .a svg {
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        top: 0;
-        left: 0;
-    }
+	.a svg {
+		position: absolute;
+		width: 100%;
+		height: 100%;
+		top: 0;
+		left: 0;
+	}
 
-    .a svg .shaded {
-        fill: rgb(79, 91, 193);
-        fill-opacity: 0.3;
-    }
+	.a svg .shaded {
+		fill: rgb(79, 91, 193);
+		fill-opacity: 0.3;
+	}
 
-    .a svg .empress {
-        fill: rgb(79, 91, 193);
-        fill-opacity: 0.7;
-    }
+	.a svg .empress {
+		fill: rgb(79, 91, 193);
+		fill-opacity: 0.7;
+	}
 
-    .a:active svg .shaded {
-        fill: rgb(79, 91, 193);
-        fill-opacity: 0.9;
-    }
+	.a:active svg .shaded {
+		fill: rgb(79, 91, 193);
+		fill-opacity: 0.9;
+	}
 
-    .a:active svg .empress {
-        fill: rgb(40, 17, 46);
-        fill-opacity: 0.5;
-    }
+	.a:active svg .empress {
+		fill: rgb(40, 17, 46);
+		fill-opacity: 0.5;
+	}
 </style>

@@ -1,16 +1,11 @@
 <script lang="ts">
-    
 </script>
 
-<style>
-
-</style>
-
 <div class="main">
-    <p class="section-heading">[control buttons]</p>
-    <div class="toggle-button">
-     
-    </div>
-    <div class="staistics"></div>
+	<p class="section-heading">[control buttons]</p>
+	<div class="toggle-button" />
+	<div class="staistics" />
 </div>
 
+<style>
+</style>

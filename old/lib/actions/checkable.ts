@@ -1,11 +1,8 @@
 export function checkable(node: HTMLElement): SvelteActionReturnType {
-
 	function handleChange(e: Event & { target: { checked: boolean } }) {
-		
 		if (e.target?.checked) {
-			node.dispatchEvent(new CustomEvent('checked'))
-		}
-		else {
+			node.dispatchEvent(new CustomEvent('checked'));
+		} else {
 			node.dispatchEvent(new CustomEvent('unchecked'));
 		}
 	}
@@ -18,5 +15,3 @@ export function checkable(node: HTMLElement): SvelteActionReturnType {
 		}
 	};
 }
-
-
