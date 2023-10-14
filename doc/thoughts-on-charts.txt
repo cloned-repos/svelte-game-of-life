@@ -1,0 +1,117 @@
+ vertical direction -->
+| gutter  |  labels | ticks | chart-area | top-label |
+
+size {min, preferred, max}
+
+min undefined means 0
+max undefined means Inf
+
+
+enough space gutter to max-content, labels to max-content, ticks to max-content
+
+min-content(gutter) = min ?? preferred ?? max ?? flex
+
+min-content(labels) = min ?? preferred ?? max ?? flex
+
+min-content(ticks) = min ?? preferred ?? max ?? flex
+
+req <- add all min definite sizes to the sum total_def
+   resp -> "to little space" 
+           when resp = "to little space" do
+		For each collapseble item (in order of priority)
+		⬇ collapse in priority collapsable
+             	⮩ not enough space? return previous size with "end marker"
+		⮨ return new recalculated space,and as metadata collapsable list
+   	
+
+
+		 
+
+horizontal x-ases issue (depends on label at axis origin and axis max)
+
+
+# this describes the "worst case situation" where you would need  
+|  space of label-overflow at "chart-x-start" | normal labels+ticks under the axis | overflow of label at "chart-x-end" 
+
+
+
+unline the vertical direction the horizontal direction is mostly data-driven (at what slice of data is one looking at).
+
+* first build for time-series (resolution), other non-time values we can consider at some later point
+
+* how to place labels at ticks, there is a preferred step, but if the labels are to wide (like when going from one hour to the next or from one day to the next or one month to the next of one year to then next) then there needs to be extra text needed to mark the transition, so labels are not fixed like  15(sec)  or 5m (miniute) crossing or (3pm hours crossing)  or 09-oct (midnight crossing) or jun (month) crossing or 2024 ( new-year crossing)
+
+for high frequence data, you can even go to subsecond, like    1 sec, 42sec  4min
+
+powers of 10    0.1.10² (or negative powers if appicable)
+
+
+data_range -> x-axis length
+
+- data-range is "independent"
+⬇ pretend your whole x-axis-length is available to you
+⬇ calculate the scale of the data range (i guess take the scale of the maxium value)
+⬇ is the lowest value also of the same scale? (how much is is close to zero)
+⬇ (example) like 23 and 1E+5, then yes 23 is close to "zero" = 0.00023E+5 so basically 0.0E+5, hence kissing  the origin of the axis
+⬇ calculate density value (xmax- xmin)/(data_range)
+⬇ normalize to 1-9 and power of 10
+
+example 3/2345 = 0.00127931769 for pixel per unit data (used in the range)
+
+seek the first 2 non rounded to the ceiling per 0.5 of the third digit
+
+0.00127 -> 0.00130  -- 13.0  E-4  or 1.30 E-3
+0.00121 -> 0.00125  -- 12.5  E-4  or 1.25 E-3
+0.00199 -> 0.00120  -- 12.0  E-4  or 1.20 E-3
+
+instead of repeating the scale we can put the scale at the END (right side) of the char
+
+--------|---------|------- 10e+5
+       2.5       5.0
+
+min/max * (xpixel_range) ->
+
+(min expressed in the scale of max) 
+
+-> data range is an independent
+	- scale of max value (x.yz)
+	- express min in the scale of the max value 
+-> let me think about the date range
+-> when something gets drawn in the axis space, need to remember it and see if collisions are happening when more labels(ticks whatever) are drawn.
+-> the remmeber is not scoped to axis but to the whole chart so we can globally detect collisions depending on what part is being drawn
+
+done --how to detect collisions?
+done --the only shapes are boxes and horizontal and vertical line snippets
+
+space out the data (data range) on the canvase (the graph has no labels, ticks);
+
+descrete data points element should only accupy a max size so this limits the effective canvas area.
+
+the maximum ratio of <nr-pixels>/<data range between descrete points> is known up front and this is your maximum zoom level!
+
+if the data only covers the canvas partially (canvas is bigger) then depending the data should be draw aligned to the right or left (developer should select?);
+(one could also decide to fix the)
+now add ticks (minimum) horizontal and vertical (this causes the data-draw area to shrink, somewhat), 
+can the data area still shrink?
+provision for space for the vertical axis (further shrinking the chart area).
+can the data area still shrink?
+provision for space for the horizontal axis (further shrinking the chart area).
+
+draw vertical axis (if allowed to draw), mark used areas for ticks and labels
+draw horizontal axis (if allowed to draw, watch collisions), mark used areas for ticks and lables, avoiding collisions
+
+
+done -- build collision detector (this is a logic space).
+-- create data axis (scalar units),
+do next create time axis (time units,  ms, days, month, year, calculate data ticks)
+-- progressive draw axis elements (taking collision into account).
+done -- lines (horizontal, vertical) can have margins too, these are actually boxes then need slightly different collision detection
+
+
+
+
+
+
+
+
+   
