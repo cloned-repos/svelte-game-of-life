@@ -1,38 +1,5 @@
-export type Block = {
-	xmin: number;
-	xmax: number;
-	ymin: number;
-	ymax: number;
-	xminM: number;
-	xmaxM: number;
-	yminM: number;
-	ymaxM: number;
-};
-
-export type HLine = {
-	xmin: number;
-	xmax: number;
-	xminM: number;
-	xmaxM: number;
-	yTop: number;
-	yBottom: number;
-};
-
-export type VLine = {
-	ymin: number;
-	ymax: number;
-	yminM: number;
-	ymaxM: number;
-	xRight: number;
-	xLeft: number;
-};
-
-export type CollisionState = 'near' | 'far' | 'collision-hard' | 'collision-soft';
-
-export const soft: CollisionState = 'collision-soft';
-export const hard: CollisionState = 'collision-hard';
-export const far: CollisionState = 'far';
-export const near: CollisionState = 'near';
+import type { CollisionState } from '../types';
+import { far, near, soft, hard } from '../constants';
 
 function collisionAxisRange(
 	max1: number,

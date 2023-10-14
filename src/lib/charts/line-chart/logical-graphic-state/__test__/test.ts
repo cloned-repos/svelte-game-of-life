@@ -1,6 +1,7 @@
 import { describe, it } from 'vitest';
 
-import { collisionBlock, collisionLines, far, near, hard, soft } from '../hv-lines-block';
+import { collisionBlock, collisionLines } from '../hv-lines-block';
+import { far, near, hard, soft } from '../../constants';
 
 describe('logical-graphic-state', () => {
 	describe('margins notation: [range]/[margin]', () => {
