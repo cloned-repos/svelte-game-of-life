@@ -261,10 +261,12 @@ export function drawHorizontalLine(
 	x1: number,
 	y1: number,
 	x2: number,
-	style: string
+	style: string,
+	...lineDash: number[]
 ) {
 	ctx.save();
 	ctx.closePath();
+	ctx.setLineDash(lineDash);
 	ctx.strokeStyle = style;
 	ctx.beginPath();
 	ctx.moveTo(x1, y1);

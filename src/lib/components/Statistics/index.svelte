@@ -26,7 +26,7 @@
 	function setFontSHValue(e: Event) {
 		chartProps = {
 			data: null,
-			font: { family: 'Junction', size: '16px', weight: '200' }
+			font: { family: 'Junction', size: '150px', weight: '200' }
 		};
 	}
 </script>

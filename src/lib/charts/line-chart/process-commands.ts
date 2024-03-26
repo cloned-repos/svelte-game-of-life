@@ -23,7 +23,7 @@ export default function processCommands(
 		debug('queue processing done for now: %o', queue);
 		return;
 	}
-	// process all font-checks, kick off font loading at the soonest (this this takes time)
+	// first: process all font-checks, kick off font loading at the soonest (loading takes time)
 	let i = offset;
 	while (i < queue.length) {
 		const command = queue[i];
@@ -91,7 +91,7 @@ export default function processCommands(
 			}
 		}
 	}
-	//
+	//  here the rendering happens
 	const ctx = internalState.ctx;
 	ctx.font = internalState.fontSH;
 	const {
@@ -144,8 +144,8 @@ export default function processCommands(
 	const textBaseLineMiddle = canvasHeight - below - 12;
 	const _fontAscent = textBaseLineMiddle - (fontAscent - middle);
 	const _actualAscent = textBaseLineMiddle - (actualAscent - middle);
-	const _fontDescentAscent = textBaseLineMiddle + (fontDescent + middle);
-	const _actualDescentAscent = textBaseLineMiddle + (actualDescent + middle);
+	const _fontDescent = textBaseLineMiddle + (fontDescent + middle);
+	const _actualDescent = textBaseLineMiddle + (actualDescent + middle);
 	const _topBaseLine = textBaseLineMiddle - (top - middle);
 	const _alphaBeticLine = textBaseLineMiddle + middle;
 
@@ -155,9 +155,9 @@ export default function processCommands(
 	drawText(ctx, textsampleForMetrics, 'black', 40, textBaseLineMiddle, 'middle');
 
 	// draw FontAscent orange
-	//drawHorizontalLine(ctx, 0, _fontAscent, ctx.canvas.width, 'rgba(255,191,0, 0.5)');
+	drawHorizontalLine(ctx, 0, _fontAscent, ctx.canvas.width, 'red', 50, 25);
 	// draw ActualAscent red
-	//drawHorizontalLine(ctx, 0, _actualAscent, ctx.canvas.width, 'rgba(255,0,0, 0.5)');
+	drawHorizontalLine(ctx, 0, _actualAscent, ctx.canvas.width, 'black', 10, 10);
 
 	// draw "top base line"
 	drawHorizontalLine(ctx, 0, _topBaseLine, ctx.canvas.width, 'rgba(255,0,255, 0.5)');
@@ -169,9 +169,9 @@ export default function processCommands(
 	drawHorizontalLine(ctx, 0, _alphaBeticLine, ctx.canvas.width, 'rgb(248, 131, 121)');
 
 	// draw FontDescent in orange
-	//drawHorizontalLine(ctx, 0, _fontDescentAscent, ctx.canvas.width, 'rgba(255,191,0, 0.5)');
+	drawHorizontalLine(ctx, 0, _fontDescent, ctx.canvas.width, 'red', 10, 10);
 	// draw actualDescent in red
-	//drawHorizontalLine(ctx, 0, _actualDescentAscent, ctx.canvas.width, 'rgba(255,0,0, 0.5)');
+	drawHorizontalLine(ctx, 0, _actualDescent, ctx.canvas.width, 'black', 5, 5);
 
 	debug('**queue is currently: %s', JSON.stringify(queue));
 	debug('**internal state is currently: %o', JSON.stringify(internalState));
