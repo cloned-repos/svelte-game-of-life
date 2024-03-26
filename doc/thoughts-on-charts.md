@@ -16,31 +16,16 @@ Vertical direction (from bottom to top) -->
 -   `x-labels`: the "line-height" see code `process-commands.ts` it is a function of (the calculation of `_fontAscent`, `_actualAscent`, `_fontDescent`, `_actualDescent`or calculated from `ctx.measureText(text)` )
 
 -   `x-ticks`: the x-axis ticks dropdown length (include big-ticks and small ticks). Ticks are a result of a function something like: `const ticks = create_ticks(<x-range-of-chart>)`. When ticks are created there is a `measure(ticks)` to determine enclosing box and use this value to determine space claim for this `x-ticks`.
+
     -   For now give it a definite size range (min, max)
 
-min (optional) undefined means 0
-max (optional) undefined means Inf
-preferred (mandatory)
+-   `chart-area`: should be flex, if the computed are is below a minimum then hide some chart components (if possible) and see if the `chart-area` increases a sufficient size. If the hide-algoritm cannot relieve enough space for the `chart-area` then the chart cannot be drawn and some kind of indicator must be shown (red-cross, text, whatever)
 
-enough space? if yes -> gutter to max-content, labels to max-content, ticks to max-content, chart-area eats the rest
+-   `guttoer top`: I AM HERE
 
-min-content(gutter) = min ?? preferred ?? max ?? flex
+## I AM HERE
 
-min-content(labels) = min ?? preferred ?? max ?? flex
-
-min-content(ticks) = min ?? preferred ?? max ?? flex
-
-req <- add all min definite sizes to the sum total_def
-resp -> "to little space"
-when resp = "to little space" do
-For each collapseble item (in order of priority)
-⬇ collapse in priority collapsable
-⮩ not enough space? return previous size with "end marker"
-⮨ return new recalculated space,and as metadata collapsable list
-
-horizontal x-ases issue (depends on label at axis origin and axis max)
-
-# this describes the "worst case situation" where you would need
+this describes the "worst case situation" where you would need
 
 | space of label-overflow at "chart-x-start" | normal labels+ticks under the axis | overflow of label at "chart-x-end"
 
