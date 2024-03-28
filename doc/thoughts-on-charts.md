@@ -1,5 +1,14 @@
 # Chart Size Algorithm (draft)
 
+Preamble:
+Ticks & Tick Labels are the hard issue with charts
+What humans find visually appeasing (ticks at nice whole numbers or quater fractions 25, 50, 75, 100, 125, etc), or terse number of ticks ending only at "5" and "0", or ticks and labels at even numbers.
+
+We could look at other code (or the results of other code/software package) and try to infer heuristic rules. I looked at R graphs, D3 (ticks on charts are developer driven in D3).
+
+The way forward is best done by makeing very custom charts and have experience of the creation of custom charts drive the creation of "tick code intelligence"
+where explicit dev tick creation is replaced by automation.
+
 ## Canvas
 
 Font size in chart is fixed, not flexibable,
@@ -21,7 +30,7 @@ Vertical direction (from bottom to top) -->
 
 -   `chart-area`: should be flex, if the computed are is below a minimum then hide some chart components (if possible) and see if the `chart-area` increases a sufficient size. If the hide-algoritm cannot relieve enough space for the `chart-area` then the chart cannot be drawn and some kind of indicator must be shown (red-cross, text, whatever)
 
--   `guttoer top`: I AM HERE
+-   `gutter top`: I AM HERE
 
 ## I AM HERE
 
