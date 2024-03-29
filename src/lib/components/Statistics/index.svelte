@@ -15,6 +15,7 @@
 
 	function resizeNotification(event: CustomEvent<CanvasSizeInfomation>) {
 		state = event.detail;
+		debug('state', state);
 	}
 
 	let inputValue: string;
