@@ -9,19 +9,20 @@ export default function processCommandFontCheck(
 	queue: LineChartCommands[],
 	internalstate: ChartInternalState
 ): void {
-	// font not loaded
-	let loaded = false;
 	internalstate.fontSH = fontSH;
+
 	if (systemSH.includes(fontSH)) {
 		return;
 	}
-	try {
-		loaded = document.fonts.check(fontSH);
-		if (loaded) {
-			return;
-		}
 
-		queue.push(createCommand('font-loading', fontSH));
+	queue.push(createCommand('font-loading', fontSH));
+
+	try {
+		const loaded = document.fonts.check(fontSH); // this can throw?
+		if (loaded) {
+			queue.push(createCommand('font-loaded', fontSH));
+			return processCommands(internalstate, queue);
+		}
 		document.fonts
 			.load(fontSH)
 			.then(([fontFace]) => {
@@ -37,10 +38,12 @@ export default function processCommandFontCheck(
 			})
 			.catch((error) => {
 				queue.push(createCommand('font-load-error', { font: fontSH, error }));
+				return processCommands(internalstate, queue);
 			});
 	} catch (error) {
 		queue.push(
 			createCommand('font-load-error', { font: fontSH, error: error as DOMException })
 		);
+		return processCommands(internalstate, queue);
 	}
 }

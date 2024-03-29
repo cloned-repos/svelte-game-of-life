@@ -1,11 +1,5 @@
 import createNS from '@mangos/debug-frontend';
-import type {
-	ChartInternalState,
-	CheckFontLoadErrorCommand,
-	CheckFontLoadedCommand,
-	CheckSize,
-	LineChartCommands
-} from './types';
+import type { ChartInternalState, LineChartCommands } from './types';
 import processCommandFontCheck from './process-font-check';
 import processCommandFontLoading from './process-font-loading';
 import { getfontMetrics, drawHorizontalLine, clear, drawText } from './helpers';

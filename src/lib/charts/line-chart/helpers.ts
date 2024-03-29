@@ -104,7 +104,10 @@ export function createFontShortHand(opt: FontOptions = {}): string | never {
 		}
 	}
 	// add font family
-	return rc + ' ' + opt.family;
+	if (opt.family) {
+		rc += (rc ? ' ' : '') + opt.family;
+	}
+	return rc;
 }
 
 const debugMetrics = createNS('helper.ts/getfontMetrics');

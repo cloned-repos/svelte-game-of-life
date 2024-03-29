@@ -2,7 +2,8 @@ import type {
 	ChartInternalState,
 	LineChartCommands,
 	CheckFontLoadErrorCommand,
-	CheckFontLoadedCommand
+	CheckFontLoadedCommand,
+	CheckFontLoadingCommand
 } from './types';
 
 import { createCommand } from './types';
@@ -12,9 +13,9 @@ export default function fontLoading(
 	queue: LineChartCommands[],
 	internalState: ChartInternalState
 ) {
-	const command = queue[idx] as CheckFontLoadedCommand;
+	const command = queue[idx] as CheckFontLoadingCommand;
 	// try to reconcile with a font-loaded or font-load-error
-	const length = queue.length;
+	let delta = 1;
 	let reconcile: CheckFontLoadErrorCommand | CheckFontLoadedCommand | undefined = undefined;
 	for (let i = idx + 1; i < queue.length; i++) {
 		const fle = queue[i];
@@ -24,11 +25,12 @@ export default function fontLoading(
 			if (fontSH === command.payload) {
 				queue.splice(i, 1);
 				queue.splice(idx, 1);
+				delta = 0;
 				break;
 			}
 		}
 	}
-	const delta = length === queue.length ? 1 : 0;
+
 	let i = idx + delta;
 	for (; i < queue.length; i++) {
 		if (queue[i].type === 'font-loading') {
@@ -37,10 +39,12 @@ export default function fontLoading(
 	}
 	if (i >= queue.length && reconcile) {
 		if (reconcile!.type === 'font-loaded') {
+			// success
 			internalState.fontSH = command.payload;
 			internalState.lastFontLoadError = null;
 			queue.push(createCommand('render'));
 		} else {
+			// error
 			internalState.lastFontLoadError = {
 				font: reconcile!.payload.font,
 				ts: new Date().toISOString(),
@@ -49,5 +53,6 @@ export default function fontLoading(
 			internalState.fontSH = '';
 		}
 	}
+
 	return idx + delta;
 }
