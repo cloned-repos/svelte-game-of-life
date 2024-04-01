@@ -74,7 +74,7 @@ export default function line_chart(
 	const fontSH = createFontShortHand(options.font);
 	// fire up font check/load in parallel
 	if (fontSH) {
-		queue.push(createCommand('font-check', fontSH));
+		queue.push(createCommand('font-check', [fontSH], []));
 	}
 
 	const ctx = canvas.getContext('2d', {
@@ -113,7 +113,7 @@ export default function line_chart(
 				if (fontSH) {
 					internalState.fontOptions = newOptions.font;
 					debugAction('update/ new fontSH: [%s]', fontSH);
-					queue.push(createCommand('font-check', fontSH));
+					queue.push(createCommand('font-check', [fontSH], []));
 					processCommands(internalState, queue, 0);
 				}
 			}

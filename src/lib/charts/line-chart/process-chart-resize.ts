@@ -15,6 +15,6 @@ export default function processChartResize(
 	) {
 		return; // do nothing
 	}
-	queue.push(createCommand('chart-size', state));
-	queue.push(createCommand('render'));
+	queue.push(createCommand('chart-size', [state], []));
+	queue.push(createCommand('render', [], []));
 }

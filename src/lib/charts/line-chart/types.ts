@@ -6,11 +6,13 @@ export type CheckFontCommand = {
 export type CheckFontLoadingCommand = {
 	type: 'font-loading';
 	payload: string; // the font shorthand
+	reqId: number;
 };
 
 export type CheckFontLoadedCommand = {
 	type: 'font-loaded';
 	payload: string; // the font shorthand
+	reqId: number;
 };
 
 export type CheckFontLoadErrorCommand = {
@@ -19,6 +21,7 @@ export type CheckFontLoadErrorCommand = {
 		font: string;
 		error: DOMException; // the font shorthand
 	};
+	reqId: number;
 };
 
 export type CheckSize = {
@@ -53,15 +56,20 @@ type CommandSelectByType<T extends CommandType> = mapTypeToCommand[T];
 // optional type
 type Payload<T> = T extends { payload: infer P } ? [P] : never[];
 
+// optional type
+type RequestId<T> = T extends { reqId: infer P } ? [P] : never[];
+
 export function createCommand<
 	TName extends CommandType,
 	TCommand extends CommandSelectByType<TName>,
-	TPayload extends Payload<TCommand>
->(type: TName, ...payload: TPayload): TCommand {
-	if (!payload.length) {
-		return { type } as unknown as TCommand;
-	}
-	return { type, payload: payload[0] } as unknown as TCommand;
+	TPayload extends Payload<TCommand>,
+	TRequestId extends RequestId<TCommand>
+>(type: TName, payload: TPayload, reqId: TRequestId): TCommand {
+	return {
+		type,
+		...(payload.length && { payload: payload[0] }),
+		...(reqId.length && { reqId: reqId[0] })
+	} as unknown as TCommand;
 }
 
 export type ChartOptions = {

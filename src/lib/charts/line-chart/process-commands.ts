@@ -12,7 +12,7 @@ export default function processCommands(
 	queue: LineChartCommands[],
 	offset = 0
 ): void {
-	debug('queue is currently: %s', JSON.stringify(queue));
+	debug('queue is currently: %s', queue.map((elt) => elt.type).join());
 	if (queue[offset] === undefined) {
 		debug('queue processing done for now: %o', queue);
 		return;
@@ -23,12 +23,7 @@ export default function processCommands(
 		const command = queue[i];
 		if (command.type === 'font-check') {
 			queue.splice(i, 1);
-			if (command.payload) {
-				processCommandFontCheck(command.payload, queue, internalState);
-			} else {
-				//no font shorthand could be created
-				internalState.fontSH = '';
-			}
+			processCommandFontCheck(command.payload, queue, internalState);
 		}
 		i++;
 	}
@@ -47,7 +42,6 @@ export default function processCommands(
 	// clean up all chart resize command except the last one
 	{
 		let lastResizeIdx = -1;
-		const length = queue.length;
 		for (let i = queue.length - 1; i >= offset; ) {
 			if (queue[i].type === 'chart-size') {
 				if (lastResizeIdx === -1) {
@@ -64,7 +58,6 @@ export default function processCommands(
 	// clean up all chart render command except the last one
 	{
 		let lastRenderIdx = -1;
-		const length = queue.length;
 		for (let i = queue.length - 1; i >= offset; ) {
 			if (queue[i].type === 'render') {
 				if (lastRenderIdx === -1) {
@@ -87,6 +80,7 @@ export default function processCommands(
 	}
 	//  here the rendering happens
 	const ctx = internalState.ctx;
+	// after font loading the font here is assigned
 	ctx.font = internalState.fontSH;
 	const {
 		cellHeightUsingActualBBAscentTDescent,
