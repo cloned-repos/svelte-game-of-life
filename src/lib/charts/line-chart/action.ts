@@ -2,27 +2,19 @@ import type { Readable } from 'svelte/store';
 import type { ActionReturn } from 'svelte/action';
 import createNS from '@mangos/debug-frontend';
 //
-import { createCommand } from './types';
-import { getDefaultAxis, createFontShortHand, fontEquals } from './helpers';
+import { createFontShortHand, isFontEqual } from './helpers';
 
-import type {
-	LineChartCommands,
-	CanvasSizeInfomation,
-	ChartOptions,
-	ChartInternalState
-} from './types';
+import type { ChartCommands, CanvasSize, ChartOptions, ChartInternalState } from './types';
 import processCommands from './process-commands';
 import processChartResize from './process-chart-resize';
 
 //
-const debugStore = createNS('chart-canvas/store');
-const debugObd = createNS('chart-canvas/resize-observer');
 const debugAction = createNS('chart-canvas/action');
 
 // action
 function createObserverForCanvas(
 	canvas: HTMLCanvasElement,
-	notificationList: ((ci: CanvasSizeInfomation) => void)[] = []
+	notificationList: ((ci: CanvasSize) => void)[] = []
 ) {
 	const observer = new ResizeObserver((entries) => {
 		const entry = entries[0];
@@ -44,13 +36,13 @@ function createObserverForCanvas(
 	};
 }
 
-type ReadableCanvasStore = Readable<CanvasSizeInfomation> & {
-	getSubscribers(): ((ci: CanvasSizeInfomation) => void)[];
-	sizeMetrics: CanvasSizeInfomation;
+type ReadableCanvasStore = Readable<CanvasSize> & {
+	getSubscribers(): ((ci: CanvasSize) => void)[];
+	sizeMetrics: CanvasSize;
 };
 
 type ChartAttributes = {
-	'on:chart-resize'?: (e: CustomEvent<CanvasSizeInfomation>) => void;
+	'on:chart-resize'?: (e: CustomEvent<CanvasSize>) => void;
 };
 
 // action
@@ -58,7 +50,7 @@ export default function line_chart(
 	canvas: HTMLCanvasElement,
 	options: ChartOptions
 ): ActionReturn<ChartOptions, ChartAttributes> {
-	const fnList: ((ci: CanvasSizeInfomation) => void)[] = [
+	const fnList: ((ci: CanvasSize) => void)[] = [
 		(state) => {
 			debugAction('dispatching resize event: %o', state);
 			processChartResize(internalState, state, queue);
@@ -66,7 +58,7 @@ export default function line_chart(
 			canvas.dispatchEvent(new CustomEvent('chart-resize', { detail: state }));
 		}
 	];
-	const queue: LineChartCommands[] = [];
+	const queue: ChartCommands[] = [];
 	const destroyObserver = createObserverForCanvas(canvas, fnList);
 	const renderCTX = canvas.getContext('2d');
 
@@ -74,7 +66,7 @@ export default function line_chart(
 	const fontSH = createFontShortHand(options.font);
 	// fire up font check/load in parallel
 	if (fontSH) {
-		queue.push(createCommand('font-check', [fontSH], []));
+		queue.push({ type: 'font-check', fontSH });
 	}
 
 	const ctx = canvas.getContext('2d', {
@@ -87,7 +79,7 @@ export default function line_chart(
 	}
 
 	const csc = getComputedStyle(canvas);
-	let csi: CanvasSizeInfomation = {
+	let csi: CanvasSize = {
 		physicalPixelHeight: canvas.height,
 		physicalPixelWidth: canvas.width,
 		width: parseFloat(csc.width),
@@ -100,20 +92,18 @@ export default function line_chart(
 		// https://html.spec.whatwg.org/multipage/canvas.html#2dcontext
 		//  '10px sans-serif' is the default for canvas
 		fontOptions: options.font ?? {},
-		fontSH,
-		xAxis: getDefaultAxis(),
-		yAxis: getDefaultAxis()
+		fontSH
 	};
 
 	return {
 		update: (newOptions: ChartOptions) => {
 			debugAction('options update received, newOptions: %o', newOptions);
-			if (newOptions.font && !fontEquals(newOptions.font, internalState.fontOptions)) {
+			if (newOptions.font && !isFontEqual(newOptions.font, internalState.fontOptions)) {
 				const fontSH = createFontShortHand(newOptions.font);
 				if (fontSH) {
 					internalState.fontOptions = newOptions.font;
 					debugAction('update/ new fontSH: [%s]', fontSH);
-					queue.push(createCommand('font-check', [fontSH], []));
+					queue.push({ type: 'font-check', fontSH });
 					processCommands(internalState, queue, 0);
 				}
 			}

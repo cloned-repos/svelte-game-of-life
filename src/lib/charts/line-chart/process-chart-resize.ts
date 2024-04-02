@@ -1,9 +1,8 @@
-import { createCommand } from './types';
-import type { ChartInternalState, CanvasSizeInfomation, LineChartCommands } from './types';
+import type { ChartInternalState, CanvasSize, ChartCommands } from './types';
 export default function processChartResize(
 	iState: ChartInternalState,
-	state: CanvasSizeInfomation,
-	queue: LineChartCommands[]
+	state: CanvasSize,
+	queue: ChartCommands[]
 ): void {
 	// if there are other resize commands in this queue remove them
 	const size = iState.size;
@@ -15,6 +14,6 @@ export default function processChartResize(
 	) {
 		return; // do nothing
 	}
-	queue.push(createCommand('chart-size', [state], []));
-	queue.push(createCommand('render', [], []));
+	queue.push({ type: 'chart-set-size', size: state });
+	queue.push({ type: 'chart-render' });
 }

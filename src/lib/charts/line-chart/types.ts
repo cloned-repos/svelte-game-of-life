@@ -1,111 +1,60 @@
-export type CheckFontCommand = {
+type RPC = {
+	reqId: number;
+};
+
+type FontSH = {
+	fontSH: string;
+};
+
+export type CheckFont = FontSH & {
 	type: 'font-check';
-	payload: string; // the font shorthand
 };
 
-export type CheckFontLoadingCommand = {
-	type: 'font-loading';
-	payload: string; // the font shorthand
-	reqId: number;
-};
-
-export type CheckFontLoadedCommand = {
-	type: 'font-loaded';
-	payload: string; // the font shorthand
-	reqId: number;
-};
-
-export type CheckFontLoadErrorCommand = {
-	type: 'font-load-error';
-	payload: {
-		font: string;
-		error: DOMException; // the font shorthand
+export type FontLoading = RPC &
+	FontSH & {
+		type: 'font-loading';
 	};
-	reqId: number;
+
+export type FontLoaded = RPC &
+	FontSH & {
+		type: 'font-loaded';
+	};
+
+export type FontLoadError = RPC &
+	FontSH & {
+		type: 'font-load-error';
+		error: DOMException; // the error
+	};
+
+export type ChangeSize = {
+	type: 'chart-set-size';
+	size: CanvasSize; // new canvas metrics
 };
 
-export type CheckSize = {
-	type: 'chart-size';
-	payload: CanvasSizeInfomation; // the font shorthand
+export type RenderChart = {
+	type: 'chart-render';
 };
 
-export type RerenderChart = {
-	type: 'render';
-};
-
-//union type of lineChartCommands;
-export type LineChartCommands =
-	| CheckFontCommand
-	| CheckSize
-	| CheckFontLoadingCommand
-	| CheckFontLoadedCommand
-	| CheckFontLoadErrorCommand
-	| RerenderChart;
-
-// lookup table
-type mapTypeToCommand = {
-	[Command in LineChartCommands as Command['type']]: Command;
-};
-
-// lookup index values of the lookup table
-type CommandType = keyof mapTypeToCommand;
-
-// select a value of the lookup table by its key
-type CommandSelectByType<T extends CommandType> = mapTypeToCommand[T];
-
-// optional type
-type Payload<T> = T extends { payload: infer P } ? [P] : never[];
-
-// optional type
-type RequestId<T> = T extends { reqId: infer P } ? [P] : never[];
-
-export function createCommand<
-	TName extends CommandType,
-	TCommand extends CommandSelectByType<TName>,
-	TPayload extends Payload<TCommand>,
-	TRequestId extends RequestId<TCommand>
->(type: TName, payload: TPayload, reqId: TRequestId): TCommand {
-	return {
-		type,
-		...(payload.length && { payload: payload[0] }),
-		...(reqId.length && { reqId: reqId[0] })
-	} as unknown as TCommand;
-}
+//union type of ChartCommands;
+export type ChartCommands =
+	| CheckFont
+	| ChangeSize
+	| FontLoading
+	| FontLoaded
+	| FontLoadError
+	| RenderChart;
 
 export type ChartOptions = {
-	font?: FontOptions; // font shorthand
-	xAxis?: Axis;
-	yAxis?: Axis;
-	data: any;
+	font: FontOptions; // font shorthand
 };
 
 export type LengthPercentage = string | number;
 
-export type MinMax = {
-	collapseVisibility?: boolean;
-	min?: LengthPercentage;
-	max: LengthPercentage;
-};
-
-export type Axis = {
-	label?: {
-		// same font family as the font shirthand but different size
-		fontSize: number | MinMax;
-	};
-	// if the yaxis font "descent" would overlap the x-axis label with this value then:
-	// 1. x-labels are not drawn
-	// or
-	// 2. y-labels are not drawn
-	tickSize?: number | MinMax;
-};
-
 export type ChartInternalState = {
 	ctx: CanvasRenderingContext2D;
-	size: CanvasSizeInfomation;
+	size: CanvasSize;
 	fontOptions: FontOptions; // font shortHand
 	fontSH: string; // inferred from fontOptions and cached
-	xAxis: Axis;
-	yAxis: Axis;
 	lastFontLoadError: null | {
 		ts: string; // ISO date when the error happened
 		error: DOMException; // the Error from the browser
@@ -113,7 +62,7 @@ export type ChartInternalState = {
 	};
 };
 
-export type CanvasSizeInfomation = {
+export type CanvasSize = {
 	physicalPixelHeight: number;
 	physicalPixelWidth: number;
 	width?: number;
@@ -194,14 +143,14 @@ export type FontSize =
 	| FontSizeLengthem
 	| FontSizeLengthPx;
 
-export type FontOptions = Partial<{
-	style: FontStyle;
-	variant: FontVariant;
-	weight: FontWeight;
-	stretch: FontStretch;
+export type FontOptions = {
+	style?: FontStyle;
+	variant?: FontVariant;
+	weight?: FontWeight;
+	stretch?: FontStretch;
 	size: FontSize;
 	family: string;
-}>;
+};
 
 export type Block = {
 	xmin: number;

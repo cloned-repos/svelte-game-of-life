@@ -1,5 +1,17 @@
 // needed for runtime checks
-import type { FontVariant, FontStyle, FontWeight, FontStretch, CollisionState } from './types';
+import type {
+	FontVariant,
+	FontStyle,
+	FontWeight,
+	FontStretch,
+	CollisionState,
+	CheckFont,
+	FontLoading,
+	FontLoaded,
+	FontLoadError,
+	ChangeSize,
+	RenderChart
+} from './types';
 export const systemSH = ['caption', 'icon', 'menu', 'message-box', 'small-caption', 'status-bar'];
 export const fontStyle: FontStyle[] = ['normal', 'italic', 'oblique'];
 export const fontVariant: FontVariant[] = ['normal', 'small-caps'];
@@ -29,6 +41,13 @@ export const fontStretch: FontStretch[] = [
 	'extra-expanded',
 	'ultra-expanded'
 ];
+
+export const FONT_CHECK: CheckFont['type'] = 'font-check';
+export const FONT_LOADING: FontLoading['type'] = 'font-loading';
+export const FONT_LOADED: FontLoaded['type'] = 'font-loaded';
+export const FONT_LOAD_ERROR: FontLoadError['type'] = 'font-load-error';
+export const CHANGE_SIZE: ChangeSize['type'] = 'chart-set-size';
+export const CHART_RENDER: RenderChart['type'] = 'chart-render';
 
 export const RegExpFontSizePx = /^(?:\d*\.*\d*)px$/i;
 export const RegExpFontSizeREM = /^(?:\d*\.*\d*)rem$/i;

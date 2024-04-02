@@ -1,5 +1,5 @@
 import createNS from '@mangos/debug-frontend';
-import type { Axis, FontOptions } from './types';
+import type { CanvasSize, ChartCommands, ChartInternalState, FontOptions } from './types';
 
 import {
 	systemSH,
@@ -11,31 +11,12 @@ import {
 	RegExpFontSizeREM,
 	RegExpFontSizeEM,
 	RegExpFontSizePCT,
-	textsampleForMetrics
+	textsampleForMetrics,
+	CHANGE_SIZE,
+	CHART_RENDER
 } from './constants';
 
-export function getDefaultAxis(): Axis {
-	return {
-		label: {
-			fontSize: {
-				min: 10,
-				max: 14,
-				collapseVisibility: true
-			}
-		},
-		tickSize: {
-			// if the yaxis font "descent" would overlap the x-axis label with this value then:
-			// 1. x-labels are not drawn
-			// or
-			// 2. y-labels are not drawn
-			max: 6,
-			collapseVisibility: true
-		}
-	};
-}
-// learn to parse font shorthand to get the font family options
-
-export function fontEquals(o1?: FontOptions, o2?: FontOptions) {
+export function isFontEqual(o1?: FontOptions, o2?: FontOptions) {
 	return (
 		o1?.family === o2?.family &&
 		o1?.size === o2?.size &&
@@ -46,7 +27,30 @@ export function fontEquals(o1?: FontOptions, o2?: FontOptions) {
 	);
 }
 
-export function createFontShortHand(opt: FontOptions = {}): string | never {
+export function isCanvasSizeEqual(a: CanvasSize, b: CanvasSize) {
+	return (
+		a.height === b.height &&
+		a.width == b.width &&
+		a.physicalPixelHeight === b.physicalPixelHeight &&
+		a.physicalPixelWidth === b.physicalPixelWidth
+	);
+}
+
+export default function emitChartResize(
+	iState: ChartInternalState,
+	newSize: CanvasSize,
+	queue: ChartCommands[]
+): void {
+	if (isCanvasSizeEqual(iState.size, newSize)) {
+		return; // do nothing
+	}
+	queue.push({ type: CHANGE_SIZE, size: iState.size });
+	queue.push({ type: CHART_RENDER });
+}
+
+export function createFontShortHand(
+	opt: FontOptions = { family: 'monospace', size: '1rem' }
+): string | never {
 	/* this is the font shorthand typedef from https://www.w3.org/TR/2018/REC-css-fonts-3-20180920/#font-prop
 	Operator:
 	'||' means at least one of these options need to be chosen
