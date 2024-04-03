@@ -1,4 +1,5 @@
 import type { Enqueue } from './Enqueue';
+import { PromiseExtended } from './PromiseExtended';
 import { FONT_CHECK } from './constants';
 import { createFontShortHand, createObserverForCanvas, defaultFontOptionValues } from './helper';
 import type { CanvasSize, CommonMsg, FontOptions } from './types';
@@ -12,6 +13,18 @@ export default class Chart implements Enqueue<CommonMsg> {
 		error: DOMException; // the Error from the browser
 		font: string; // for what font-shorthand the error happened
 	};
+
+	private queue: CommonMsg[];
+
+	private triggerProcessing: PromiseExtended<void>;
+
+	private async run() {
+		while (this.triggerProcessing.isResolved === false) {
+			await this.triggerProcessing.promise;
+			this.triggerProcessing = new PromiseExtended(false);
+			// process queue batch commands
+		}
+	}
 
 	constructor(
 		private readonly canvas: HTMLCanvasElement,
@@ -35,7 +48,10 @@ export default class Chart implements Enqueue<CommonMsg> {
 		const fontSH = createFontShortHand(defaultFontOptionValues(fontOptions));
 
 		this.lastFontLoadError = null;
+		this.triggerProcessing = new PromiseExtended(false);
+		this.queue = [];
 		this.enqueue({ type: FONT_CHECK, fontSH });
+		this.run();
 	}
 	public detach() {
 		this.destroyObserver();
@@ -51,5 +67,7 @@ export default class Chart implements Enqueue<CommonMsg> {
 			// do nothing
 			return;
 		}
+		this.queue.push(msg);
+		this.triggerProcessing.forceResolve();
 	}
 }

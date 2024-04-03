@@ -3,7 +3,7 @@ import type { ChartInternalState, LineChartCommands } from './types';
 import processCommandFontCheck from './process-font-check';
 import processCommandFontLoading from './process-font-loading';
 import { getfontMetrics, drawHorizontalLine, clear, drawText } from './helpers';
-import { textsampleForMetrics } from './constants';
+import { textsampleForMetrics } from '../constants';
 
 const debug = createNS('process-commands');
 

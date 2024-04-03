@@ -1,5 +1,5 @@
 import type { CollisionState } from '../types';
-import { far, near, soft, hard } from '../constants';
+import { far, near, soft, hard } from '../../constants';
 
 function collisionAxisRange(
 	max1: number,

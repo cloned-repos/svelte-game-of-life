@@ -1,27 +1,25 @@
-import type { LineChartCommands, ChartInternalState } from './types';
-import { createCommand } from './types';
-import { systemSH } from './constants';
-
+import { FONT_LOADING, systemSH } from '../constants';
 import processCommands from './process-commands';
 
 export default function processCommandFontCheck(
 	fontSH: string,
-	queue: LineChartCommands[],
+	queue: ChartCommands[],
 	internalstate: ChartInternalState
 ): void {
 	internalstate.fontSH = fontSH;
 
 	// system fonts dont need to be loaded they are assigned in the "render" phase directly to ctx.font = ...
+	// document.fonts.check(..) a system font results in an error loading system fonts results in an error
 	if (systemSH.includes(fontSH)) {
 		return;
 	}
-	const reqId = Math.random();
-	queue.push(createCommand('font-loading', [fontSH], [reqId]));
+	const reqId = random();
+	queue.push({ type: FONT_LOADING, fontSH, reqId });
 
 	try {
 		const loaded = document.fonts.check(fontSH); // this can throw?
 		if (loaded) {
-			queue.push(createCommand('font-loaded', [fontSH], [reqId]));
+			queue.push(createCommand('font-loaded', [fontSH], [reqId: r]));
 			return processCommands(internalstate, queue);
 		}
 		document.fonts
