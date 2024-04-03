@@ -4,7 +4,6 @@ import type {
 	FontStyle,
 	FontWeight,
 	FontStretch,
-	CollisionState,
 	CheckFont,
 	FontLoading,
 	FontLoaded,
@@ -55,8 +54,3 @@ export const RegExpFontSizeEM = /^(?:\d*\.*\d*)em$/i;
 export const RegExpFontSizePCT = /^(?:\d*\.*\d*)%$/i;
 
 export const textsampleForMetrics = 'MÊ|²{Qszdcy';
-
-export const soft: CollisionState = 'collision-soft';
-export const hard: CollisionState = 'collision-hard';
-export const far: CollisionState = 'far';
-export const near: CollisionState = 'near';

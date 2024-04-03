@@ -1,7 +1,9 @@
-export function now() {
+function now() {
 	return Date.now();
 }
 
-export function random() {
+function random() {
 	return parseInt(`${Math.random()}`.replace('.', ''));
 }
+
+export {};
