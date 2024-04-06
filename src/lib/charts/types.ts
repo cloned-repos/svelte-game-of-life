@@ -18,8 +18,14 @@ type FontSH = {
 	fontSH: string;
 };
 
+// internal message for the chart
 export type CheckFont = FontSH & {
 	type: 'font-check';
+};
+
+export type ChangeFont = {
+	type: 'font-change';
+	fontOptions: FontOptions;
 };
 
 export type FontLoading = RPC &
@@ -48,7 +54,8 @@ export type CommonMsg =
 	| FontLoadError
 	| FontLoaded
 	| FontLoading
-	| CheckFont;
+	| ChangeFont;
+//| CheckFont;
 
 /*
 [ 
@@ -139,6 +146,4 @@ export type TestHarnas = {
 	setInterval: typeof setInterval;
 	setImmediate: typeof setImmediate;
 	random: typeof Math.random;
-	checkFonts: typeof document.fonts.check;
-	loadFonts: typeof document.fonts.load;
 };

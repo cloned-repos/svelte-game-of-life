@@ -3,6 +3,7 @@ import createNS from '@mangos/debug-frontend';
 import Chart from './Chart';
 import {
 	CHANGE_SIZE,
+	CHART_RENDER,
 	RegExpFontSizeEM,
 	RegExpFontSizePCT,
 	RegExpFontSizePx,
@@ -14,7 +15,7 @@ import {
 	systemSH,
 	textsampleForMetrics
 } from './constants';
-import type { CanvasSize, CommonMsg, FontOptions } from './types';
+import type { CanvasSize, CheckFont, CommonMsg, FontOptions, RenderChart } from './types';
 
 export function createObserverForCanvas(canvas: HTMLCanvasElement, chart: Chart) {
 	const observer = new ResizeObserver((entries) => {
@@ -314,9 +315,14 @@ export function drawText(
 	ctx.restore();
 }
 
-export function createChart(fontOptions?: FontOptions) {
-	return function (canvas: HTMLCanvasElement) {
-		return new Chart(canvas, fontOptions);
+export function createChartCreator(fontOptions?: FontOptions) {
+	let chart: Chart;
+	return function (canvas?: HTMLCanvasElement) {
+		if (chart) {
+			return chart;
+		}
+		chart = new Chart(canvas!, fontOptions);
+		return chart;
 	};
 }
 
@@ -324,9 +330,9 @@ export function defaultFontOptionValues(fontOptions?: FontOptions): FontOptions 
 	return Object.assign({ size: '10px', family: 'sans-serif' }, fontOptions);
 }
 
-export function* eventGenerator<T extends CommonMsg>(
-	queue: CommonMsg[],
-	selector: (ev: CommonMsg) => boolean
+export function* eventGenerator<T extends CommonMsg | CheckFont>(
+	queue: (CommonMsg | CheckFont)[],
+	selector: (ev: CommonMsg | CheckFont) => boolean
 ): Generator<{ readonly idx: number; target: T; remove: () => void }, undefined, void> {
 	let i = 0;
 	while (i < queue.length) {
@@ -340,14 +346,37 @@ export function* eventGenerator<T extends CommonMsg>(
 				},
 				target: ev as T,
 				remove() {
-					queue.splice(fr);
+					queue.splice(fr, 1);
 				}
 			};
-			if (length === queue.length) {
+			if (length !== queue.length) {
+				// remove() was called
 				continue;
 			}
 		}
 		i++;
 	}
 	return;
+}
+
+// clean up chart render unless the last one
+export function cleanUpChartRenderMsgs(queue: (CommonMsg | CheckFont)[]) {
+	let renderMsg: RenderChart | null = null;
+	let i = queue.length - 1;
+	for (; i >= 0; i--) {
+		const msg = queue[i];
+		if (msg.type === CHART_RENDER) {
+			if (!renderMsg) {
+				renderMsg = msg;
+			}
+			queue.splice(i, 1);
+		}
+	}
+	if (!renderMsg) {
+		return false; // nothing to be done
+	}
+	if (queue[queue.length - 1].type !== CHART_RENDER) {
+		queue.push({ type: CHART_RENDER });
+	}
+	return true;
 }

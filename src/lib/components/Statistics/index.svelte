@@ -1,8 +1,10 @@
 <script lang="ts">
 	import createNS from '@mangos/debug-frontend';
 	import { onMount } from 'svelte';
-	import line_chart from '$lib/charts/line-chart/action';
-	import type { CanvasSizeInfomation, ChartOptions } from '$lib/charts/line-chart/types';
+	import line_chart from '$lib/charts/action';
+	import type { CanvasSize, FontOptions } from '$lib/charts/types';
+	import { createChartCreator } from '$lib/charts/helper';
+	import { FONT_CHANGE, FONT_CHECK } from '$lib/charts/constants';
 
 	// const inits
 	const debug = createNS('statistics/index.svelte');
@@ -11,24 +13,24 @@
 
 	let width = 'n/a';
 
-	let state: CanvasSizeInfomation;
+	let state: CanvasSize;
 
-	function resizeNotification(event: CustomEvent<CanvasSizeInfomation>) {
+	function resizeNotification(event: CustomEvent<CanvasSize>) {
 		state = event.detail;
 		debug('state', state);
 	}
 
 	let inputValue: string;
-	let chartProps: ChartOptions = { data: null, font: { family: 'menu' } };
+	let fontOptions: FontOptions = { family: 'menu', size: '10px' };
+	const createChart = createChartCreator(fontOptions);
 	function handleInputChange(e: Event) {
 		inputValue = (e.target as HTMLInputElement).value;
 	}
 
 	function setFontSHValue(e: Event) {
-		chartProps = {
-			data: null,
-			font: { family: 'Junction', size: '150px', weight: '200' }
-		};
+		fontOptions = { family: 'Junction', size: '150px', weight: '200' };
+		const chart = createChart();
+		chart.enqueue({ type: FONT_CHANGE, fontOptions });
 	}
 </script>
 
@@ -44,7 +46,7 @@
 	</ul>
 	<input type="text" on:input={handleInputChange} bind:value={inputValue} />
 	<input type="button" value="set font shorthand" on:click={setFontSHValue} />
-	<canvas use:line_chart={chartProps} on:chart-resize={resizeNotification}
+	<canvas use:line_chart={createChart} on:chart-resize={resizeNotification}
 		>{(debug('rendering canvas?'), '')}</canvas
 	>
 </div>

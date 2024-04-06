@@ -10,7 +10,8 @@ import type {
 	FontLoadError,
 	ChangeSize,
 	RenderChart,
-	TestHarnas
+	TestHarnas,
+	ChangeFont
 } from './types';
 export const systemSH = ['caption', 'icon', 'menu', 'message-box', 'small-caption', 'status-bar'];
 export const fontStyle: FontStyle[] = ['normal', 'italic', 'oblique'];
@@ -48,6 +49,7 @@ export const FONT_LOADED: FontLoaded['type'] = 'font-loaded';
 export const FONT_LOAD_ERROR: FontLoadError['type'] = 'font-load-error';
 export const CHANGE_SIZE: ChangeSize['type'] = 'chart-set-size';
 export const CHART_RENDER: RenderChart['type'] = 'chart-render';
+export const FONT_CHANGE: ChangeFont['type'] = 'font-change';
 
 export const RegExpFontSizePx = /^(?:\d*\.*\d*)px$/i;
 export const RegExpFontSizeREM = /^(?:\d*\.*\d*)rem$/i;
@@ -59,9 +61,7 @@ export const textsampleForMetrics = 'MÊ|²{Qszdcy';
 export const defaultHarnas: TestHarnas = {
 	Date: globalThis.Date,
 	setTimeout: globalThis.setTimeout,
-	setInterval: global.setInterval,
-	setImmediate: global.setImmediate,
-	random: global.Math.random,
-	checkFonts: document.fonts.check,
-	loadFonts: document.fonts.load
+	setInterval: globalThis.setInterval,
+	setImmediate: globalThis.setImmediate,
+	random: globalThis.Math.random
 };

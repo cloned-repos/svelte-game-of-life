@@ -1,7 +1,7 @@
 import type { ActionReturn } from 'svelte/action';
 import createNS from '@mangos/debug-frontend';
 import type { CanvasSize } from './types';
-import type { createChart } from './helper';
+import type { createChartCreator } from './helper';
 
 //
 const debug = createNS('charts/action');
@@ -13,8 +13,8 @@ type ChartAttributes = {
 // action
 export default function line_chart(
 	canvas: HTMLCanvasElement,
-	chartCreator: ReturnType<typeof createChart>
-): ActionReturn<ChartAttributes> {
+	chartCreator: ReturnType<typeof createChartCreator>
+): ActionReturn<never, ChartAttributes> {
 	// finalize char creation since we now have the canvas
 	const chart = chartCreator(canvas);
 
