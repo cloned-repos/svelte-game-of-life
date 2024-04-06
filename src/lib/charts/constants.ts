@@ -9,7 +9,8 @@ import type {
 	FontLoaded,
 	FontLoadError,
 	ChangeSize,
-	RenderChart
+	RenderChart,
+	TestHarnas
 } from './types';
 export const systemSH = ['caption', 'icon', 'menu', 'message-box', 'small-caption', 'status-bar'];
 export const fontStyle: FontStyle[] = ['normal', 'italic', 'oblique'];
@@ -54,3 +55,13 @@ export const RegExpFontSizeEM = /^(?:\d*\.*\d*)em$/i;
 export const RegExpFontSizePCT = /^(?:\d*\.*\d*)%$/i;
 
 export const textsampleForMetrics = 'MÊ|²{Qszdcy';
+
+export const defaultHarnas: TestHarnas = {
+	Date: globalThis.Date,
+	setTimeout: globalThis.setTimeout,
+	setInterval: global.setInterval,
+	setImmediate: global.setImmediate,
+	random: global.Math.random,
+	checkFonts: document.fonts.check,
+	loadFonts: document.fonts.load
+};

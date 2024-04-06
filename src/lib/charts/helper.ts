@@ -14,7 +14,7 @@ import {
 	systemSH,
 	textsampleForMetrics
 } from './constants';
-import type { CanvasSize, FontOptions } from './types';
+import type { CanvasSize, CommonMsg, FontOptions } from './types';
 
 export function createObserverForCanvas(canvas: HTMLCanvasElement, chart: Chart) {
 	const observer = new ResizeObserver((entries) => {
@@ -322,4 +322,32 @@ export function createChart(fontOptions?: FontOptions) {
 
 export function defaultFontOptionValues(fontOptions?: FontOptions): FontOptions {
 	return Object.assign({ size: '10px', family: 'sans-serif' }, fontOptions);
+}
+
+export function* eventGenerator<T extends CommonMsg>(
+	queue: CommonMsg[],
+	selector: (ev: CommonMsg) => boolean
+): Generator<{ readonly idx: number; target: T; remove: () => void }, undefined, void> {
+	let i = 0;
+	while (i < queue.length) {
+		const length = queue.length;
+		const ev = queue[i];
+		const fr = i;
+		if (selector(ev)) {
+			yield {
+				get idx() {
+					return fr;
+				},
+				target: ev as T,
+				remove() {
+					queue.splice(fr);
+				}
+			};
+			if (length === queue.length) {
+				continue;
+			}
+		}
+		i++;
+	}
+	return;
 }

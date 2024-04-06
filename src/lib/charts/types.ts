@@ -132,3 +132,13 @@ export type FontOptions = {
 	size: FontSize;
 	family: string;
 };
+
+export type TestHarnas = {
+	Date: typeof Date;
+	setTimeout: typeof setTimeout;
+	setInterval: typeof setInterval;
+	setImmediate: typeof setImmediate;
+	random: typeof Math.random;
+	checkFonts: typeof document.fonts.check;
+	loadFonts: typeof document.fonts.load;
+};
