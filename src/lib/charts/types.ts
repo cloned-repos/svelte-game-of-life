@@ -14,12 +14,12 @@ type RPC = {
 	reqId: number;
 };
 
-type FontSH = {
-	fontSH: string;
+type Font = {
+	font: FontOptions;
 };
 
 // internal message for the chart
-export type CheckFont = FontSH & {
+export type CheckFont = Font & {
 	type: 'font-check';
 };
 
@@ -29,17 +29,17 @@ export type ChangeFont = {
 };
 
 export type FontLoading = RPC &
-	FontSH & {
+	Font & {
 		type: 'font-loading';
 	};
 
 export type FontLoaded = RPC &
-	FontSH & {
+	Font & {
 		type: 'font-loaded';
 	};
 
 export type FontLoadError = RPC &
-	FontSH & {
+	Font & {
 		type: 'font-load-error';
 		error: DOMException; // the error
 	};

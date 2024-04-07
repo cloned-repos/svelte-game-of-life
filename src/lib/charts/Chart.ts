@@ -5,7 +5,6 @@ import {
 	CHANGE_SIZE,
 	CHART_RENDER,
 	FONT_CHANGE,
-	FONT_CHECK,
 	FONT_LOADED,
 	FONT_LOADING,
 	FONT_LOAD_ERROR,
@@ -30,6 +29,7 @@ import type {
 	ChangeSize,
 	CheckFont,
 	CommonMsg,
+	FontLoadError,
 	FontLoading,
 	FontOptions,
 	TestHarnas
@@ -45,7 +45,7 @@ export default class Chart implements Enqueue<CommonMsg> {
 	private lastFontLoadError: null | {
 		ts: number; // time in ms since epoch, when the error happened
 		error: DOMException; // the Error from the browser
-		font: string; // for what font-shorthand the error happened
+		font: FontOptions; // for what font-shorthand the error happened
 	};
 
 	private queue: (CommonMsg | CheckFont)[];
@@ -60,8 +60,8 @@ export default class Chart implements Enqueue<CommonMsg> {
 				continue;
 			}
 			// process queue batch commands
-			const batch = this.queue.splice(0);
-			if (batch.length === 0) {
+
+			if (this.queue.length === 0) {
 				continue;
 			}
 			this.processFontChangeEvents();
@@ -86,7 +86,8 @@ export default class Chart implements Enqueue<CommonMsg> {
 			} = event;
 			remove();
 			const fontSH = createFontShortHand(defaultFontOptionValues(fontOptions));
-			if (systemSH.includes(fontSH)) {
+			if (systemSH.find((sysf) => fontSH.includes(sysf))) {
+				this.enqueue({ type: CHART_RENDER });
 				continue;
 			}
 
@@ -95,12 +96,12 @@ export default class Chart implements Enqueue<CommonMsg> {
 			const reqId = this.testHarnas.random();
 			try {
 				loaded = document.fonts.check(fontSH); // this can throw!!!
-				this.enqueue({ type: FONT_LOADING, fontSH, reqId });
+				this.enqueue({ type: FONT_LOADING, font: fontOptions, reqId });
 			} catch (err) {
 				continue;
 			}
 			if (loaded) {
-				this.enqueue({ type: FONT_LOADED, fontSH, reqId });
+				this.enqueue({ type: FONT_LOADED, font: fontOptions, reqId });
 				continue;
 			}
 			document.fonts
@@ -109,16 +110,16 @@ export default class Chart implements Enqueue<CommonMsg> {
 					if (fontFace === undefined) {
 						this.enqueue({
 							type: FONT_LOAD_ERROR,
-							fontSH,
+							font: fontOptions,
 							error: new DOMException(`[${fontSH}] not found`),
 							reqId
 						});
 					} else {
-						this.enqueue({ type: FONT_LOADED, fontSH, reqId });
+						this.enqueue({ type: FONT_LOADED, font: fontOptions, reqId });
 					}
 				})
 				.catch((error) => {
-					this.enqueue({ type: FONT_LOAD_ERROR, fontSH, error, reqId });
+					this.enqueue({ type: FONT_LOAD_ERROR, font: fontOptions, error, reqId });
 				});
 		}
 	}
@@ -141,25 +142,31 @@ export default class Chart implements Enqueue<CommonMsg> {
 				this.queue.splice(resolved, 1);
 				remove();
 				fontLoaded = true;
+				this.fontOptions = target.font;
 			} else {
 				const rejected = this.queue.findIndex(
 					(ev) => ev.type === FONT_LOAD_ERROR && ev.reqId && ev.reqId === target.reqId
 				);
 				if (rejected > -1) {
+					const fontLoadError = this.queue[rejected] as FontLoadError;
 					this.queue.splice(resolved, 1);
 					remove();
+					this.lastFontLoadError = { ...fontLoadError, ts: this.testHarnas.Date.now() };
 				}
 			}
 		}
 		if (fontLoaded) {
-			this.queue.push({ type: CHART_RENDER });
+			if (this.queue.length && this.queue[this.queue.length - 1].type === CHART_RENDER) {
+				return;
+			}
+			this.enqueue({ type: CHART_RENDER });
 		}
 	}
 
 	private processChartResize() {
 		let resizeMsg: ChangeSize | null = null;
 		let i = this.queue.length - 1;
-		for (; i >= 0; i--) {
+		for (; i >= 0 && i < this.queue.length; i--) {
 			const msg = this.queue[i];
 			if (msg.type === CHANGE_SIZE) {
 				if (!resizeMsg) {
@@ -171,13 +178,14 @@ export default class Chart implements Enqueue<CommonMsg> {
 		if (!resizeMsg) {
 			return; // nothing to be done
 		}
-		if (false === isCanvasSizeEqual(this.size, resizeMsg.size)) {
+		if (isCanvasSizeEqual(this.size, resizeMsg.size)) {
 			return;
 		}
 		this.size = resizeMsg.size;
-		if (this.queue[this.queue.length - 1].type !== CHART_RENDER) {
-			this.queue.push({ type: CHART_RENDER });
+		if (this.queue.length && this.queue[this.queue.length - 1].type === CHART_RENDER) {
+			return;
 		}
+		this.enqueue({ type: CHART_RENDER });
 	}
 
 	private processChartRender() {
@@ -240,7 +248,12 @@ export default class Chart implements Enqueue<CommonMsg> {
 		debugRender('below %s', below);
 		debugRender('max cellHeight: %s', maxHeight);
 		const canvasHeight = this.rctx.canvas.height;
-		const textBaseLineMiddle = canvasHeight - below - 12;
+		const max = Math.max;
+		const textBaseLineMiddle =
+			// the - 20 off the end is not put the lines on the canvas boundery but give it a small padding to check the
+			// visual calculations are in fact correct
+			canvasHeight - max(actualDescent + middle, fontDescent + middle, bottom + middle) - 20;
+
 		const _fontAscent = textBaseLineMiddle - (fontAscent - middle);
 		const _actualAscent = textBaseLineMiddle - (actualAscent - middle);
 		const _fontDescent = textBaseLineMiddle + (fontDescent + middle);
@@ -251,7 +264,15 @@ export default class Chart implements Enqueue<CommonMsg> {
 		// lets draw
 		clear(this.rctx);
 
-		drawText(this.rctx, textsampleForMetrics, 'black', 40, textBaseLineMiddle, 'middle');
+		drawText(
+			this.rctx,
+			textsampleForMetrics,
+			'black',
+			fontSH,
+			40,
+			textBaseLineMiddle,
+			'middle'
+		);
 
 		// draw FontAscent orange
 		drawHorizontalLine(this.rctx, 0, _fontAscent, this.rctx.canvas.width, 'red', 50, 25);
@@ -302,7 +323,7 @@ export default class Chart implements Enqueue<CommonMsg> {
 		private readonly canvas: HTMLCanvasElement,
 		// https://html.spec.whatwg.org/multipage/canvas.html#2dcontext
 		//  '10px sans-serif' is the default for canvas
-		private readonly fontOptions?: FontOptions,
+		private fontOptions?: FontOptions,
 		private readonly testHarnas: TestHarnas = defaultHarnas
 	) {
 		this.rctx = canvas.getContext('2d', {

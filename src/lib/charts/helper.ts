@@ -72,12 +72,6 @@ export function createFontShortHand(opt: FontOptions): string | never {
 */
 	// some checks, if font-family  is one of the systemSH then other options must be not set
 	let rc = '';
-	if (opt.family && systemSH.includes(opt.family.toLocaleLowerCase())) {
-		if (Object.keys(opt).length > 1) {
-			throw new Error(`Can not specify other font properties with ${opt.family}`);
-		}
-		return opt.family.toLocaleLowerCase();
-	}
 	// fontstyle check
 	if (opt.style) {
 		if (fontStyle.includes(opt.style)) {
@@ -302,12 +296,14 @@ export function drawText(
 	ctx: CanvasRenderingContext2D,
 	text: string,
 	fillStyle: string,
+	fontSH: string,
 	x: number,
 	y: number,
 	textBaseline: CanvasRenderingContext2D['textBaseline']
 ) {
 	ctx.save();
 	ctx.closePath();
+	ctx.font = fontSH;
 	ctx.textBaseline = textBaseline;
 	ctx.fillStyle = fillStyle;
 	ctx.fillText(text, x, y);
@@ -363,7 +359,7 @@ export function* eventGenerator<T extends CommonMsg | CheckFont>(
 export function cleanUpChartRenderMsgs(queue: (CommonMsg | CheckFont)[]) {
 	let renderMsg: RenderChart | null = null;
 	let i = queue.length - 1;
-	for (; i >= 0; i--) {
+	for (; i >= 0 && i < queue.length; i--) {
 		const msg = queue[i];
 		if (msg.type === CHART_RENDER) {
 			if (!renderMsg) {
@@ -374,9 +370,6 @@ export function cleanUpChartRenderMsgs(queue: (CommonMsg | CheckFont)[]) {
 	}
 	if (!renderMsg) {
 		return false; // nothing to be done
-	}
-	if (queue[queue.length - 1].type !== CHART_RENDER) {
-		queue.push({ type: CHART_RENDER });
 	}
 	return true;
 }

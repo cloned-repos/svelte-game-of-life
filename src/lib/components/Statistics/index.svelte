@@ -21,7 +21,7 @@
 	}
 
 	let inputValue: string;
-	let fontOptions: FontOptions = { family: 'menu', size: '10px' };
+	let fontOptions: FontOptions = { family: 'sans-serif', size: '16px', weight: 'bold' };
 	const createChart = createChartCreator(fontOptions);
 	function handleInputChange(e: Event) {
 		inputValue = (e.target as HTMLInputElement).value;
