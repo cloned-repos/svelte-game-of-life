@@ -202,23 +202,22 @@ export default class Chart implements Enqueue<CommonMsg> {
 
 		const fontSH = createFontShortHand(defaultFontOptionValues(this.fontOptions));
 		const {
-			cellHeightUsingActualBBAscentTDescent,
-			cellHeightUsingFontAscentToDescent,
-			cellHeightUsingTopToBottomTextBaseline,
-			top,
-			bottom,
-			middle,
-			fontAscent,
-			fontDescent,
-			actualAscent,
-			actualDescent
+			// cellHeights?
+			heights: {
+				using_alphbl_using_font_topbl_2_botbl,
+				using_alphbl_using_font_ascent_2_descent,
+				using_alphbl_using_actual_ascent_2_descent
+			},
+			baselines,
+			ascents,
+			descents
 		} = getfontMetrics(this.rctx, fontSH);
 		// select max emHeight
 
 		const heights = [
-			cellHeightUsingActualBBAscentTDescent,
-			cellHeightUsingFontAscentToDescent,
-			cellHeightUsingTopToBottomTextBaseline
+			using_alphbl_using_font_topbl_2_botbl,
+			using_alphbl_using_font_ascent_2_descent,
+			using_alphbl_using_actual_ascent_2_descent
 		];
 		let maxHeightIdx = 0;
 		for (let i = 1; i < 3; i++) {
@@ -231,17 +230,17 @@ export default class Chart implements Enqueue<CommonMsg> {
 		let below = 0;
 		switch (maxHeightIdx) {
 			case 0:
-				above = actualAscent - middle;
-				below = actualDescent + middle;
+				above = baselines.top.alphbl_2_topbl_from_actual_ascent;
+				below = baselines.bottom.alphbl_2_midbl_from_actual_ascent;
 				break;
 			case 1:
-				above = fontAscent - middle;
-				below = fontDescent + middle;
+				above = ascents.font.alphabetic;
+				below = descents.font.alphabetic;
 				break;
 			case 2:
 			default:
-				above = top - middle;
-				below = bottom + middle;
+				above = ascents.actual.alphabetic;
+				below = descents.actual.alphabetic;
 		}
 		debugRender('render/selected: %s', maxHeightIdx);
 		debugRender('above %s', above);

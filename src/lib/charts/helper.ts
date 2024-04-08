@@ -131,118 +131,140 @@ function metricsFrom(
 }
 
 export function getfontMetrics(ctx: CanvasRenderingContext2D, fontSH: string) {
-	ctx.save(); // main save
+	ctx.save(); // save contexts
 	ctx.font = fontSH;
+	// get metrics from all possible baselines
 	const topMetrics = metricsFrom(textsampleForMetrics, 'top', ctx);
 	const middleMetrics = metricsFrom(textsampleForMetrics, 'middle', ctx);
 	const baseLineMetrics = metricsFrom(textsampleForMetrics, 'alphabetic', ctx);
 	const bottomLineMetrics = metricsFrom(textsampleForMetrics, 'bottom', ctx);
 	ctx.restore();
 	//
-	const fontTopAscent = topMetrics.fontBoundingBoxAscent;
-	const actualTopAscent = topMetrics.actualBoundingBoxAscent;
-	const fontTopDescent = topMetrics.fontBoundingBoxDescent;
-	const actualTopDescent = topMetrics.actualBoundingBoxDescent;
+	const topbl_fontAscent = topMetrics.fontBoundingBoxAscent;
+	const topbl_actualAscent = topMetrics.actualBoundingBoxAscent;
+	const topbl_fontDescent = topMetrics.fontBoundingBoxDescent;
+	const topbl_actualDescent = topMetrics.actualBoundingBoxDescent;
 
-	const fontAlphabeticAscent = baseLineMetrics.fontBoundingBoxAscent;
-	const actualAlphabeticAscent = baseLineMetrics.actualBoundingBoxAscent;
-	const fontAlphabeticDescent = baseLineMetrics.fontBoundingBoxDescent;
-	const actualAlphabeticDescent = baseLineMetrics.actualBoundingBoxDescent;
+	const alpbl_fontAscent = baseLineMetrics.fontBoundingBoxAscent;
+	const alpbl_actualAscent = baseLineMetrics.actualBoundingBoxAscent;
+	const alpbl_fontDescent = baseLineMetrics.fontBoundingBoxDescent;
+	const alpbl_actualDescent = baseLineMetrics.actualBoundingBoxDescent;
 
-	const fontBottomAscent = bottomLineMetrics.fontBoundingBoxAscent;
-	const actualBottomAscent = bottomLineMetrics.actualBoundingBoxAscent;
-	const fontBottomDescent = bottomLineMetrics.fontBoundingBoxDescent;
-	const actualBottomDescent = bottomLineMetrics.actualBoundingBoxDescent;
+	const botbl_fontAscent = bottomLineMetrics.fontBoundingBoxAscent;
+	const botbl_actualAscent = bottomLineMetrics.actualBoundingBoxAscent;
+	const botbl_fontDescent = bottomLineMetrics.fontBoundingBoxDescent;
+	const botbl_actualDescent = bottomLineMetrics.actualBoundingBoxDescent;
 
-	const fontMiddleAscent = middleMetrics.fontBoundingBoxAscent;
-	const fontMiddleDescent = middleMetrics.fontBoundingBoxDescent;
-	const actualMiddleAscent = middleMetrics.actualBoundingBoxAscent;
-	const actualMiddleDescent = middleMetrics.actualBoundingBoxDescent;
+	const midbl_fontAscent = middleMetrics.fontBoundingBoxAscent;
+	const midbl_fontDescent = middleMetrics.fontBoundingBoxDescent;
+	const midbl_actualAscent = middleMetrics.actualBoundingBoxAscent;
+	const midbl_actualDescent = middleMetrics.actualBoundingBoxDescent;
 
 	// some calculations
-	debugMetrics('ascent, fontTopAscent: %s', fontTopAscent);
-	debugMetrics('ascent, actualTopAscent: %s', actualTopAscent);
-	debugMetrics('descent, fontTopDescent: %s', fontTopDescent);
-	debugMetrics('descent, actualTopDescent: %s', actualTopDescent);
+	debugMetrics('/font/ascent, basline-top: %s', topbl_fontAscent);
+	debugMetrics('/actual/ascent, baseline-top: %s', topbl_actualAscent);
+	debugMetrics('/font/descent, baseline-top: %s', topbl_fontDescent);
+	debugMetrics('/actual/descent, baseline-top: %s', topbl_actualDescent);
 	//
-	debugMetrics('ascent, fontAlphabeticAscent: %s', fontAlphabeticAscent);
-	debugMetrics('ascent, actualAlphabeticAscent: %s', actualAlphabeticAscent);
-	debugMetrics('descent, fontAlphabeticDescent: %s', fontAlphabeticDescent);
-	debugMetrics('descent, actualAlphabeticDescent: %s', actualAlphabeticDescent);
+	debugMetrics('/font/ascent, fontAlphabeticAscent: %s', alpbl_fontAscent);
+	debugMetrics('/actual/ascent, actualAlphabeticAscent: %s', alpbl_actualAscent);
+	debugMetrics('/font/descent, fontAlphabeticDescent: %s', alpbl_fontDescent);
+	debugMetrics('/actual/descent, actualAlphabeticDescent: %s', alpbl_actualDescent);
 	//
-	debugMetrics('ascent, fontBottomAscent: %s', fontBottomAscent);
-	debugMetrics('ascent, actualBottomAscent: %s', actualBottomAscent);
-	debugMetrics('descent, fontBottomDescent: %s', fontBottomDescent);
-	debugMetrics('descent, actualBottomDescent: %s', actualBottomDescent);
+	debugMetrics('/font/ascent, fontBottomAscent: %s', botbl_fontAscent);
+	debugMetrics('/actual/ascent, actualBottomAscent: %s', botbl_actualAscent);
+	debugMetrics('/font/descent, fontBottomDescent: %s', botbl_fontDescent);
+	debugMetrics('/actual/descent, actualBottomDescent: %s', botbl_actualDescent);
 
-	debugMetrics('ascent, fontMiddleAscent: %s', fontBottomAscent);
-	debugMetrics('ascent, actualMiddleAscent: %s', actualBottomAscent);
-	debugMetrics('descent, fontMiddleDescent: %s', fontMiddleDescent);
-	debugMetrics('descent, actualMiddleDescent: %s', actualMiddleDescent);
+	debugMetrics('ascent, fontMiddleAscent: %s', midbl_fontAscent);
+	debugMetrics('ascent, actualMiddleAscent: %s', midbl_actualAscent);
+	debugMetrics('descent, fontMiddleDescent: %s', midbl_fontDescent);
+	debugMetrics('descent, actualMiddleDescent: %s', midbl_actualDescent);
 
 	// these 2 are be the same
-	// we pick the first
-	const topBaselineFromFontAscent = fontAlphabeticAscent - fontTopAscent;
-	//const topBaselineFromActualAscent = actualAlphabeticAscent - actualTopAscent;
+	const midbl_2_topbl_from_font_ascent = midbl_fontAscent - topbl_fontAscent;
+	const midbl_2_topbl_from_actual_ascent = midbl_actualAscent - topbl_actualAscent;
 
-	debugMetrics('%ctopBaselineFromFontAscent [%s]', 'color:orange', topBaselineFromFontAscent);
-	//debugMetrics('%ctopBaselineFromActualAscent [%s]', 'color:orange', topBaselineFromActualAscent);
+	// these 2 should be the same, mid-ascent < alpha-ascent
+	const midbl_2_alpha_from_font_ascent = alpbl_fontAscent - midbl_fontAscent;
+	const midbl_2_alpha_from_actual_ascent = alpbl_actualAscent - midbl_actualAscent;
 
-	// these 2 are be the same
-	// we pick the first
-	const middleBaselineFromFontAscent = fontAlphabeticAscent - fontMiddleAscent;
-	//const middleBaselineFromActualAscent = actualAlphabeticAscent - actualMiddleAscent;
+	// these 2 should be the same, mid-descent > bot-descent
+	const midbl_2_botbl_from_font_descent = midbl_fontDescent - botbl_fontDescent;
+	const midbl_2_botbl_from_actual_descent = midbl_fontDescent - botbl_actualDescent;
 
-	debugMetrics(
-		'%cmiddleBaselineFromFontAscent [%s]',
-		'color:orange',
-		middleBaselineFromFontAscent
-	);
+	// from top baseline to  bottom baseline
+	// I am here
+	const using_l_using_font_topbl_2_botbl =
+		alphbl_2_topbl_from_font_ascent + alphbl_2_botbl_from_font_ascent;
 
-	// these 2 are be the approx the same
-	const bottomBaselineFromFontDescent = fontAlphabeticDescent - fontBottomDescent;
-	//const bottomBaselineFromActualAscent = actualAlphabeticDescent - actualBottomDescent;
+	// from font ascent to font descent
+	const using_alphbl_using_font_ascent_2_descent = alpbl_fontAscent + alpbl_fontDescent;
 
-	debugMetrics(
-		'%cbottomBaselineFromFontDescent [%s]',
-		'color:orange',
-		bottomBaselineFromFontDescent
-	);
-
-	const cellHeightUsingTopToBottomTextBaseline =
-		topBaselineFromFontAscent + bottomBaselineFromFontDescent;
-	const cellHeightUsingFontAscentToDescent = fontAlphabeticAscent + fontAlphabeticDescent;
-	const cellHeightUsingActualBBAscentTDescent = actualAlphabeticAscent + actualAlphabeticDescent;
+	// from actual ascent to actual descent
+	const using_alphbl_using_actual_ascent_2_descent = alpbl_actualAscent + alpbl_actualDescent;
 
 	debugMetrics(
-		'%ccellHeightUsingTopAndBottomBaseline [%s]',
+		'%c using_alphbl_using_font_topbl_2_botbl [%s]',
 		'color:green',
-		cellHeightUsingTopToBottomTextBaseline
+		using_alphbl_using_font_topbl_2_botbl
 	);
 	debugMetrics(
-		'%ccellHeightFontAscentDescent [%s]',
+		'%c using_alphbl_using_font_ascent_2_descent [%s]',
 		'color:green',
-		cellHeightUsingFontAscentToDescent
+		using_alphbl_using_font_ascent_2_descent
 	);
 	debugMetrics(
-		'%ccellHeightActualAscentDescent [%s]',
+		'%c using_alphbl_using_actual_ascent_2_descent [%s]',
 		'color:green',
-		cellHeightUsingActualBBAscentTDescent
+		using_alphbl_using_actual_ascent_2_descent
 	);
 	return {
 		// cellHeights?
-		cellHeightUsingTopToBottomTextBaseline,
-		cellHeightUsingFontAscentToDescent,
-		cellHeightUsingActualBBAscentTDescent,
-		// baselines, ("alphabetic" is always 0)
-		top: topBaselineFromFontAscent,
-		middle: middleBaselineFromFontAscent,
-		bottom: bottomBaselineFromFontDescent,
+		heights: {
+			using_alphbl_using_font_topbl_2_botbl,
+			using_alphbl_using_font_ascent_2_descent,
+			using_alphbl_using_actual_ascent_2_descent
+		},
+		baselines: {
+			top: {
+				alphbl_2_topbl_from_font_ascent,
+				alphbl_2_topbl_from_actual_ascent
+			},
+			middle: {
+				alphbl_2_midbl_from_font_ascent,
+				alphbl_2_midbl_from_actual_ascent
+			},
+			bottom: {
+				alphbl_2_midbl_from_actual_ascent,
+				alphbl_2_midbl_from_font_ascent
+			}
+		},
 		// ascents and descents
-		fontAscent: fontAlphabeticAscent,
-		fontDescent: fontAlphabeticDescent,
-		actualAscent: actualAlphabeticAscent,
-		actualDescent: actualAlphabeticDescent
+		ascents: {
+			font: {
+				alphabetic: alpbl_fontAscent,
+				middle: midbl_fontAscent,
+				bottom: botbl_fontAscent
+			},
+			actual: {
+				alphabetic: alpbl_actualAscent,
+				middle: midbl_actualAscent,
+				bottom: botbl_actualAscent
+			}
+		},
+		descents: {
+			font: {
+				alphabetic: alpbl_fontDescent,
+				middle: midbl_fontDescent,
+				bottom: botbl_fontDescent
+			},
+			actual: {
+				alphabetic: alpbl_actualDescent,
+				middle: midbl_actualDescent,
+				bottom: botbl_actualDescent
+			}
+		}
 	};
 }
 
@@ -314,8 +336,17 @@ export function drawText(
 export function createChartCreator(fontOptions?: FontOptions) {
 	let chart: Chart;
 	return function (canvas?: HTMLCanvasElement) {
+		if (canvas && chart) {
+			throw new Error('can not add this action to multiple html tags');
+		}
 		if (chart) {
 			return chart;
+		}
+		if (!canvas) {
+			throw new Error('no argument given for chart-action');
+		}
+		if (false === canvas instanceof window.HTMLCanvasElement) {
+			throw new Error('the tag being "actionized" is not a <canvas /> tag');
 		}
 		chart = new Chart(canvas!, fontOptions);
 		return chart;
