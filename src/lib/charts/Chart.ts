@@ -84,6 +84,7 @@ export default class Chart implements Enqueue<CommonMsg> {
 				target: { fontOptions },
 				remove
 			} = event;
+
 			remove();
 			const fontSH = createFontShortHand(defaultFontOptionValues(fontOptions));
 			if (systemSH.find((sysf) => fontSH.includes(sysf))) {
@@ -95,6 +96,7 @@ export default class Chart implements Enqueue<CommonMsg> {
 			let loaded: boolean;
 			const reqId = this.testHarnas.random();
 			try {
+				document.fonts.ready;
 				loaded = document.fonts.check(fontSH); // this can throw!!!
 				this.enqueue({ type: FONT_LOADING, font: fontOptions, reqId });
 			} catch (err) {
@@ -203,22 +205,16 @@ export default class Chart implements Enqueue<CommonMsg> {
 		const fontSH = createFontShortHand(defaultFontOptionValues(this.fontOptions));
 		const {
 			// cellHeights?
-			heights: {
-				using_alphbl_using_font_topbl_2_botbl,
-				using_alphbl_using_font_ascent_2_descent,
-				using_alphbl_using_actual_ascent_2_descent
-			},
 			baselines,
 			ascents,
-			descents
+			descents,
+			midbl_all
 		} = getfontMetrics(this.rctx, fontSH);
 		// select max emHeight
+		console.log({ midbl_all, baselines, ascents, descents });
 
-		const heights = [
-			using_alphbl_using_font_topbl_2_botbl,
-			using_alphbl_using_font_ascent_2_descent,
-			using_alphbl_using_actual_ascent_2_descent
-		];
+		return;
+		/*
 		let maxHeightIdx = 0;
 		for (let i = 1; i < 3; i++) {
 			if (heights[i] > heights[maxHeightIdx]) {
@@ -316,6 +312,8 @@ export default class Chart implements Enqueue<CommonMsg> {
 			size: this.size
 		});
 		// render chart data here
+
+		*/
 	}
 
 	constructor(

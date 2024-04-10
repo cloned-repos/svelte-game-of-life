@@ -160,84 +160,44 @@ export function getfontMetrics(ctx: CanvasRenderingContext2D, fontSH: string) {
 	const midbl_actualAscent = middleMetrics.actualBoundingBoxAscent;
 	const midbl_actualDescent = middleMetrics.actualBoundingBoxDescent;
 
-	// some calculations
-	debugMetrics('/font/ascent, basline-top: %s', topbl_fontAscent);
-	debugMetrics('/actual/ascent, baseline-top: %s', topbl_actualAscent);
-	debugMetrics('/font/descent, baseline-top: %s', topbl_fontDescent);
-	debugMetrics('/actual/descent, baseline-top: %s', topbl_actualDescent);
-	//
-	debugMetrics('/font/ascent, fontAlphabeticAscent: %s', alpbl_fontAscent);
-	debugMetrics('/actual/ascent, actualAlphabeticAscent: %s', alpbl_actualAscent);
-	debugMetrics('/font/descent, fontAlphabeticDescent: %s', alpbl_fontDescent);
-	debugMetrics('/actual/descent, actualAlphabeticDescent: %s', alpbl_actualDescent);
-	//
-	debugMetrics('/font/ascent, fontBottomAscent: %s', botbl_fontAscent);
-	debugMetrics('/actual/ascent, actualBottomAscent: %s', botbl_actualAscent);
-	debugMetrics('/font/descent, fontBottomDescent: %s', botbl_fontDescent);
-	debugMetrics('/actual/descent, actualBottomDescent: %s', botbl_actualDescent);
-
-	debugMetrics('ascent, fontMiddleAscent: %s', midbl_fontAscent);
-	debugMetrics('ascent, actualMiddleAscent: %s', midbl_actualAscent);
-	debugMetrics('descent, fontMiddleDescent: %s', midbl_fontDescent);
-	debugMetrics('descent, actualMiddleDescent: %s', midbl_actualDescent);
-
-	// these 2 are be the same
-	const midbl_2_topbl_from_font_ascent = midbl_fontAscent - topbl_fontAscent;
-	const midbl_2_topbl_from_actual_ascent = midbl_actualAscent - topbl_actualAscent;
+	// these 2 are always the same?
+	// middle baseline is the norm
+	const topbl_font = midbl_fontAscent - topbl_fontAscent;
+	const topbl_actual = midbl_actualAscent - topbl_actualAscent;
 
 	// these 2 should be the same, mid-ascent < alpha-ascent
-	const midbl_2_alpha_from_font_ascent = alpbl_fontAscent - midbl_fontAscent;
-	const midbl_2_alpha_from_actual_ascent = alpbl_actualAscent - midbl_actualAscent;
+	const alpbl_font = midbl_fontAscent - alpbl_fontAscent;
+	const alpbl_actual = midbl_actualAscent - alpbl_actualAscent;
 
-	// these 2 should be the same, mid-descent > bot-descent
-	const midbl_2_botbl_from_font_descent = midbl_fontDescent - botbl_fontDescent;
-	const midbl_2_botbl_from_actual_descent = midbl_fontDescent - botbl_actualDescent;
+	// these 2 should be the same, mid-ascent < bot-ascent
+	const botbl_font = midbl_fontAscent - botbl_fontAscent;
+	const botbl_actual = midbl_actualAscent - botbl_actualAscent;
 
+	const midbl_all = {
+		topbl: topbl_font,
+		fontAscent: topbl_font + topbl_fontAscent,
+		actualAscent: topbl_actual + topbl_actualAscent,
+		alpbbl: alpbl_font,
+		botbl: botbl_font,
+		fontDescent: botbl_font - botbl_fontDescent,
+		actualDescent: botbl_actual - botbl_actualDescent
+	};
 	// from top baseline to  bottom baseline
 	// I am here
-	const using_l_using_font_topbl_2_botbl =
-		alphbl_2_topbl_from_font_ascent + alphbl_2_botbl_from_font_ascent;
-
-	// from font ascent to font descent
-	const using_alphbl_using_font_ascent_2_descent = alpbl_fontAscent + alpbl_fontDescent;
-
-	// from actual ascent to actual descent
-	const using_alphbl_using_actual_ascent_2_descent = alpbl_actualAscent + alpbl_actualDescent;
-
-	debugMetrics(
-		'%c using_alphbl_using_font_topbl_2_botbl [%s]',
-		'color:green',
-		using_alphbl_using_font_topbl_2_botbl
-	);
-	debugMetrics(
-		'%c using_alphbl_using_font_ascent_2_descent [%s]',
-		'color:green',
-		using_alphbl_using_font_ascent_2_descent
-	);
-	debugMetrics(
-		'%c using_alphbl_using_actual_ascent_2_descent [%s]',
-		'color:green',
-		using_alphbl_using_actual_ascent_2_descent
-	);
 	return {
-		// cellHeights?
-		heights: {
-			using_alphbl_using_font_topbl_2_botbl,
-			using_alphbl_using_font_ascent_2_descent,
-			using_alphbl_using_actual_ascent_2_descent
-		},
+		midbl_all,
 		baselines: {
 			top: {
-				alphbl_2_topbl_from_font_ascent,
-				alphbl_2_topbl_from_actual_ascent
+				font: topbl_font,
+				actual: topbl_actual
 			},
-			middle: {
-				alphbl_2_midbl_from_font_ascent,
-				alphbl_2_midbl_from_actual_ascent
+			alphabetic: {
+				font: alpbl_font,
+				actual: alpbl_actual
 			},
 			bottom: {
-				alphbl_2_midbl_from_actual_ascent,
-				alphbl_2_midbl_from_font_ascent
+				font: botbl_font,
+				actual: botbl_actual
 			}
 		},
 		// ascents and descents
@@ -245,24 +205,28 @@ export function getfontMetrics(ctx: CanvasRenderingContext2D, fontSH: string) {
 			font: {
 				alphabetic: alpbl_fontAscent,
 				middle: midbl_fontAscent,
-				bottom: botbl_fontAscent
+				bottom: botbl_fontAscent,
+				top: topbl_fontAscent
 			},
 			actual: {
 				alphabetic: alpbl_actualAscent,
 				middle: midbl_actualAscent,
-				bottom: botbl_actualAscent
+				bottom: botbl_actualAscent,
+				top: topbl_actualAscent
 			}
 		},
 		descents: {
 			font: {
-				alphabetic: alpbl_fontDescent,
-				middle: midbl_fontDescent,
-				bottom: botbl_fontDescent
+				alphabetic: -alpbl_fontDescent,
+				middle: -midbl_fontDescent,
+				bottom: -botbl_fontDescent,
+				top: -topbl_fontDescent
 			},
 			actual: {
-				alphabetic: alpbl_actualDescent,
-				middle: midbl_actualDescent,
-				bottom: botbl_actualDescent
+				alphabetic: -alpbl_actualDescent,
+				middle: -midbl_actualDescent,
+				bottom: -botbl_actualDescent,
+				top: -topbl_actualDescent
 			}
 		}
 	};
