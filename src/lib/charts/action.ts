@@ -16,12 +16,9 @@ export default function line_chart(
 	chartCreator: ReturnType<typeof createChartCreator>
 ): ActionReturn<never, ChartAttributes> {
 	// finalize char creation since we now have the canvas
-	const chart = chartCreator(canvas);
+	const { destroy } = chartCreator(canvas);
 
 	return {
-		destroy: () => {
-			debug('detaching chart from canvas');
-			chart.detach();
-		}
+		destroy
 	};
 }

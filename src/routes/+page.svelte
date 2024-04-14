@@ -1,13 +1,14 @@
 <script context="module" lang="ts">
 	// app
 	import { animationFrameFired } from '$lib/store/animationFrameSlice';
-	import { store, startAnimFrameDispatcher, redux2SvelteReadable } from '$lib/store';
+	import { store, redux2SvelteReadable } from '$lib/store';
 	// app types
 	import type { RootState } from '$lib/store';
 	import type { Store } from '@reduxjs/toolkit';
 	import type { AnimationState } from '$lib/store/animationFrameSlice';
 	// svelte libs
 	import { onMount } from 'svelte';
+	import { startAnimFrameDispatcher } from '$lib/helpers';
 </script>
 
 <script lang="ts">
@@ -15,7 +16,6 @@
 		store,
 		(store) => store.animFrame
 	);
-
 	onMount(() => {
 		const cancel = startAnimFrameDispatcher();
 		return cancel; // same as useEffect in react, can return a function

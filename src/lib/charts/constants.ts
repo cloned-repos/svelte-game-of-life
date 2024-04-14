@@ -63,5 +63,6 @@ export const defaultHarnas: TestHarnas = {
 	setTimeout: globalThis.setTimeout,
 	setInterval: globalThis.setInterval,
 	setImmediate: globalThis.setImmediate,
-	random: globalThis.Math.random
+	random: globalThis.Math.random,
+	getRequestAnimationFrame: () => window.requestAnimationFrame
 };

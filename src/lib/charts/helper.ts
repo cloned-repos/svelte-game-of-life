@@ -1,5 +1,3 @@
-import createNS from '@mangos/debug-frontend';
-
 import Chart from './Chart';
 import {
 	CHANGE_SIZE,
@@ -15,7 +13,7 @@ import {
 	systemSH,
 	textsampleForMetrics
 } from './constants';
-import type { CanvasSize, CheckFont, CommonMsg, FontOptions, RenderChart } from './types';
+import type { CanvasSize, CommonMsg, Font, FontOptions, RenderChart } from './types';
 
 export function createObserverForCanvas(canvas: HTMLCanvasElement, chart: Chart) {
 	const observer = new ResizeObserver((entries) => {
@@ -25,8 +23,8 @@ export function createObserverForCanvas(canvas: HTMLCanvasElement, chart: Chart)
 		const height = entry.borderBoxSize[0].blockSize;
 		const width = entry.borderBoxSize[0].inlineSize;
 		const target: HTMLCanvasElement = entry.target as HTMLCanvasElement;
-		target.width = physicalPixelWidth; //physicalPixelWidth;
-		target.height = physicalPixelHeight; //physicalPixelHeight;
+		//target.width = physicalPixelWidth; //physicalPixelWidth;
+		//target.height = physicalPixelHeight; //physicalPixelHeight;
 		const size = { physicalPixelWidth, physicalPixelHeight, height, width };
 		chart.enqueue({ type: CHANGE_SIZE, size });
 	});
@@ -58,7 +56,22 @@ export function isCanvasSizeEqual(a: CanvasSize, b: CanvasSize) {
 	);
 }
 
-export function createFontShortHand(opt: FontOptions): string | never {
+export function createFontID(opt: FontOptions): string | null {
+	let rc = '';
+	if (fontStyle.includes(opt.style!)) {
+		rc += opt.style;
+	} else {
+		return null;
+	}
+	if (opt.family) {
+		rc += ' ' + opt.family;
+	} else {
+		return null;
+	}
+	return rc;
+}
+
+export function createFontShortHand(opt: FontOptions): string | null {
 	/* this is the font shorthand typedef from https://www.w3.org/TR/2018/REC-css-fonts-3-20180920/#font-prop
 	Operator:
 	'||' means at least one of these options need to be chosen
@@ -106,17 +119,16 @@ export function createFontShortHand(opt: FontOptions): string | never {
 				rc += (rc ? ' ' : '') + opt.size.toLocaleLowerCase();
 				break;
 			default:
-				throw new Error(`invalid font size:${opt.size}`);
+				return null;
 		}
 	}
 	// add font family
-	if (opt.family) {
-		rc += (rc ? ' ' : '') + opt.family;
+	if (!opt.family) {
+		return null;
 	}
+	rc += ' ' + opt.family;
 	return rc;
 }
-
-const debugMetrics = createNS('helper.ts/getfontMetrics');
 
 function metricsFrom(
 	text: string,
@@ -173,7 +185,7 @@ export function getfontMetrics(ctx: CanvasRenderingContext2D, fontSH: string) {
 	const botbl_font = midbl_fontAscent - botbl_fontAscent;
 	const botbl_actual = midbl_actualAscent - botbl_actualAscent;
 
-	const midbl_all = {
+	const metrics = {
 		topbl: topbl_font,
 		fontAscent: topbl_font + topbl_fontAscent,
 		actualAscent: topbl_actual + topbl_actualAscent,
@@ -185,48 +197,50 @@ export function getfontMetrics(ctx: CanvasRenderingContext2D, fontSH: string) {
 	// from top baseline to  bottom baseline
 	// I am here
 	return {
-		midbl_all,
-		baselines: {
-			top: {
-				font: topbl_font,
-				actual: topbl_actual
+		metrics,
+		debug: {
+			baselines: {
+				top: {
+					font: topbl_font,
+					actual: topbl_actual
+				},
+				alphabetic: {
+					font: alpbl_font,
+					actual: alpbl_actual
+				},
+				bottom: {
+					font: botbl_font,
+					actual: botbl_actual
+				}
 			},
-			alphabetic: {
-				font: alpbl_font,
-				actual: alpbl_actual
+			// ascents and descents
+			ascents: {
+				font: {
+					alphabetic: alpbl_fontAscent,
+					middle: midbl_fontAscent,
+					bottom: botbl_fontAscent,
+					top: topbl_fontAscent
+				},
+				actual: {
+					alphabetic: alpbl_actualAscent,
+					middle: midbl_actualAscent,
+					bottom: botbl_actualAscent,
+					top: topbl_actualAscent
+				}
 			},
-			bottom: {
-				font: botbl_font,
-				actual: botbl_actual
-			}
-		},
-		// ascents and descents
-		ascents: {
-			font: {
-				alphabetic: alpbl_fontAscent,
-				middle: midbl_fontAscent,
-				bottom: botbl_fontAscent,
-				top: topbl_fontAscent
-			},
-			actual: {
-				alphabetic: alpbl_actualAscent,
-				middle: midbl_actualAscent,
-				bottom: botbl_actualAscent,
-				top: topbl_actualAscent
-			}
-		},
-		descents: {
-			font: {
-				alphabetic: -alpbl_fontDescent,
-				middle: -midbl_fontDescent,
-				bottom: -botbl_fontDescent,
-				top: -topbl_fontDescent
-			},
-			actual: {
-				alphabetic: -alpbl_actualDescent,
-				middle: -midbl_actualDescent,
-				bottom: -botbl_actualDescent,
-				top: -topbl_actualDescent
+			descents: {
+				font: {
+					alphabetic: -alpbl_fontDescent,
+					middle: -midbl_fontDescent,
+					bottom: -botbl_fontDescent,
+					top: -topbl_fontDescent
+				},
+				actual: {
+					alphabetic: -alpbl_actualDescent,
+					middle: -midbl_actualDescent,
+					bottom: -botbl_actualDescent,
+					top: -topbl_actualDescent
+				}
 			}
 		}
 	};
@@ -271,6 +285,17 @@ export function drawHorizontalLine(
 	ctx.restore();
 }
 
+export function drawHorizontalLines(
+	ctx: CanvasRenderingContext2D,
+	x1: number,
+	y1: number[],
+	x2: number,
+	style: string,
+	...lineDash: number[]
+) {
+	y1.forEach((y0) => drawHorizontalLine(ctx, x1, y0, x2, style, ...lineDash));
+}
+
 export function clear(ctx: CanvasRenderingContext2D) {
 	ctx.save();
 	ctx.closePath();
@@ -297,14 +322,17 @@ export function drawText(
 	ctx.restore();
 }
 
-export function createChartCreator(fontOptions?: FontOptions) {
+export function createChartCreator(fontOptions?: Font) {
 	let chart: Chart;
 	return function (canvas?: HTMLCanvasElement) {
+		const destroy = () => {
+			chart.detach();
+		};
 		if (canvas && chart) {
 			throw new Error('can not add this action to multiple html tags');
 		}
 		if (chart) {
-			return chart;
+			return { chart, destroy };
 		}
 		if (!canvas) {
 			throw new Error('no argument given for chart-action');
@@ -313,7 +341,7 @@ export function createChartCreator(fontOptions?: FontOptions) {
 			throw new Error('the tag being "actionized" is not a <canvas /> tag');
 		}
 		chart = new Chart(canvas!, fontOptions);
-		return chart;
+		return { chart, destroy };
 	};
 }
 
@@ -321,9 +349,9 @@ export function defaultFontOptionValues(fontOptions?: FontOptions): FontOptions 
 	return Object.assign({ size: '10px', family: 'sans-serif' }, fontOptions);
 }
 
-export function* eventGenerator<T extends CommonMsg | CheckFont>(
-	queue: (CommonMsg | CheckFont)[],
-	selector: (ev: CommonMsg | CheckFont) => boolean
+export function* eventGenerator<T extends CommonMsg>(
+	queue: CommonMsg[],
+	selector: (ev: CommonMsg) => boolean
 ): Generator<{ readonly idx: number; target: T; remove: () => void }, undefined, void> {
 	let i = 0;
 	while (i < queue.length) {
@@ -351,7 +379,7 @@ export function* eventGenerator<T extends CommonMsg | CheckFont>(
 }
 
 // clean up chart render unless the last one
-export function cleanUpChartRenderMsgs(queue: (CommonMsg | CheckFont)[]) {
+export function cleanUpChartRenderMsgs(queue: CommonMsg[]) {
 	let renderMsg: RenderChart | null = null;
 	let i = queue.length - 1;
 	for (; i >= 0 && i < queue.length; i--) {

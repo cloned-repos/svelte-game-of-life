@@ -14,34 +14,40 @@ type RPC = {
 	reqId: number;
 };
 
-type Font = {
+export type FontKey = {
+	key: string;
+};
+
+export type Font = {
 	font: FontOptions;
 };
 
-// internal message for the chart
-export type CheckFont = Font & {
-	type: 'font-check';
-};
-
-export type ChangeFont = {
-	type: 'font-change';
-	fontOptions: FontOptions;
-};
+export type ChangeFont = Font &
+	FontKey & {
+		type: 'font-change';
+	};
 
 export type FontLoading = RPC &
+	FontKey &
 	Font & {
 		type: 'font-loading';
 	};
 
 export type FontLoaded = RPC &
-	Font & {
+	Font &
+	FontKey & {
 		type: 'font-loaded';
 	};
 
+export type FontLoadErrorPL = Font & {
+	error: DOMException;
+	ts: string; // thime this error occurred
+};
+
 export type FontLoadError = RPC &
-	Font & {
+	FontKey &
+	FontLoadErrorPL & {
 		type: 'font-load-error';
-		error: DOMException; // the error
 	};
 
 export type RenderChart = {
@@ -146,4 +152,5 @@ export type TestHarnas = {
 	setInterval: typeof setInterval;
 	setImmediate: typeof setImmediate;
 	random: typeof Math.random;
+	getRequestAnimationFrame: () => typeof window.requestAnimationFrame;
 };

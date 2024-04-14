@@ -3,10 +3,12 @@
 	import font_bold from '../../node_modules/@easyfonts/league-junction-typeface/junction-bold.woff';
 	import font_regular from '../../node_modules/@easyfonts/league-junction-typeface/junction-regular.woff';
 	import font_light from '../../node_modules/@easyfonts/league-junction-typeface/junction-light.woff';
+	//
 	import Statistics from '$lib/components/Statistics/index.svelte';
 	import ButtonActionBar from '$lib/components/ButtonActionBar/index.svelte';
 	import Status from '$lib/components/Status/index.svelte';
 	import SideBar from '$lib/components/SideBar/index.svelte';
+	//
 	import createNS, { register } from '@mangos/debug-frontend';
 	import createBackEndMock from './debug-backend';
 	register(createBackEndMock());

@@ -1,6 +1,5 @@
 import createNS from '@mangos/debug-frontend';
 import type { Enqueue } from './Enqueue';
-import { PromiseExtended } from './PromiseExtended';
 import {
 	CHANGE_SIZE,
 	CHART_RENDER,
@@ -18,6 +17,7 @@ import {
 	createObserverForCanvas,
 	defaultFontOptionValues,
 	drawHorizontalLine,
+	drawHorizontalLines,
 	drawText,
 	eventGenerator,
 	getfontMetrics,
@@ -27,9 +27,11 @@ import type {
 	CanvasSize,
 	ChangeFont,
 	ChangeSize,
-	CheckFont,
 	CommonMsg,
+	Font,
+	FontKey,
 	FontLoadError,
+	FontLoadErrorPL,
 	FontLoading,
 	FontOptions,
 	TestHarnas
@@ -40,35 +42,58 @@ const debugRender = createNS('Chart/render');
 
 export default class Chart implements Enqueue<CommonMsg> {
 	private rctx: CanvasRenderingContext2D | null;
+
 	private size: CanvasSize;
+
 	private readonly destroyObserver: ReturnType<typeof createObserverForCanvas>;
-	private lastFontLoadError: null | {
-		ts: number; // time in ms since epoch, when the error happened
-		error: DOMException; // the Error from the browser
-		font: FontOptions; // for what font-shorthand the error happened
-	};
 
-	private queue: (CommonMsg | CheckFont)[];
+	private queue: ({ ts: string } & CommonMsg)[];
 
-	private triggerProcessing: PromiseExtended<void>;
+	private fonts: Record<string, FontOptions | FontLoadErrorPL>;
 
-	private async run() {
-		do {
-			await this.triggerProcessing.promise;
-			this.triggerProcessing = new PromiseExtended(false);
-			if (this.rctx === null) {
-				continue;
+	constructor(
+		private readonly canvas: HTMLCanvasElement,
+		// https://html.spec.whatwg.org/multipage/canvas.html#2dcontext
+		//  '10px sans-serif' is the default for canvas
+		initialFonts?: (FontKey & Font)[],
+		private readonly testHarnas: TestHarnas = defaultHarnas
+	) {
+		this.rctx = canvas.getContext('2d', {
+			willReadFrequently: true,
+			alpha: true
+		})!;
+		const csc = getComputedStyle(canvas);
+		this.size = {
+			physicalPixelHeight: canvas.height,
+			physicalPixelWidth: canvas.width,
+			width: parseFloat(csc.width),
+			height: parseFloat(csc.height)
+		};
+		this.destroyObserver = createObserverForCanvas(canvas, this);
+		this.queue = [];
+		this.fonts = {};
+
+		// need to write it like this to make typscript understand "initialFonts" is defined
+		if (Array.isArray(initialFonts)) {
+			for (const fontOption of initialFonts) {
+				const font = defaultFontOptionValues(fontOption?.font);
+				const key = fontOption?.key || creatFontID(font)!; // because of the default values createFontID(..) will be ok
+				this.enqueue({ type: FONT_CHANGE, font, key });
 			}
-			// process queue batch commands
+		}
+	}
 
-			if (this.queue.length === 0) {
-				continue;
-			}
-			this.processFontChangeEvents();
-			this.processFontLoadingEvents();
-			this.processChartResize();
-			this.processChartRender();
-		} while (this.rctx !== null);
+	public async nextStep() {
+		if (this.rctx === null) {
+			return;
+		}
+		if (this.queue.length === 0) {
+			return;
+		}
+		this.processFontChangeEvents();
+		this.processFontLoadingEvents();
+		//this.processChartResize();
+		//this.processChartRender();
 	}
 
 	private processFontChangeEvents() {
@@ -81,7 +106,7 @@ export default class Chart implements Enqueue<CommonMsg> {
 
 		for (const event of fontCheckEventsIterator) {
 			const {
-				target: { fontOptions },
+				target: { font: fontOptions, key },
 				remove
 			} = event;
 
@@ -98,12 +123,12 @@ export default class Chart implements Enqueue<CommonMsg> {
 			try {
 				document.fonts.ready;
 				loaded = document.fonts.check(fontSH); // this can throw!!!
-				this.enqueue({ type: FONT_LOADING, font: fontOptions, reqId });
+				this.enqueue({ type: FONT_LOADING, font: fontOptions, reqId, key });
 			} catch (err) {
 				continue;
 			}
 			if (loaded) {
-				this.enqueue({ type: FONT_LOADED, font: fontOptions, reqId });
+				this.enqueue({ type: FONT_LOADED, font: fontOptions, reqId, key });
 				continue;
 			}
 			document.fonts
@@ -114,14 +139,15 @@ export default class Chart implements Enqueue<CommonMsg> {
 							type: FONT_LOAD_ERROR,
 							font: fontOptions,
 							error: new DOMException(`[${fontSH}] not found`),
-							reqId
+							reqId,
+							key
 						});
 					} else {
-						this.enqueue({ type: FONT_LOADED, font: fontOptions, reqId });
+						this.enqueue({ type: FONT_LOADED, font: fontOptions, reqId, key });
 					}
 				})
 				.catch((error) => {
-					this.enqueue({ type: FONT_LOAD_ERROR, font: fontOptions, error, reqId });
+					this.enqueue({ type: FONT_LOAD_ERROR, font: fontOptions, error, reqId, key });
 				});
 		}
 	}
@@ -184,6 +210,8 @@ export default class Chart implements Enqueue<CommonMsg> {
 			return;
 		}
 		this.size = resizeMsg.size;
+		this.rctx!.canvas.width = resizeMsg.size.physicalPixelWidth;
+		this.rctx!.canvas.height = resizeMsg.size.physicalPixelHeight;
 		if (this.queue.length && this.queue[this.queue.length - 1].type === CHART_RENDER) {
 			return;
 		}
@@ -202,146 +230,70 @@ export default class Chart implements Enqueue<CommonMsg> {
 		//  here the rendering happens
 		// after font loading the font here is assigned
 
-		const fontSH = createFontShortHand(defaultFontOptionValues(this.fontOptions));
+		const fontSH = createFontShortHand(defaultFontOptionValues(this.fontOptions!));
 		const {
 			// cellHeights?
-			baselines,
-			ascents,
-			descents,
-			midbl_all
+			metrics,
+			debug
 		} = getfontMetrics(this.rctx, fontSH);
 		// select max emHeight
-		console.log({ midbl_all, baselines, ascents, descents });
+		const sorted = Object.values(metrics)
+			.sort((a, b) => a - b)
+			.reverse();
+		console.log({ sorted });
+		const min = sorted.slice(-1)[0];
+		console.log(min);
+		console.log({ metrics, debug });
+		const bottomPadding = 20;
 
-		return;
-		/*
-		let maxHeightIdx = 0;
-		for (let i = 1; i < 3; i++) {
-			if (heights[i] > heights[maxHeightIdx]) {
-				maxHeightIdx = i;
-			}
-		}
-		const maxHeight = heights[maxHeightIdx];
-		let above = 0;
-		let below = 0;
-		switch (maxHeightIdx) {
-			case 0:
-				above = baselines.top.alphbl_2_topbl_from_actual_ascent;
-				below = baselines.bottom.alphbl_2_midbl_from_actual_ascent;
-				break;
-			case 1:
-				above = ascents.font.alphabetic;
-				below = descents.font.alphabetic;
-				break;
-			case 2:
-			default:
-				above = ascents.actual.alphabetic;
-				below = descents.actual.alphabetic;
-		}
-		debugRender('render/selected: %s', maxHeightIdx);
-		debugRender('above %s', above);
-		debugRender('below %s', below);
-		debugRender('max cellHeight: %s', maxHeight);
-		const canvasHeight = this.rctx.canvas.height;
-		const max = Math.max;
-		const textBaseLineMiddle =
-			// the - 20 off the end is not put the lines on the canvas boundery but give it a small padding to check the
-			// visual calculations are in fact correct
-			canvasHeight - max(actualDescent + middle, fontDescent + middle, bottom + middle) - 20;
-
-		const _fontAscent = textBaseLineMiddle - (fontAscent - middle);
-		const _actualAscent = textBaseLineMiddle - (actualAscent - middle);
-		const _fontDescent = textBaseLineMiddle + (fontDescent + middle);
-		const _actualDescent = textBaseLineMiddle + (actualDescent + middle);
-		const _topBaseLine = textBaseLineMiddle - (top - middle);
-		const _alphaBeticLine = textBaseLineMiddle + middle;
+		const middleBaseLine = this.rctx.canvas.height - bottomPadding - -min;
 
 		// lets draw
 		clear(this.rctx);
-
-		drawText(
-			this.rctx,
-			textsampleForMetrics,
-			'black',
-			fontSH,
-			40,
-			textBaseLineMiddle,
-			'middle'
-		);
-
-		// draw FontAscent orange
-		drawHorizontalLine(this.rctx, 0, _fontAscent, this.rctx.canvas.width, 'red', 50, 25);
-		// draw ActualAscent red
-		drawHorizontalLine(this.rctx, 0, _actualAscent, this.rctx.canvas.width, 'black', 10, 10);
-
-		// draw "top base line"
-		drawHorizontalLine(
+		const redDot = 'red';
+		drawText(this.rctx, textsampleForMetrics, 'black', fontSH, 40, middleBaseLine, 'middle');
+		// draw all baselines in dotted red
+		/*drawHorizontalLines(
 			this.rctx,
 			0,
-			_topBaseLine,
+			[
+				middleBaseLine,
+				-metrics.topbl + middleBaseLine,
+				-metrics.botbl + middleBaseLine,
+				-metrics.alpbbl + middleBaseLine
+			],
 			this.rctx.canvas.width,
-			'rgba(255,0,255, 0.5)'
+			'orange',
+			4,
+			4
 		);
-
-		// draw "middle base line" in black
-		drawHorizontalLine(
+		// font ascent/descent
+		drawHorizontalLines(
 			this.rctx,
 			0,
-			textBaseLineMiddle,
+			[-metrics.fontAscent + middleBaseLine, -metrics.fontDescent + middleBaseLine],
 			this.rctx.canvas.width,
-			'rgba(0,0,0, 0.5)'
+			'purple',
+			4,
+			4
 		);
-
-		// draw "alphabetic base line" in pink
-		drawHorizontalLine(
+		drawHorizontalLines(
 			this.rctx,
 			0,
-			_alphaBeticLine,
+			[-metrics.actualAscent + middleBaseLine, -metrics.actualDescent + middleBaseLine],
 			this.rctx.canvas.width,
-			'rgb(248, 131, 121)'
-		);
-
-		// draw FontDescent in orange
-		drawHorizontalLine(this.rctx, 0, _fontDescent, this.rctx.canvas.width, 'red', 10, 10);
-		// draw actualDescent in red
-		drawHorizontalLine(this.rctx, 0, _actualDescent, this.rctx.canvas.width, 'black', 5, 5);
-
+			'red',
+			4,
+			4
+		);*/
 		debugRender('**queue is currently: %o', this.queue);
 		debugRender('**internal state is currently: %o', {
 			fontOptions: this.fontOptions,
 			size: this.size
 		});
 		// render chart data here
-
-		*/
 	}
 
-	constructor(
-		private readonly canvas: HTMLCanvasElement,
-		// https://html.spec.whatwg.org/multipage/canvas.html#2dcontext
-		//  '10px sans-serif' is the default for canvas
-		private fontOptions?: FontOptions,
-		private readonly testHarnas: TestHarnas = defaultHarnas
-	) {
-		this.rctx = canvas.getContext('2d', {
-			desynchronized: true,
-			willReadFrequently: true,
-			alpha: true
-		})!;
-		const csc = getComputedStyle(canvas);
-		this.size = {
-			physicalPixelHeight: canvas.height,
-			physicalPixelWidth: canvas.width,
-			width: parseFloat(csc.width),
-			height: parseFloat(csc.height)
-		};
-		this.destroyObserver = createObserverForCanvas(canvas, this);
-		this.lastFontLoadError = null;
-		this.triggerProcessing = new PromiseExtended(false);
-		this.queue = [];
-		this.run();
-		this.enqueue({ type: FONT_CHANGE, fontOptions: defaultFontOptionValues(fontOptions) });
-	}
 	public detach() {
 		this.destroyObserver();
 		this.rctx = null;
@@ -358,7 +310,14 @@ export default class Chart implements Enqueue<CommonMsg> {
 			// do nothing
 			return;
 		}
-		this.queue.push(msg);
-		this.triggerProcessing.forceResolve();
+		(msg as any).ts = new this.testHarnas.Date().toISOString();
+		this.queue.push(msg as any);
 	}
+
+	public getQueue() {
+		return { queue: this.queue.slice(0), fo: this.fontOptions, canvas: this.size };
+	}
+}
+function creatFontID(font: FontOptions): string | undefined {
+	throw new Error('Function not implemented.');
 }

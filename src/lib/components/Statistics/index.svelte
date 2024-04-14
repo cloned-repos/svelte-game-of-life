@@ -21,7 +21,7 @@
 	}
 
 	let inputValue: string;
-	let fontOptions: FontOptions = { family: 'sans-serif', size: '16px', weight: 'bold' };
+	let fontOptions: FontOptions = { family: 'sans-serif', size: '17px', weight: 'bold' };
 	const createChart = createChartCreator(fontOptions);
 	function handleInputChange(e: Event) {
 		inputValue = (e.target as HTMLInputElement).value;
@@ -29,8 +29,18 @@
 
 	function setFontSHValue(e: Event) {
 		fontOptions = { family: 'Junction', size: '150px', weight: '200' };
-		const chart = createChart();
+		const { chart } = createChart()!;
 		chart.enqueue({ type: FONT_CHANGE, fontOptions });
+	}
+
+	function showQueue(e: Event) {
+		const { chart } = createChart()!;
+		console.log('show queue', chart.getQueue());
+	}
+
+	function nextStep(e: Event) {
+		const { chart } = createChart()!;
+		chart.nextStep();
 	}
 </script>
 
@@ -42,10 +52,14 @@
 		<li>width: {state?.width}</li>
 		<li>height: {state?.height}</li>
 		<li><span class="fa fa-battery-3" /></li>
-		<li>{(debug('rendering ul > li'), width)}</li>
+		<li>{(debug('rendering ul/il tag'), width)}</li>
 	</ul>
-	<input type="text" on:input={handleInputChange} bind:value={inputValue} />
-	<input type="button" value="set font shorthand" on:click={setFontSHValue} />
+	<div>
+		<input type="text" on:input={handleInputChange} bind:value={inputValue} />
+		<input type="button" value="set font shorthand" on:click={setFontSHValue} />
+		<button name="show-queue" on:click={showQueue}>{'show'}</button>
+		<button name="next-step" on:click={nextStep}>{'step'}</button>
+	</div>
 	<canvas use:line_chart={createChart} on:chart-resize={resizeNotification}
 		>{(debug('rendering canvas?'), '')}</canvas
 	>
