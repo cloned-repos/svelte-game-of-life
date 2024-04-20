@@ -13,7 +13,7 @@ import {
 	systemSH,
 	textsampleForMetrics
 } from './constants';
-import type { CanvasSize, CommonMsg, Font, FontOptions, RenderChart } from './types';
+import type { CanvasSize, CommonMsg, Font, FontKey, FontOptions, RenderChart } from './types';
 
 export function createObserverForCanvas(canvas: HTMLCanvasElement, chart: Chart) {
 	const observer = new ResizeObserver((entries) => {
@@ -194,8 +194,6 @@ export function getfontMetrics(ctx: CanvasRenderingContext2D, fontSH: string) {
 		fontDescent: botbl_font - botbl_fontDescent,
 		actualDescent: botbl_actual - botbl_actualDescent
 	};
-	// from top baseline to  bottom baseline
-	// I am here
 	return {
 		metrics,
 		debug: {
@@ -322,7 +320,7 @@ export function drawText(
 	ctx.restore();
 }
 
-export function createChartCreator(fontOptions?: Font) {
+export function createChartCreator(fontOptions?: (Font & FontKey)[]) {
 	let chart: Chart;
 	return function (canvas?: HTMLCanvasElement) {
 		const destroy = () => {
@@ -347,6 +345,16 @@ export function createChartCreator(fontOptions?: Font) {
 
 export function defaultFontOptionValues(fontOptions?: FontOptions): FontOptions {
 	return Object.assign({ size: '10px', family: 'sans-serif' }, fontOptions);
+}
+
+export function fontSafeCheck(fontSH: string): boolean | null {
+	try {
+		// https://drafts.csswg.org/css-font-loading/#font-face-set-check
+		return document.fonts.check(fontSH);
+	} catch (err) {
+		// misspelled
+		return null;
+	}
 }
 
 export function* eventGenerator<T extends CommonMsg>(

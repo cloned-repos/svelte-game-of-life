@@ -20,6 +20,7 @@ import {
 	drawHorizontalLines,
 	drawText,
 	eventGenerator,
+	fontSafeCheck,
 	getfontMetrics,
 	isCanvasSizeEqual
 } from './helper';
@@ -83,112 +84,80 @@ export default class Chart implements Enqueue<CommonMsg> {
 		}
 	}
 
-	public async nextStep() {
+	/*public async nextStep() {
 		if (this.rctx === null) {
 			return;
 		}
 		if (this.queue.length === 0) {
 			return;
 		}
-		this.processFontChangeEvents();
-		this.processFontLoadingEvents();
+		//this.processFontChangeEvents();
+		//this.processFontLoadingEvents();
 		//this.processChartResize();
 		//this.processChartRender();
 	}
+	*/
 
-	private processFontChangeEvents() {
+	processFontChangeEvents() {
 		// system fonts dont need to be loaded they are assigned in the "render" phase directly to ctx.font = ...
 		// document.fonts.check(..) a system font results in an error loading system fonts results in an error
-		const fontCheckEventsIterator = eventGenerator<ChangeFont>(
-			this.queue,
-			(event) => event.type === FONT_CHANGE
-		);
-
-		for (const event of fontCheckEventsIterator) {
-			const {
-				target: { font: fontOptions, key },
-				remove
-			} = event;
-
-			remove();
-			const fontSH = createFontShortHand(defaultFontOptionValues(fontOptions));
-			if (systemSH.find((sysf) => fontSH.includes(sysf))) {
-				this.enqueue({ type: CHART_RENDER });
-				continue;
-			}
-
-			// load fonts
-			let loaded: boolean;
-			const reqId = this.testHarnas.random();
-			try {
-				document.fonts.ready;
-				loaded = document.fonts.check(fontSH); // this can throw!!!
-				this.enqueue({ type: FONT_LOADING, font: fontOptions, reqId, key });
-			} catch (err) {
-				continue;
-			}
-			if (loaded) {
-				this.enqueue({ type: FONT_LOADED, font: fontOptions, reqId, key });
-				continue;
-			}
-			document.fonts
-				.load(fontSH)
-				.then(([fontFace]) => {
-					if (fontFace === undefined) {
-						this.enqueue({
-							type: FONT_LOAD_ERROR,
-							font: fontOptions,
-							error: new DOMException(`[${fontSH}] not found`),
-							reqId,
-							key
-						});
-					} else {
-						this.enqueue({ type: FONT_LOADED, font: fontOptions, reqId, key });
-					}
-				})
-				.catch((error) => {
-					this.enqueue({ type: FONT_LOAD_ERROR, font: fontOptions, error, reqId, key });
-				});
-		}
-	}
-
-	private processFontLoadingEvents() {
-		// system fonts dont need to be loaded they are assigned in the "render" phase directly to ctx.font = ...
-		// document.fonts.load(..) a system font results in an error loading system fonts results in an error
-		const fontLoadEventsIterator = eventGenerator<FontLoading>(
-			this.queue,
-			(event) => event.type === FONT_LOADING
-		);
-		let fontLoaded = false;
-		for (const event of fontLoadEventsIterator) {
-			const { remove, idx, target } = event;
-			// find counterpart loaded or error with the same reqId
-			const resolved = this.queue.findIndex(
-				(ev) => ev.type === FONT_LOADED && ev.reqId && ev.reqId === target.reqId
-			);
-			if (resolved > -1) {
-				this.queue.splice(resolved, 1);
-				remove();
-				fontLoaded = true;
-				this.fontOptions = target.font;
-			} else {
-				const rejected = this.queue.findIndex(
-					(ev) => ev.type === FONT_LOAD_ERROR && ev.reqId && ev.reqId === target.reqId
-				);
-				if (rejected > -1) {
-					const fontLoadError = this.queue[rejected] as FontLoadError;
-					this.queue.splice(resolved, 1);
-					remove();
-					this.lastFontLoadError = { ...fontLoadError, ts: this.testHarnas.Date.now() };
-				}
-			}
-		}
-		if (fontLoaded) {
-			if (this.queue.length && this.queue[this.queue.length - 1].type === CHART_RENDER) {
+		const toDelete: ChangeFont[] = [];
+		const completed: ChangeFont[] = [];
+		const invlalidFontSH: FontLoadError[] = [];
+		const nextStep: FontLoading[] = [];
+		const ts = new this.testHarnas.Date().toISOString();
+		this.queue.forEach((evt, i, arr) => {
+			if (evt.type !== FONT_CHANGE) {
 				return;
 			}
-			this.enqueue({ type: CHART_RENDER });
+			toDelete.push(evt);
+			const fontSH = createFontShortHand(defaultFontOptionValues(evt.font))!;
+			// are you trying to use one of the system fonts
+			if (systemSH.find((sysf) => fontSH.includes(sysf))) {
+				completed.push(evt);
+				return;
+			}
+			const loaded = fontSafeCheck(fontSH);
+			if (loaded === null) {
+				invlalidFontSH.push({
+					type: FONT_LOAD_ERROR,
+					ts,
+					error: new DOMException(`invalid font shorthand: ${fontSH}`),
+					reqId: 0,
+					key: evt.key,
+					font: evt.font
+				});
+				return;
+			}
+			nextStep.push({
+				type: FONT_LOADING,
+				key: evt.key,
+				font: evt.font,
+				reqId: this.testHarnas.random()
+			});
+			//
+		});
+		for (let i = 0, walking = 0; i < toDelete.length; i++) {
+			// indexOf is only interested in object reference not the type
+			walking = this.queue.indexOf(toDelete[i] as any, walking);
+			this.queue.splice(walking, 1);
 		}
+		invlalidFontSH.forEach((evt) => {
+			this.fonts[evt.key] = { font: evt.font, error: evt.error, ts: evt.ts };
+		});
+		completed.forEach((evt) => {
+			this.fonts[evt.key] = { ...evt.font };
+		});
+		nextStep.forEach((evt) => {
+			const reqId = this.testHarnas.random();
+			this.queue.push({
+				type: FONT_LOADING,
+				reqId,
+				ts,
+				key: evt.key,
+				font: evt.font
+			});
+		});
 	}
 
 	private processChartResize() {
@@ -218,6 +187,7 @@ export default class Chart implements Enqueue<CommonMsg> {
 		this.enqueue({ type: CHART_RENDER });
 	}
 
+	/*
 	private processChartRender() {
 		// clean up all chart render command except the last one
 		if (false === cleanUpChartRenderMsgs(this.queue)) {
@@ -253,39 +223,6 @@ export default class Chart implements Enqueue<CommonMsg> {
 		const redDot = 'red';
 		drawText(this.rctx, textsampleForMetrics, 'black', fontSH, 40, middleBaseLine, 'middle');
 		// draw all baselines in dotted red
-		/*drawHorizontalLines(
-			this.rctx,
-			0,
-			[
-				middleBaseLine,
-				-metrics.topbl + middleBaseLine,
-				-metrics.botbl + middleBaseLine,
-				-metrics.alpbbl + middleBaseLine
-			],
-			this.rctx.canvas.width,
-			'orange',
-			4,
-			4
-		);
-		// font ascent/descent
-		drawHorizontalLines(
-			this.rctx,
-			0,
-			[-metrics.fontAscent + middleBaseLine, -metrics.fontDescent + middleBaseLine],
-			this.rctx.canvas.width,
-			'purple',
-			4,
-			4
-		);
-		drawHorizontalLines(
-			this.rctx,
-			0,
-			[-metrics.actualAscent + middleBaseLine, -metrics.actualDescent + middleBaseLine],
-			this.rctx.canvas.width,
-			'red',
-			4,
-			4
-		);*/
 		debugRender('**queue is currently: %o', this.queue);
 		debugRender('**internal state is currently: %o', {
 			fontOptions: this.fontOptions,
@@ -293,14 +230,11 @@ export default class Chart implements Enqueue<CommonMsg> {
 		});
 		// render chart data here
 	}
+	*/
 
 	public detach() {
 		this.destroyObserver();
 		this.rctx = null;
-	}
-
-	public getFontShortHand() {
-		return createFontShortHand(defaultFontOptionValues(this.fontOptions));
 	}
 
 	// note, enqueue can only happen if the Chart instance is connected to the canvas and can receive events
@@ -315,7 +249,7 @@ export default class Chart implements Enqueue<CommonMsg> {
 	}
 
 	public getQueue() {
-		return { queue: this.queue.slice(0), fo: this.fontOptions, canvas: this.size };
+		return { queue: this.queue.slice(0), fonts: this.fonts, canvasSize: this.size };
 	}
 }
 function creatFontID(font: FontOptions): string | undefined {

@@ -2,9 +2,9 @@
 	import createNS from '@mangos/debug-frontend';
 	import { onMount } from 'svelte';
 	import line_chart from '$lib/charts/action';
-	import type { CanvasSize, FontOptions } from '$lib/charts/types';
+	import type { CanvasSize, Font, FontKey, FontOptions } from '$lib/charts/types';
 	import { createChartCreator } from '$lib/charts/helper';
-	import { FONT_CHANGE, FONT_CHECK } from '$lib/charts/constants';
+	import { FONT_CHANGE } from '$lib/charts/constants';
 
 	// const inits
 	const debug = createNS('statistics/index.svelte');
@@ -21,16 +21,20 @@
 	}
 
 	let inputValue: string;
-	let fontOptions: FontOptions = { family: 'sans-serif', size: '17px', weight: 'bold' };
+	let fontOptions: (FontKey & Font)[] = [
+		{ font: { family: 'sans-serif', size: '17px', weight: 'bold' }, key: 'bold sans-serif' }
+	];
 	const createChart = createChartCreator(fontOptions);
 	function handleInputChange(e: Event) {
 		inputValue = (e.target as HTMLInputElement).value;
 	}
 
 	function setFontSHValue(e: Event) {
-		fontOptions = { family: 'Junction', size: '150px', weight: '200' };
+		fontOptions = [
+			{ font: { family: 'Junction', size: '150px', weight: '200' }, key: '200 Junction' }
+		];
 		const { chart } = createChart()!;
-		chart.enqueue({ type: FONT_CHANGE, fontOptions });
+		chart.enqueue({ type: FONT_CHANGE, ...fontOptions[0] });
 	}
 
 	function showQueue(e: Event) {
@@ -38,9 +42,9 @@
 		console.log('show queue', chart.getQueue());
 	}
 
-	function nextStep(e: Event) {
+	function doFontChecks(e: Event) {
 		const { chart } = createChart()!;
-		chart.nextStep();
+		chart.processFontChangeEvents();
 	}
 </script>
 
@@ -58,7 +62,7 @@
 		<input type="text" on:input={handleInputChange} bind:value={inputValue} />
 		<input type="button" value="set font shorthand" on:click={setFontSHValue} />
 		<button name="show-queue" on:click={showQueue}>{'show'}</button>
-		<button name="next-step" on:click={nextStep}>{'step'}</button>
+		<button name="next-step" on:click={doFontChecks}>{'font-checks'}</button>
 	</div>
 	<canvas use:line_chart={createChart} on:chart-resize={resizeNotification}
 		>{(debug('rendering canvas?'), '')}</canvas

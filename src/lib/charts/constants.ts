@@ -4,7 +4,6 @@ import type {
 	FontStyle,
 	FontWeight,
 	FontStretch,
-	CheckFont,
 	FontLoading,
 	FontLoaded,
 	FontLoadError,
@@ -43,7 +42,6 @@ export const fontStretch: FontStretch[] = [
 	'ultra-expanded'
 ];
 
-export const FONT_CHECK: CheckFont['type'] = 'font-check';
 export const FONT_LOADING: FontLoading['type'] = 'font-loading';
 export const FONT_LOADED: FontLoaded['type'] = 'font-loaded';
 export const FONT_LOAD_ERROR: FontLoadError['type'] = 'font-load-error';

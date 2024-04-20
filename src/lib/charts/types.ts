@@ -61,7 +61,6 @@ export type CommonMsg =
 	| FontLoaded
 	| FontLoading
 	| ChangeFont;
-//| CheckFont;
 
 /*
 [ 
@@ -145,6 +144,16 @@ export type FontOptions = {
 	size: FontSize;
 	family: string;
 };
+
+export type GenericFontFamilies =
+	| 'serif'
+	| 'sans-serif'
+	| 'cursive'
+	| 'fantasy'
+	| 'monospace'
+	| 'system-ui'
+	| 'math'
+	| '';
 
 export type TestHarnas = {
 	Date: typeof Date;
