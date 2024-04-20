@@ -59,6 +59,16 @@
 		const { chart } = createChart();
 		chart.processChartResize();
 	}
+
+	function stopAnimFrame(e: Event) {
+		const { chart } = createChart();
+		chart.stopSyncOnAnimationFrame();
+	}
+
+	function startChartAnimFrame(e: Event) {
+		const { chart } = createChart();
+		chart.syncOnAnimationFrame();
+	}
 </script>
 
 <div style="--grid-pos: {pos}" class="me">
@@ -81,6 +91,8 @@
 			>{'font-loading-results'}</button
 		>
 		<button name="chart-resize" on:click={doChartResize}>{'chart-resize'}</button>
+		<button name="start-anim" on:click={startChartAnimFrame}>{'start'}</button>
+		<button name="stop-anim" on:click={stopAnimFrame}>{'stop'}</button>
 	</div>
 	<canvas use:line_chart={createChart} on:chart-resize={resizeNotification}
 		>{(debug('rendering canvas?'), '')}</canvas

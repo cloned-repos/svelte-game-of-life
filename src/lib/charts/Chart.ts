@@ -51,11 +51,13 @@ export default class Chart implements Enqueue<CommonMsg> {
 
 	private readonly destroyObserver: ReturnType<typeof createObserverForCanvas>;
 
-	private queue: ({ ts: string } & CommonMsg)[];
+	private readonly queue: ({ ts: string } & CommonMsg)[];
 
-	private fonts: Record<string, FontOptions | FontLoadErrorPL>;
+	private readonly fonts: Record<string, FontOptions | FontLoadErrorPL>;
 
-	private waits: Waits;
+	private readonly waits: Waits;
+
+	private cancelAnimationFrame: number;
 
 	constructor(
 		private readonly canvas: HTMLCanvasElement,
@@ -88,21 +90,8 @@ export default class Chart implements Enqueue<CommonMsg> {
 				this.enqueue({ type: FONT_CHANGE, font, key });
 			}
 		}
+		this.cancelAnimationFrame = 0;
 	}
-
-	/*public async nextStep() {
-		if (this.rctx === null) {
-			return;
-		}
-		if (this.queue.length === 0) {
-			return;
-		}
-		//this.processFontChangeEvents();
-		//this.processFontLoadingEvents();
-		//this.processChartResize();
-		//this.processChartRender();
-	}
-	*/
 
 	processFontChangeEvents() {
 		// system fonts dont need to be loaded they are assigned in the "render" phase directly to ctx.font = ...
@@ -254,6 +243,27 @@ export default class Chart implements Enqueue<CommonMsg> {
 		}
 	}
 
+	syncOnAnimationFrame() {
+		if (this.cancelAnimationFrame) {
+			return;
+		}
+		const run = (ts: number) => {
+			this.processFontChangeEvents();
+			this.processFontLoadingEvents();
+			this.processFontLoadResultEvents();
+			this.processChartResize();
+			if (this.cancelAnimationFrame) {
+				this.cancelAnimationFrame = requestAnimationFrame(run);
+			}
+		};
+		this.cancelAnimationFrame = requestAnimationFrame(run);
+	}
+
+	stopSyncOnAnimationFrame() {
+		cancelAnimationFrame(this.cancelAnimationFrame);
+		this.cancelAnimationFrame = 0;
+	}
+
 	/*
 	private processChartRender() {
 		// clean up all chart render command except the last one
@@ -311,8 +321,8 @@ export default class Chart implements Enqueue<CommonMsg> {
 			// do nothing
 			return;
 		}
-		(msg as any).ts = new this.testHarnas.Date().toISOString();
-		this.queue.push(msg as any);
+		(msg as { ts: string }).ts = new this.testHarnas.Date().toISOString();
+		this.queue.push(msg as CommonMsg & { ts: string });
 	}
 
 	public getQueue() {
