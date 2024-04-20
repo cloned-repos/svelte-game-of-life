@@ -13,7 +13,16 @@ import {
 	systemSH,
 	textsampleForMetrics
 } from './constants';
-import type { CanvasSize, CommonMsg, Font, FontKey, FontOptions, RenderChart } from './types';
+import type {
+	CanvasSize,
+	CommonMsg,
+	Font,
+	FontKey,
+	FontOptions,
+	IOWaitsGroupNames,
+	RenderChart,
+	Waits
+} from './types';
 
 export function createObserverForCanvas(canvas: HTMLCanvasElement, chart: Chart) {
 	const observer = new ResizeObserver((entries) => {
@@ -403,4 +412,10 @@ export function cleanUpChartRenderMsgs(queue: CommonMsg[]) {
 		return false; // nothing to be done
 	}
 	return true;
+}
+
+export function updateStatistics(waits: Waits, ns: IOWaitsGroupNames, start: number, end: number) {
+	const delay = end - start;
+	waits[ns][delay] = waits[ns][delay] || 0;
+	waits[ns][delay]++;
 }

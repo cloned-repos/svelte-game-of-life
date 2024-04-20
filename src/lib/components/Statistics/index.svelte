@@ -22,7 +22,7 @@
 
 	let inputValue: string;
 	let fontOptions: (FontKey & Font)[] = [
-		{ font: { family: 'sans-serif', size: '17px', weight: 'bold' }, key: 'bold sans-serif' }
+		{ font: { family: 'caption', size: '17px', weight: 'bold' }, key: 'bold caption' }
 	];
 	const createChart = createChartCreator(fontOptions);
 	function handleInputChange(e: Event) {
@@ -46,6 +46,19 @@
 		const { chart } = createChart()!;
 		chart.processFontChangeEvents();
 	}
+	function doFontLoadings(e: Event) {
+		const { chart } = createChart();
+		chart.processFontLoadingEvents();
+	}
+	function doFontLoadResults(e: Event) {
+		const { chart } = createChart();
+		chart.processFontLoadResultEvents();
+	}
+
+	function doChartResize(e: Event) {
+		const { chart } = createChart();
+		chart.processChartResize();
+	}
 </script>
 
 <div style="--grid-pos: {pos}" class="me">
@@ -62,7 +75,12 @@
 		<input type="text" on:input={handleInputChange} bind:value={inputValue} />
 		<input type="button" value="set font shorthand" on:click={setFontSHValue} />
 		<button name="show-queue" on:click={showQueue}>{'show'}</button>
-		<button name="next-step" on:click={doFontChecks}>{'font-checks'}</button>
+		<button name="font-checks" on:click={doFontChecks}>{'font-checks'}</button>
+		<button name="font-loading" on:click={doFontLoadings}>{'font-loading'}</button>
+		<button name="font-loading-results" on:click={doFontLoadResults}
+			>{'font-loading-results'}</button
+		>
+		<button name="chart-resize" on:click={doChartResize}>{'chart-resize'}</button>
 	</div>
 	<canvas use:line_chart={createChart} on:chart-resize={resizeNotification}
 		>{(debug('rendering canvas?'), '')}</canvas

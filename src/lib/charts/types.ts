@@ -37,11 +37,12 @@ export type FontLoaded = RPC &
 	Font &
 	FontKey & {
 		type: 'font-loaded';
+		ts: string; // time font loaded
 	};
 
 export type FontLoadErrorPL = Font & {
 	error: DOMException;
-	ts: string; // thime this error occurred
+	ts: string; // time this error occurred
 };
 
 export type FontLoadError = RPC &
@@ -163,3 +164,7 @@ export type TestHarnas = {
 	random: typeof Math.random;
 	getRequestAnimationFrame: () => typeof window.requestAnimationFrame;
 };
+
+export type IOWaitsGroupNames = 'fontLoadTime' | 'fontloadErrorTime';
+
+export type Waits = Record<IOWaitsGroupNames, Record<number, number>>;

@@ -22,7 +22,8 @@ import {
 	eventGenerator,
 	fontSafeCheck,
 	getfontMetrics,
-	isCanvasSizeEqual
+	isCanvasSizeEqual,
+	updateStatistics
 } from './helper';
 import type {
 	CanvasSize,
@@ -33,9 +34,11 @@ import type {
 	FontKey,
 	FontLoadError,
 	FontLoadErrorPL,
+	FontLoaded,
 	FontLoading,
 	FontOptions,
-	TestHarnas
+	TestHarnas,
+	Waits
 } from './types';
 import { systemSH } from './constants';
 
@@ -51,6 +54,8 @@ export default class Chart implements Enqueue<CommonMsg> {
 	private queue: ({ ts: string } & CommonMsg)[];
 
 	private fonts: Record<string, FontOptions | FontLoadErrorPL>;
+
+	private waits: Waits;
 
 	constructor(
 		private readonly canvas: HTMLCanvasElement,
@@ -72,7 +77,8 @@ export default class Chart implements Enqueue<CommonMsg> {
 		};
 		this.destroyObserver = createObserverForCanvas(canvas, this);
 		this.queue = [];
-		this.fonts = {};
+		this.fonts = Object.create(null);
+		this.waits = Object.assign(Object.create(null), { fontLoadTime: Object.create(null) });
 
 		// need to write it like this to make typscript understand "initialFonts" is defined
 		if (Array.isArray(initialFonts)) {
@@ -160,31 +166,92 @@ export default class Chart implements Enqueue<CommonMsg> {
 		});
 	}
 
-	private processChartResize() {
-		let resizeMsg: ChangeSize | null = null;
-		let i = this.queue.length - 1;
-		for (; i >= 0 && i < this.queue.length; i--) {
-			const msg = this.queue[i];
-			if (msg.type === CHANGE_SIZE) {
-				if (!resizeMsg) {
-					resizeMsg = msg;
-				}
-				this.queue.splice(i, 1);
+	processFontLoadingEvents() {
+		const toDelete: FontLoading[] = [];
+
+		this.queue.forEach((evt, i, arr) => {
+			if (evt.type !== FONT_LOADING) {
+				return;
 			}
+			toDelete.push(evt);
+			const fontSH = createFontShortHand(defaultFontOptionValues(evt.font))!;
+			const start = new this.testHarnas.Date(evt.ts);
+			document.fonts
+				.load(fontSH)
+				.then((faces: FontFace[]) => {
+					const end = new this.testHarnas.Date();
+					updateStatistics(this.waits, 'fontLoadTime', start.valueOf(), end.valueOf());
+					this.queue.push({
+						type: FONT_LOADED,
+						font: evt.font,
+						ts: end.toISOString(),
+						reqId: evt.reqId,
+						key: evt.key
+					});
+				})
+				.catch((err) => {
+					const end = new this.testHarnas.Date();
+					updateStatistics(
+						this.waits,
+						'fontloadErrorTime',
+						start.valueOf(),
+						end.valueOf()
+					);
+					this.queue.push({
+						type: FONT_LOAD_ERROR,
+						font: evt.font,
+						error: new DOMException(err.message),
+						ts: end.toISOString(),
+						reqId: evt.reqId,
+						key: evt.key
+					});
+				});
+		});
+		for (let i = 0, walking = 0; i < toDelete.length; i++) {
+			// indexOf is only interested in object reference not the type
+			walking = this.queue.indexOf(toDelete[i] as any, walking);
+			this.queue.splice(walking, 1);
 		}
-		if (!resizeMsg) {
-			return; // nothing to be done
-		}
-		if (isCanvasSizeEqual(this.size, resizeMsg.size)) {
+	}
+
+	processFontLoadResultEvents() {
+		const toDelete: (FontLoaded | FontLoadError)[] = [];
+		this.queue.forEach((evt) => {
+			if (!(evt.type === FONT_LOAD_ERROR || evt.type === FONT_LOADED)) {
+				return;
+			}
+			if (evt.type === FONT_LOAD_ERROR) {
+				const errPL: FontLoadErrorPL = { font: evt.font, ts: evt.ts, error: evt.error };
+				this.fonts[evt.key] = errPL;
+			} else {
+				this.fonts[evt.key] = { ...evt.font };
+			}
+			toDelete.push(evt);
 			return;
+		});
+		for (let i = 0, walking = 0; i < toDelete.length; i++) {
+			// indexOf is only interested in object reference not the type
+			walking = this.queue.indexOf(toDelete[i] as any, walking);
+			this.queue.splice(walking, 1);
 		}
-		this.size = resizeMsg.size;
-		this.rctx!.canvas.width = resizeMsg.size.physicalPixelWidth;
-		this.rctx!.canvas.height = resizeMsg.size.physicalPixelHeight;
-		if (this.queue.length && this.queue[this.queue.length - 1].type === CHART_RENDER) {
-			return;
+	}
+
+	processChartResize() {
+		const toDelete: ChangeSize[] = [];
+		this.queue.forEach((evt) => {
+			if (!(evt.type === CHANGE_SIZE)) {
+				return;
+			}
+			toDelete.push(evt);
+		});
+		// delete all but the last one
+		const last = toDelete[toDelete.length - 1];
+		const length = toDelete.length + (isCanvasSizeEqual(last.size, this.size) ? 0 : -1);
+		for (let i = 0, walking = 0; i < length; i++) {
+			// indexOf is only interested in object reference not the type
+			walking = this.queue.indexOf(toDelete[i] as any, walking);
+			this.queue.splice(walking, 1);
 		}
-		this.enqueue({ type: CHART_RENDER });
 	}
 
 	/*
@@ -249,7 +316,12 @@ export default class Chart implements Enqueue<CommonMsg> {
 	}
 
 	public getQueue() {
-		return { queue: this.queue.slice(0), fonts: this.fonts, canvasSize: this.size };
+		return {
+			queue: this.queue.slice(0),
+			fonts: this.fonts,
+			canvasSize: this.size,
+			waits: this.waits
+		};
 	}
 }
 function creatFontID(font: FontOptions): string | undefined {
