@@ -11,7 +11,6 @@ import {
 	textsampleForMetrics
 } from './constants';
 import {
-	cleanUpChartRenderMsgs,
 	clear,
 	createFontShortHand,
 	createObserverForCanvas,
@@ -23,12 +22,14 @@ import {
 	fontSafeCheck,
 	getfontMetrics,
 	isCanvasSizeEqual,
+	isFontLoadErrorPL,
 	updateStatistics
 } from './helper';
 import type {
 	CanvasSize,
 	ChangeFont,
 	ChangeSize,
+	ChartFontInfo,
 	CommonMsg,
 	Font,
 	FontKey,
@@ -37,6 +38,7 @@ import type {
 	FontLoaded,
 	FontLoading,
 	FontOptions,
+	GenericFontFamilies,
 	TestHarnas,
 	Waits
 } from './types';
@@ -45,7 +47,7 @@ import { systemSH } from './constants';
 const debugRender = createNS('Chart/render');
 
 export default class Chart implements Enqueue<CommonMsg> {
-	private rctx: CanvasRenderingContext2D | null;
+	private rctx: CanvasRenderingContext2D;
 
 	private size: CanvasSize;
 
@@ -53,7 +55,7 @@ export default class Chart implements Enqueue<CommonMsg> {
 
 	private readonly queue: ({ ts: string } & CommonMsg)[];
 
-	private readonly fonts: Record<string, FontOptions | FontLoadErrorPL>;
+	private readonly fonts: ChartFontInfo;
 
 	private readonly waits: Waits;
 
@@ -61,6 +63,7 @@ export default class Chart implements Enqueue<CommonMsg> {
 
 	constructor(
 		private readonly canvas: HTMLCanvasElement,
+		fallback: GenericFontFamilies,
 		// https://html.spec.whatwg.org/multipage/canvas.html#2dcontext
 		//  '10px sans-serif' is the default for canvas
 		initialFonts?: (FontKey & Font)[],
@@ -79,7 +82,7 @@ export default class Chart implements Enqueue<CommonMsg> {
 		};
 		this.destroyObserver = createObserverForCanvas(canvas, this);
 		this.queue = [];
-		this.fonts = Object.create(null);
+		this.fonts = Object.assign(Object.create(null), { fallback });
 		this.waits = Object.assign(Object.create(null), { fontLoadTime: Object.create(null) });
 
 		// need to write it like this to make typscript understand "initialFonts" is defined
@@ -91,6 +94,7 @@ export default class Chart implements Enqueue<CommonMsg> {
 			}
 		}
 		this.cancelAnimationFrame = 0;
+		this.fonts.fallback = fallback;
 	}
 
 	processFontChangeEvents() {
@@ -138,10 +142,10 @@ export default class Chart implements Enqueue<CommonMsg> {
 			this.queue.splice(walking, 1);
 		}
 		invlalidFontSH.forEach((evt) => {
-			this.fonts[evt.key] = { font: evt.font, error: evt.error, ts: evt.ts };
+			this.fonts[`fo${evt.key}`] = { font: evt.font, error: evt.error, ts: evt.ts };
 		});
 		completed.forEach((evt) => {
-			this.fonts[evt.key] = { ...evt.font };
+			this.fonts[`fo${evt.key}`] = { ...evt.font };
 		});
 		nextStep.forEach((evt) => {
 			const reqId = this.testHarnas.random();
@@ -204,16 +208,20 @@ export default class Chart implements Enqueue<CommonMsg> {
 	}
 
 	processFontLoadResultEvents() {
+		let renderFlag = false;
 		const toDelete: (FontLoaded | FontLoadError)[] = [];
 		this.queue.forEach((evt) => {
 			if (!(evt.type === FONT_LOAD_ERROR || evt.type === FONT_LOADED)) {
 				return;
 			}
-			if (evt.type === FONT_LOAD_ERROR) {
-				const errPL: FontLoadErrorPL = { font: evt.font, ts: evt.ts, error: evt.error };
-				this.fonts[evt.key] = errPL;
-			} else {
-				this.fonts[evt.key] = { ...evt.font };
+			if (!this.fonts[`fo${evt.key}`]) {
+				if (evt.type === FONT_LOAD_ERROR) {
+					const errPL: FontLoadErrorPL = { font: evt.font, ts: evt.ts, error: evt.error };
+					this.fonts[`fo${evt.key}`] = errPL;
+				} else {
+					this.fonts[`fo${evt.key}`] = { ...evt.font };
+					renderFlag = true;
+				}
 			}
 			toDelete.push(evt);
 			return;
@@ -223,6 +231,7 @@ export default class Chart implements Enqueue<CommonMsg> {
 			walking = this.queue.indexOf(toDelete[i] as any, walking);
 			this.queue.splice(walking, 1);
 		}
+		return renderFlag;
 	}
 
 	processChartResize() {
@@ -234,13 +243,20 @@ export default class Chart implements Enqueue<CommonMsg> {
 			toDelete.push(evt);
 		});
 		// delete all but the last one
-		const last = toDelete[toDelete.length - 1];
-		const length = toDelete.length + (isCanvasSizeEqual(last.size, this.size) ? 0 : -1);
-		for (let i = 0, walking = 0; i < length; i++) {
-			// indexOf is only interested in object reference not the type
-			walking = this.queue.indexOf(toDelete[i] as any, walking);
-			this.queue.splice(walking, 1);
+		if (toDelete.length) {
+			const last = toDelete[toDelete.length - 1];
+			for (let i = 0, walking = 0; i < toDelete.length; i++) {
+				// indexOf is only interested in object reference not the type
+				walking = this.queue.indexOf(toDelete[i] as any, walking);
+				this.queue.splice(walking, 1);
+			}
+			if (isCanvasSizeEqual(last.size, this.size)) {
+				return false;
+			}
+			this.size = last.size;
+			return true;
 		}
+		return false;
 	}
 
 	syncOnAnimationFrame() {
@@ -250,8 +266,11 @@ export default class Chart implements Enqueue<CommonMsg> {
 		const run = (ts: number) => {
 			this.processFontChangeEvents();
 			this.processFontLoadingEvents();
-			this.processFontLoadResultEvents();
-			this.processChartResize();
+			const rc =
+				Number(this.processFontLoadResultEvents()) + Number(this.processChartResize());
+			if (rc) {
+				this.processChartRender();
+			}
 			if (this.cancelAnimationFrame) {
 				this.cancelAnimationFrame = requestAnimationFrame(run);
 			}
@@ -264,20 +283,23 @@ export default class Chart implements Enqueue<CommonMsg> {
 		this.cancelAnimationFrame = 0;
 	}
 
-	/*
-	private processChartRender() {
+	processChartRender() {
 		// clean up all chart render command except the last one
-		if (false === cleanUpChartRenderMsgs(this.queue)) {
-			// nothing to do
-			return;
-		}
-		if (!this.rctx) {
-			return;
-		}
-		//  here the rendering happens
-		// after font loading the font here is assigned
+		clear(this.rctx!);
+		this.canvas.width = this.size.physicalPixelWidth;
+		this.canvas.height = this.size.physicalPixelHeight;
 
-		const fontSH = createFontShortHand(defaultFontOptionValues(this.fontOptions!));
+		// 20px from the bottom
+		const bottomPadding = 20;
+		const foAxe = this.fonts['fohAxe'];
+		const fontHAxeFinalOptions: FontOptions = isFontLoadErrorPL(foAxe)
+			? {
+					...foAxe.font,
+					family: this.fonts.fallback
+			  }
+			: foAxe;
+
+		const fontSH = createFontShortHand(defaultFontOptionValues(fontHAxeFinalOptions))!;
 		const {
 			// cellHeights?
 			metrics,
@@ -287,11 +309,10 @@ export default class Chart implements Enqueue<CommonMsg> {
 		const sorted = Object.values(metrics)
 			.sort((a, b) => a - b)
 			.reverse();
-		console.log({ sorted });
-		const min = sorted.slice(-1)[0];
+		console.log({ sorted, metrics });
+		/*const min = sorted.slice(-1)[0];
 		console.log(min);
 		console.log({ metrics, debug });
-		const bottomPadding = 20;
 
 		const middleBaseLine = this.rctx.canvas.height - bottomPadding - -min;
 
@@ -306,12 +327,11 @@ export default class Chart implements Enqueue<CommonMsg> {
 			size: this.size
 		});
 		// render chart data here
+		*/
 	}
-	*/
 
-	public detach() {
+	public destroy() {
 		this.destroyObserver();
-		this.rctx = null;
 	}
 
 	// note, enqueue can only happen if the Chart instance is connected to the canvas and can receive events

@@ -15,7 +15,7 @@ type RPC = {
 };
 
 export type FontKey = {
-	key: string;
+	key: 'hAxe' | 'vAxe' | 'legendTop' | 'legendBottom';
 };
 
 export type Font = {
@@ -149,12 +149,11 @@ export type FontOptions = {
 export type GenericFontFamilies =
 	| 'serif'
 	| 'sans-serif'
+	| 'monospace'
 	| 'cursive'
 	| 'fantasy'
-	| 'monospace'
 	| 'system-ui'
-	| 'math'
-	| '';
+	| 'math';
 
 export type TestHarnas = {
 	Date: typeof Date;
@@ -168,3 +167,8 @@ export type TestHarnas = {
 export type IOWaitsGroupNames = 'fontLoadTime' | 'fontloadErrorTime';
 
 export type Waits = Record<IOWaitsGroupNames, Record<number, number>>;
+
+export type ChartFontInfo = {
+	fallback: GenericFontFamilies;
+	[index: `fo${string}`]: FontOptions | FontLoadErrorPL;
+};

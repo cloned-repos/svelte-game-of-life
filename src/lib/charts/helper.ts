@@ -18,7 +18,9 @@ import type {
 	CommonMsg,
 	Font,
 	FontKey,
+	FontLoadErrorPL,
 	FontOptions,
+	GenericFontFamilies,
 	IOWaitsGroupNames,
 	RenderChart,
 	Waits
@@ -80,7 +82,7 @@ export function createFontID(opt: FontOptions): string | null {
 	return rc;
 }
 
-export function createFontShortHand(opt: FontOptions): string | null {
+export function createFontShortHand(opt: FontOptions) {
 	/* this is the font shorthand typedef from https://www.w3.org/TR/2018/REC-css-fonts-3-20180920/#font-prop
 	Operator:
 	'||' means at least one of these options need to be chosen
@@ -120,20 +122,16 @@ export function createFontShortHand(opt: FontOptions): string | null {
 	}
 
 	if (opt.size) {
-		switch (true) {
-			case RegExpFontSizePx.test(opt.size):
-			case RegExpFontSizeREM.test(opt.size):
-			case RegExpFontSizeEM.test(opt.size):
-			case RegExpFontSizePCT.test(opt.size):
-				rc += (rc ? ' ' : '') + opt.size.toLocaleLowerCase();
-				break;
-			default:
-				return null;
-		}
-	}
-	// add font family
-	if (!opt.family) {
-		return null;
+		//switch (true) {
+		//	case RegExpFontSizePx.test(opt.size):
+		//	case RegExpFontSizeREM.test(opt.size):
+		//	case RegExpFontSizeEM.test(opt.size):
+		//	case RegExpFontSizePCT.test(opt.size):
+		rc += (rc ? ' ' : '') + opt.size.toLocaleLowerCase();
+		//		break;
+		//	default:
+		//		return null;
+		// }
 	}
 	rc += ' ' + opt.family;
 	return rc;
@@ -329,17 +327,17 @@ export function drawText(
 	ctx.restore();
 }
 
-export function createChartCreator(fontOptions?: (Font & FontKey)[]) {
+export function createChartCreator(
+	fallback: GenericFontFamilies,
+	fontOptions?: (Font & FontKey)[]
+) {
 	let chart: Chart;
 	return function (canvas?: HTMLCanvasElement) {
-		const destroy = () => {
-			chart.detach();
-		};
 		if (canvas && chart) {
 			throw new Error('can not add this action to multiple html tags');
 		}
 		if (chart) {
-			return { chart, destroy };
+			return { chart };
 		}
 		if (!canvas) {
 			throw new Error('no argument given for chart-action');
@@ -347,8 +345,13 @@ export function createChartCreator(fontOptions?: (Font & FontKey)[]) {
 		if (false === canvas instanceof window.HTMLCanvasElement) {
 			throw new Error('the tag being "actionized" is not a <canvas /> tag');
 		}
-		chart = new Chart(canvas!, fontOptions);
-		return { chart, destroy };
+		chart = new Chart(canvas, fallback, fontOptions);
+		return {
+			chart,
+			destroy() {
+				chart.destroy();
+			}
+		};
 	};
 }
 
@@ -395,27 +398,12 @@ export function* eventGenerator<T extends CommonMsg>(
 	return;
 }
 
-// clean up chart render unless the last one
-export function cleanUpChartRenderMsgs(queue: CommonMsg[]) {
-	let renderMsg: RenderChart | null = null;
-	let i = queue.length - 1;
-	for (; i >= 0 && i < queue.length; i--) {
-		const msg = queue[i];
-		if (msg.type === CHART_RENDER) {
-			if (!renderMsg) {
-				renderMsg = msg;
-			}
-			queue.splice(i, 1);
-		}
-	}
-	if (!renderMsg) {
-		return false; // nothing to be done
-	}
-	return true;
-}
-
 export function updateStatistics(waits: Waits, ns: IOWaitsGroupNames, start: number, end: number) {
 	const delay = end - start;
 	waits[ns][delay] = waits[ns][delay] || 0;
 	waits[ns][delay]++;
+}
+
+export function isFontLoadErrorPL(u: any): u is FontLoadErrorPL {
+	return u.error instanceof DOMException && typeof u.ts === 'string';
 }

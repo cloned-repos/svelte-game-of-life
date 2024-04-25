@@ -22,28 +22,26 @@
 
 	let inputValue: string;
 	let fontOptions: (FontKey & Font)[] = [
-		{ font: { family: 'caption', size: '17px', weight: 'bold' }, key: 'bold caption' }
+		{ font: { family: 'Junction', size: '150px', weight: 'bold' }, key: 'hAxe' }
 	];
-	const createChart = createChartCreator(fontOptions);
+	const createChart = createChartCreator('sans-serif', fontOptions);
 	function handleInputChange(e: Event) {
 		inputValue = (e.target as HTMLInputElement).value;
 	}
 
 	function setFontSHValue(e: Event) {
-		fontOptions = [
-			{ font: { family: 'Junction', size: '150px', weight: '200' }, key: '200 Junction' }
-		];
-		const { chart } = createChart()!;
+		fontOptions = [{ font: { family: 'Junction', size: '150px', weight: '900' }, key: 'hAxe' }];
+		const { chart } = createChart();
 		chart.enqueue({ type: FONT_CHANGE, ...fontOptions[0] });
 	}
 
 	function showQueue(e: Event) {
-		const { chart } = createChart()!;
+		const { chart } = createChart();
 		console.log('show queue', chart.getQueue());
 	}
 
 	function doFontChecks(e: Event) {
-		const { chart } = createChart()!;
+		const { chart } = createChart();
 		chart.processFontChangeEvents();
 	}
 	function doFontLoadings(e: Event) {
@@ -69,6 +67,11 @@
 		const { chart } = createChart();
 		chart.syncOnAnimationFrame();
 	}
+
+	function doChartRender(e: Event) {
+		const { chart } = createChart();
+		chart.processChartRender();
+	}
 </script>
 
 <div style="--grid-pos: {pos}" class="me">
@@ -92,6 +95,7 @@
 		>
 		<button name="chart-resize" on:click={doChartResize}>{'chart-resize'}</button>
 		<button name="start-anim" on:click={startChartAnimFrame}>{'start'}</button>
+		<button name="start-anim" on:click={doChartRender}>{'render'}</button>
 		<button name="stop-anim" on:click={stopAnimFrame}>{'stop'}</button>
 	</div>
 	<canvas use:line_chart={createChart} on:chart-resize={resizeNotification}
