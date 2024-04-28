@@ -14,7 +14,9 @@ import {
 	clear,
 	createFontShortHand,
 	createObserverForCanvas,
+	createSizer,
 	defaultFontOptionValues,
+	deviceCssPxRatio,
 	drawHorizontalLine,
 	drawHorizontalLines,
 	drawText,
@@ -23,12 +25,15 @@ import {
 	getfontMetrics,
 	isCanvasSizeEqual,
 	isFontLoadErrorPL,
+	scaleFontSize,
+	selectFont,
 	updateStatistics
 } from './helper';
 import type {
 	CanvasSize,
 	ChangeFont,
 	ChangeSize,
+	ChartDebugInfo,
 	ChartFontInfo,
 	CommonMsg,
 	Font,
@@ -43,6 +48,7 @@ import type {
 	Waits
 } from './types';
 import { systemSH } from './constants';
+import { draw } from 'svelte/transition';
 
 const debugRender = createNS('Chart/render');
 
@@ -89,7 +95,7 @@ export default class Chart implements Enqueue<CommonMsg> {
 		if (Array.isArray(initialFonts)) {
 			for (const fontOption of initialFonts) {
 				const font = defaultFontOptionValues(fontOption?.font);
-				const key = fontOption?.key || creatFontID(font)!; // because of the default values createFontID(..) will be ok
+				const key = fontOption.key;
 				this.enqueue({ type: FONT_CHANGE, font, key });
 			}
 		}
@@ -235,28 +241,29 @@ export default class Chart implements Enqueue<CommonMsg> {
 	}
 
 	processChartResize() {
-		const toDelete: ChangeSize[] = [];
-		this.queue.forEach((evt) => {
-			if (!(evt.type === CHANGE_SIZE)) {
-				return;
-			}
-			toDelete.push(evt);
-		});
+		let last: ChangeSize | undefined;
 		// delete all but the last one
-		if (toDelete.length) {
-			const last = toDelete[toDelete.length - 1];
-			for (let i = 0, walking = 0; i < toDelete.length; i++) {
-				// indexOf is only interested in object reference not the type
-				walking = this.queue.indexOf(toDelete[i] as any, walking);
-				this.queue.splice(walking, 1);
+		for (let i = this.queue.length - 1; i >= 0; i--) {
+			const event = this.queue[i];
+			if (event.type !== CHANGE_SIZE) {
+				continue;
 			}
-			if (isCanvasSizeEqual(last.size, this.size)) {
-				return false;
+			if (!last) {
+				if (!isCanvasSizeEqual(event.size, this.size)) {
+					last = event;
+					this.size = {
+						...event.size,
+						// we cannot use half pixel spaces at the far end of the canvas
+						height: Math.trunc(event.size.height),
+						width: Math.trunc(event.size.width)
+					};
+					const ce = new CustomEvent('chart-resize', { detail: this.size });
+					this.canvas.dispatchEvent(ce);
+				}
 			}
-			this.size = last.size;
-			return true;
+			this.queue.splice(i, 1);
 		}
-		return false;
+		return last ? true : false;
 	}
 
 	syncOnAnimationFrame() {
@@ -266,13 +273,16 @@ export default class Chart implements Enqueue<CommonMsg> {
 		const run = (ts: number) => {
 			this.processFontChangeEvents();
 			this.processFontLoadingEvents();
-			const rc =
-				Number(this.processFontLoadResultEvents()) + Number(this.processChartResize());
-			if (rc) {
+			const rc1 = this.processFontLoadResultEvents();
+			const rc2 = this.processChartResize();
+			if (rc1 || rc2) {
+				const event = new CustomEvent('chart-debug', { detail: this.getInfo() });
 				this.processChartRender();
 			}
 			if (this.cancelAnimationFrame) {
-				this.cancelAnimationFrame = requestAnimationFrame(run);
+				setTimeout(() => {
+					this.cancelAnimationFrame = requestAnimationFrame(run);
+				}, 5000);
 			}
 		};
 		this.cancelAnimationFrame = requestAnimationFrame(run);
@@ -284,36 +294,77 @@ export default class Chart implements Enqueue<CommonMsg> {
 	}
 
 	processChartRender() {
-		// clean up all chart render command except the last one
 		clear(this.rctx!);
-		this.canvas.width = this.size.physicalPixelWidth;
-		this.canvas.height = this.size.physicalPixelHeight;
-
+		const { size, rctx, canvas } = this;
+		canvas.width = size.physicalPixelWidth;
+		canvas.height = size.physicalPixelHeight;
+		const ratio = devicePixelRatio;
 		// 20px from the bottom
+		const fhAxe = selectFont(this.fonts, 'fohAxe');
+		fhAxe.size = scaleFontSize(fhAxe.size, ratio);
+		const fontSH = createFontShortHand(defaultFontOptionValues(fhAxe));
+		const { metrics, debug } = getfontMetrics(rctx, fontSH);
+		const px = createSizer(ratio);
+
+		console.log({ ratio, metrics, debug, size });
+
+		rctx.save();
+		rctx.closePath();
+		rctx.beginPath();
+		this.rctx.lineWidth = ratio;
+		rctx.moveTo(px(10), 0);
+		rctx.lineTo(px(20), 0);
+		rctx.strokeStyle = 'red';
+		rctx.stroke();
+		rctx.closePath();
+
+		rctx.beginPath();
+		this.rctx.lineWidth = ratio;
+		rctx.moveTo(0, px(2.5));
+		rctx.lineTo(px(10), px(12.5));
+		rctx.strokeStyle = 'green';
+		rctx.stroke();
+		this.rctx.closePath();
+		rctx.beginPath();
+		this.rctx.lineWidth = ratio;
+		rctx.moveTo(0, px(5.5));
+		rctx.lineTo(px(5), px(12.5));
+		rctx.strokeStyle = 'green';
+		rctx.stroke();
+		this.rctx.closePath();
+		rctx.beginPath();
+		this.rctx.lineWidth = ratio;
+		rctx.moveTo(px(20), px(0.5));
+		rctx.lineTo(px(30), px(0.5));
+		rctx.strokeStyle = 'red';
+		rctx.stroke();
+		rctx.closePath();
+
+		//this.rctx.lineWidth = ratio;
+		this.rctx.restore();
+
+		//
+		// draw baselines
 		const bottomPadding = 20;
-		const foAxe = this.fonts['fohAxe'];
-		const fontHAxeFinalOptions: FontOptions = isFontLoadErrorPL(foAxe)
-			? {
-					...foAxe.font,
-					family: this.fonts.fallback
-			  }
-			: foAxe;
+		const blMiddle = this.size.physicalPixelHeight - (metrics.cellHeight << 1);
+		const { topbl, alpbbl, botbl } = metrics;
+		drawHorizontalLines(
+			this.rctx,
+			0,
+			[topbl, alpbbl, botbl, 0].map((bl) => blMiddle - bl),
+			this.size.physicalPixelWidth,
+			'green'
+		);
 
-		const fontSH = createFontShortHand(defaultFontOptionValues(fontHAxeFinalOptions))!;
-		const {
-			// cellHeights?
-			metrics,
-			debug
-		} = getfontMetrics(this.rctx, fontSH);
-		// select max emHeight
-		const sorted = Object.values(metrics)
-			.sort((a, b) => a - b)
-			.reverse();
-		console.log({ sorted, metrics });
-		/*const min = sorted.slice(-1)[0];
-		console.log(min);
-		console.log({ metrics, debug });
-
+		const { fontAscent, fontDescent } = metrics;
+		drawHorizontalLines(
+			this.rctx,
+			0,
+			[fontAscent, fontDescent].map((bl) => blMiddle - bl),
+			this.size.physicalPixelWidth,
+			'rgba(255,0,0,0.5)'
+		);
+		/*
 		const middleBaseLine = this.rctx.canvas.height - bottomPadding - -min;
 
 		// lets draw
@@ -345,7 +396,7 @@ export default class Chart implements Enqueue<CommonMsg> {
 		this.queue.push(msg as CommonMsg & { ts: string });
 	}
 
-	public getQueue() {
+	public getInfo(): ChartDebugInfo {
 		return {
 			queue: this.queue.slice(0),
 			fonts: this.fonts,
@@ -353,7 +404,4 @@ export default class Chart implements Enqueue<CommonMsg> {
 			waits: this.waits
 		};
 	}
-}
-function creatFontID(font: FontOptions): string | undefined {
-	throw new Error('Function not implemented.');
 }

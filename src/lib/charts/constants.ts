@@ -10,7 +10,9 @@ import type {
 	ChangeSize,
 	RenderChart,
 	TestHarnas,
-	ChangeFont
+	ChangeFont,
+	FontSizeRelative,
+	FontSizeAbsolute
 } from './types';
 export const systemSH = ['caption', 'icon', 'menu', 'message-box', 'small-caption', 'status-bar'];
 export const fontStyle: FontStyle[] = ['normal', 'italic', 'oblique'];
@@ -64,3 +66,15 @@ export const defaultHarnas: TestHarnas = {
 	random: globalThis.Math.random,
 	getRequestAnimationFrame: () => window.requestAnimationFrame
 };
+
+export const fontSizeRelative: FontSizeRelative[] = ['larger', 'smaller'];
+
+export const fontSizeAbsolute: FontSizeAbsolute[] = [
+	'xx-small',
+	'x-small',
+	'small',
+	'medium',
+	'large',
+	'x-large',
+	'xx-large'
+];

@@ -4,7 +4,6 @@
 	import { store, redux2SvelteReadable } from '$lib/store';
 	// app types
 	import type { RootState } from '$lib/store';
-	import type { Store } from '@reduxjs/toolkit';
 	import type { AnimationState } from '$lib/store/animationFrameSlice';
 	// svelte libs
 	import { onMount } from 'svelte';

@@ -2,9 +2,10 @@
 	import createNS from '@mangos/debug-frontend';
 	import { onMount } from 'svelte';
 	import line_chart from '$lib/charts/action';
-	import type { CanvasSize, Font, FontKey, FontOptions } from '$lib/charts/types';
+	import type { CanvasSize, ChartDebugInfo, Font, FontKey, FontOptions } from '$lib/charts/types';
 	import { createChartCreator } from '$lib/charts/helper';
 	import { FONT_CHANGE } from '$lib/charts/constants';
+	import type Chart from '$lib/charts/Chart';
 
 	// const inits
 	const debug = createNS('statistics/index.svelte');
@@ -16,13 +17,17 @@
 	let state: CanvasSize;
 
 	function resizeNotification(event: CustomEvent<CanvasSize>) {
-		state = event.detail;
-		debug('state', state);
+		//state = event.detail;
+		//debug('state', state);
+	}
+
+	function onDebug(event: CustomEvent<ChartDebugInfo>) {
+		console.log(Object.assign(Object.create(null), event.detail));
 	}
 
 	let inputValue: string;
 	let fontOptions: (FontKey & Font)[] = [
-		{ font: { family: 'Junction', size: '150px', weight: 'bold' }, key: 'hAxe' }
+		{ font: { family: 'Junction', size: '16px', weight: 'bold' }, key: 'hAxe' }
 	];
 	const createChart = createChartCreator('sans-serif', fontOptions);
 	function handleInputChange(e: Event) {
@@ -30,14 +35,14 @@
 	}
 
 	function setFontSHValue(e: Event) {
-		fontOptions = [{ font: { family: 'Junction', size: '150px', weight: '900' }, key: 'hAxe' }];
+		fontOptions = [{ font: { family: 'Junction', size: '16px', weight: '900' }, key: 'hAxe' }];
 		const { chart } = createChart();
 		chart.enqueue({ type: FONT_CHANGE, ...fontOptions[0] });
 	}
 
 	function showQueue(e: Event) {
 		const { chart } = createChart();
-		console.log('show queue', chart.getQueue());
+		console.log('show queue', chart.getInfo());
 	}
 
 	function doFontChecks(e: Event) {
@@ -98,8 +103,10 @@
 		<button name="start-anim" on:click={doChartRender}>{'render'}</button>
 		<button name="stop-anim" on:click={stopAnimFrame}>{'stop'}</button>
 	</div>
-	<canvas use:line_chart={createChart} on:chart-resize={resizeNotification}
-		>{(debug('rendering canvas?'), '')}</canvas
+	<canvas
+		use:line_chart={createChart}
+		on:chart-resize={resizeNotification}
+		on:chart-debug={onDebug}>{(debug('rendering canvas?'), '')}</canvas
 	>
 </div>
 

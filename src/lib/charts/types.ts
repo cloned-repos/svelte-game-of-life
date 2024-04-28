@@ -1,8 +1,10 @@
+import type { getfontMetrics } from './helper';
+
 export type CanvasSize = {
 	physicalPixelHeight: number;
 	physicalPixelWidth: number;
-	width?: number;
-	height?: number;
+	width: number;
+	height: number;
 };
 
 export type ChangeSize = {
@@ -171,4 +173,11 @@ export type Waits = Record<IOWaitsGroupNames, Record<number, number>>;
 export type ChartFontInfo = {
 	fallback: GenericFontFamilies;
 	[index: `fo${string}`]: FontOptions | FontLoadErrorPL;
+};
+
+export type ChartDebugInfo = {
+	queue: ({ ts: string } & CommonMsg)[];
+	fonts: ChartFontInfo;
+	canvasSize: CanvasSize;
+	waits: Waits;
 };

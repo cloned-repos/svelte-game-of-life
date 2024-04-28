@@ -6,6 +6,8 @@ import {
 	RegExpFontSizePCT,
 	RegExpFontSizePx,
 	RegExpFontSizeREM,
+	fontSizeAbsolute,
+	fontSizeRelative,
 	fontStretch,
 	fontStyle,
 	fontVariant,
@@ -15,11 +17,17 @@ import {
 } from './constants';
 import type {
 	CanvasSize,
+	ChartFontInfo,
 	CommonMsg,
 	Font,
 	FontKey,
 	FontLoadErrorPL,
 	FontOptions,
+	FontSize,
+	FontSizeAbsolute,
+	FontSizeLengthPx,
+	FontSizeLengthRem,
+	FontSizeRelative,
 	GenericFontFamilies,
 	IOWaitsGroupNames,
 	RenderChart,
@@ -199,10 +207,19 @@ export function getfontMetrics(ctx: CanvasRenderingContext2D, fontSH: string) {
 		alpbbl: alpbl_font,
 		botbl: botbl_font,
 		fontDescent: botbl_font - botbl_fontDescent,
-		actualDescent: botbl_actual - botbl_actualDescent
+		actualDescent: botbl_actual - botbl_actualDescent,
+		cellHeight: 0,
+		min: 0,
+		max: 0
 	};
+
+	const sorted = Object.values(metrics).sort((a, b) => a - b);
+	metrics.min = sorted[0];
+	metrics.max = sorted[sorted.length - 1];
+	metrics.cellHeight = metrics.max - metrics.min;
 	return {
 		metrics,
+
 		debug: {
 			baselines: {
 				top: {
@@ -280,6 +297,7 @@ export function drawHorizontalLine(
 ) {
 	ctx.save();
 	ctx.closePath();
+	ctx.translate(0.5, 0.5);
 	ctx.setLineDash(lineDash);
 	ctx.strokeStyle = style;
 	ctx.beginPath();
@@ -355,7 +373,7 @@ export function createChartCreator(
 	};
 }
 
-export function defaultFontOptionValues(fontOptions?: FontOptions): FontOptions {
+export function defaultFontOptionValues(fontOptions?: Partial<FontOptions>): FontOptions {
 	return Object.assign({ size: '10px', family: 'sans-serif' }, fontOptions);
 }
 
@@ -405,5 +423,71 @@ export function updateStatistics(waits: Waits, ns: IOWaitsGroupNames, start: num
 }
 
 export function isFontLoadErrorPL(u: any): u is FontLoadErrorPL {
-	return u.error instanceof DOMException && typeof u.ts === 'string';
+	return u?.error instanceof DOMException && typeof u?.ts === 'string';
+}
+
+export function deviceCssPxRatio(size: CanvasSize): number {
+	return 0.5 * (size.physicalPixelHeight / size.height + size.physicalPixelWidth / size.width);
+}
+
+/*
+export const RegExpFontSizePx = /^(?:\d*\.*\d*)px$/i;
+export const RegExpFontSizeREM = /^(?:\d*\.*\d*)rem$/i;
+export const RegExpFontSizeEM = /^(?:\d*\.*\d*)em$/i;
+export const RegExpFontSizePCT = /^(?:\d*\.*\d*)%$/i;
+*/
+
+export function isFontSizeRelative(size: FontSize): size is FontSizeRelative {
+	return fontSizeRelative.includes(size as never);
+}
+
+export function isFontSizeAbsolute(size: FontSize): size is FontSizeAbsolute {
+	return fontSizeAbsolute.includes(size as never);
+}
+
+export function isFontSizeInPx(size: FontSize): size is FontSizeLengthPx {
+	return RegExpFontSizePx.test(size);
+}
+
+export function isFontSizeInRem(size: FontSize): size is FontSizeLengthRem {
+	return RegExpFontSizeREM.test(size);
+}
+
+export function scaleFontSize(size: FontSize, ratio: number): FontSize {
+	/*if (isFontSizeAbsolute(size) || isFontSizeRelative(size)) {
+		return size;
+	}*/
+	if (isFontSizeInPx(size)) {
+		const nSize = parseFloat(size.slice(0, -2)) * ratio;
+		return `${nSize}px`;
+	}
+	/*
+	if (isFontSizeInRem(size)) {
+		const nSize = parseFloat(size.slice(0, -3)) * ratio;
+		return `${nSize}rem`;
+	}*/
+	return size;
+}
+
+export function selectFont(fonts: ChartFontInfo, key: `fo${string}`): FontOptions {
+	const foAxe = fonts['fohAxe'];
+	// not defined, seek fallback font
+	let font: FontOptions;
+	if (foAxe === undefined) {
+		font = defaultFontOptionValues({ family: fonts.fallback });
+	} else if (isFontLoadErrorPL(foAxe)) {
+		font = defaultFontOptionValues({
+			...foAxe.font,
+			family: fonts.fallback
+		});
+	} else {
+		font = defaultFontOptionValues(foAxe);
+	}
+	return font;
+}
+
+export function createSizer(scale: number) {
+	return function toCSS(n: number) {
+		return n * scale;
+	};
 }
