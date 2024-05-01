@@ -180,6 +180,7 @@ export default class Chart implements Enqueue<CommonMsg> {
 				.then((faces: FontFace[]) => {
 					const end = new this.testHarnas.Date();
 					updateStatistics(this.waits, 'fontLoadTime', start.valueOf(), end.valueOf());
+					console.log('font loaded', evt.font);
 					this.queue.push({
 						type: FONT_LOADED,
 						font: evt.font,
@@ -225,6 +226,7 @@ export default class Chart implements Enqueue<CommonMsg> {
 					const errPL: FontLoadErrorPL = { font: evt.font, ts: evt.ts, error: evt.error };
 					this.fonts[`fo${evt.key}`] = errPL;
 				} else {
+					console.log('font results processed', evt.font);
 					this.fonts[`fo${evt.key}`] = { ...evt.font };
 					renderFlag = true;
 				}
@@ -241,6 +243,7 @@ export default class Chart implements Enqueue<CommonMsg> {
 	}
 
 	processChartResize() {
+		console.log('process-chart-render');
 		let last: ChangeSize | undefined;
 		// delete all but the last one
 		for (let i = this.queue.length - 1; i >= 0; i--) {
@@ -280,9 +283,7 @@ export default class Chart implements Enqueue<CommonMsg> {
 				this.processChartRender();
 			}
 			if (this.cancelAnimationFrame) {
-				setTimeout(() => {
-					this.cancelAnimationFrame = requestAnimationFrame(run);
-				}, 5000);
+				this.cancelAnimationFrame = requestAnimationFrame(run);
 			}
 		};
 		this.cancelAnimationFrame = requestAnimationFrame(run);
@@ -299,9 +300,10 @@ export default class Chart implements Enqueue<CommonMsg> {
 		canvas.width = size.physicalPixelWidth;
 		canvas.height = size.physicalPixelHeight;
 		const ratio = devicePixelRatio;
+
 		// 20px from the bottom
 		const fhAxe = selectFont(this.fonts, 'fohAxe');
-		fhAxe.size = scaleFontSize(fhAxe.size, ratio);
+		fhAxe.size = fhAxe.size;
 		const fontSH = createFontShortHand(defaultFontOptionValues(fhAxe));
 		const { metrics, debug } = getfontMetrics(rctx, fontSH);
 		const px = createSizer(ratio);
@@ -310,30 +312,168 @@ export default class Chart implements Enqueue<CommonMsg> {
 
 		rctx.save();
 		rctx.closePath();
+		// rctx.scale(ratio, ratio);
+
+		/*
 		rctx.beginPath();
-		this.rctx.lineWidth = ratio;
+		//this.rctx.lineWidth = ratio;
 		rctx.moveTo(px(10), 0);
 		rctx.lineTo(px(20), 0);
 		rctx.strokeStyle = 'red';
 		rctx.stroke();
 		rctx.closePath();
+        */
+		rctx.beginPath();
+		this.rctx.lineWidth = 1;
+		rctx.moveTo(1, 2);
+		rctx.lineTo(12, 2);
+		rctx.strokeStyle = 'red';
+		rctx.stroke();
+		this.rctx.closePath();
 
 		rctx.beginPath();
-		this.rctx.lineWidth = ratio;
-		rctx.moveTo(0, px(2.5));
-		rctx.lineTo(px(10), px(12.5));
+		this.rctx.lineWidth = 1;
+		rctx.moveTo(1, 4.5);
+		rctx.lineTo(12, 4.5);
+		rctx.strokeStyle = 'red';
+		rctx.stroke();
+		this.rctx.closePath();
+
+		rctx.beginPath();
+		this.rctx.lineWidth = 0.5;
+		rctx.moveTo(0.5, 8.5);
+		rctx.lineTo(9.5, 8.5);
+		rctx.strokeStyle = 'red';
+		rctx.stroke();
+		this.rctx.closePath();
+
+		rctx.beginPath();
+		this.rctx.lineWidth = 1;
+		rctx.moveTo(10, 8.5);
+		rctx.lineTo(10, 18.5);
+		rctx.strokeStyle = 'red';
+		rctx.stroke();
+		this.rctx.closePath();
+
+		rctx.beginPath();
+		this.rctx.lineWidth = 1;
+		rctx.moveTo(15.5, 8.5);
+		rctx.lineTo(15.5, 18.5);
+		rctx.strokeStyle = 'red';
+		rctx.stroke();
+		this.rctx.closePath();
+
+		rctx.beginPath();
+		this.rctx.lineWidth = 1;
+		rctx.moveTo(25, 8.0);
+		rctx.strokeStyle = 'red';
+		rctx.fillStyle = 'red';
+		rctx.fillRect(25, 8, 1, 10);
+		rctx.stroke();
+		this.rctx.closePath();
+
+		rctx.beginPath();
+		this.rctx.lineWidth = 1;
+		rctx.moveTo(26, 8.0);
+		rctx.strokeStyle = 'orange';
+		rctx.fillStyle = 'orange';
+		rctx.fillRect(26, 8, 1, 10);
+		rctx.stroke();
+		this.rctx.closePath();
+
+		rctx.beginPath();
+		this.rctx.lineWidth = 1;
+		rctx.moveTo(27.5, 8.0);
+		rctx.strokeStyle = 'red';
+		rctx.fillStyle = 'orange';
+		rctx.lineTo(27.5, 18);
+		rctx.stroke();
+		this.rctx.closePath();
+
+		rctx.beginPath();
+		this.rctx.lineWidth = 1;
+		rctx.moveTo(28.5, 8.0);
+		rctx.strokeStyle = 'orange';
+		rctx.fillStyle = 'orange';
+		rctx.lineTo(28.5, 18);
+		rctx.stroke();
+		this.rctx.closePath();
+
+		rctx.beginPath();
+		this.rctx.lineWidth = 1;
+		rctx.moveTo(29.5, 8.0);
+		rctx.strokeStyle = 'orange';
+		rctx.fillStyle = 'orange';
+		rctx.lineTo(35.5, 18);
+		rctx.stroke();
+		this.rctx.closePath();
+
+		rctx.beginPath();
+		this.rctx.lineWidth = 1;
+		rctx.moveTo(36.5, 8);
+		rctx.strokeStyle = 'orange';
+		rctx.fillStyle = 'orange';
+		rctx.lineTo(50.5, 18);
+		rctx.stroke();
+		this.rctx.closePath();
+
+		rctx.beginPath();
+		this.rctx.lineWidth = 1;
+		rctx.moveTo(52.5, 17.5);
+		rctx.strokeStyle = 'orange';
+		rctx.fillStyle = 'orange';
+		rctx.lineTo(65.5, 8.5);
+		rctx.stroke();
+		this.rctx.closePath();
+
+		rctx.beginPath();
+		this.rctx.lineWidth = 1;
+		rctx.moveTo(66.5, 18);
+		rctx.strokeStyle = 'orange';
+		rctx.fillStyle = 'orange';
+		rctx.lineTo(66.5, 8);
+		rctx.stroke();
+		this.rctx.closePath();
+
+		rctx.beginPath();
+		this.rctx.lineWidth = 1;
+		rctx.moveTo(67.5, 18);
+		rctx.strokeStyle = 'red';
+		rctx.fillStyle = 'orange';
+		rctx.lineTo(67.5, 8);
+		rctx.stroke();
+		this.rctx.closePath();
+
+		const middlebl = 20;
+		rctx.beginPath();
+		rctx.font = fontSH;
+		rctx.textBaseline = 'middle';
+		rctx.fillStyle = 'orange';
+		rctx.fillText(textsampleForMetrics, 70, middlebl);
+		rctx.moveTo(70, middlebl);
+		rctx.fillStyle = 'rgba(255,0,0,0.5)';
+		rctx.fillRect(70, middlebl, 40, 1);
+		rctx.fillRect(70, Math.round(middlebl - metrics.topbl), 40, 1);
+		rctx.fillRect(70, Math.round(middlebl - metrics.alpbbl), 40, 1);
+		rctx.fillRect(70, Math.round(middlebl - metrics.botbl), 40, 1);
+
+		rctx.fillStyle = 'rgba(0,255,0,0.5)';
+
+		rctx.fillRect(70, Math.round(middlebl - metrics.actualAscent), 40, 1);
+		rctx.fillRect(70, Math.round(middlebl - metrics.actualDescent), 40, 1);
+
+		this.rctx.closePath();
+
+		/*
+		rctx.beginPath();
+		//this.rctx.lineWidth = ratio;
+		rctx.moveTo(0, 5.5);
+		rctx.lineTo(5, 12.5);
 		rctx.strokeStyle = 'green';
 		rctx.stroke();
 		this.rctx.closePath();
 		rctx.beginPath();
-		this.rctx.lineWidth = ratio;
-		rctx.moveTo(0, px(5.5));
-		rctx.lineTo(px(5), px(12.5));
-		rctx.strokeStyle = 'green';
-		rctx.stroke();
-		this.rctx.closePath();
-		rctx.beginPath();
-		this.rctx.lineWidth = ratio;
+		//this.rctx.lineWidth = ratio;
 		rctx.moveTo(px(20), px(0.5));
 		rctx.lineTo(px(30), px(0.5));
 		rctx.strokeStyle = 'red';
@@ -341,13 +481,15 @@ export default class Chart implements Enqueue<CommonMsg> {
 		rctx.closePath();
 
 		//this.rctx.lineWidth = ratio;
+		
+		*/
 		this.rctx.restore();
-
 		//
 		// draw baselines
 		const bottomPadding = 20;
-		const blMiddle = this.size.physicalPixelHeight - (metrics.cellHeight << 1);
+		const blMiddle = 100; // this.size.physicalPixelHeight - (metrics.cellHeight << 1);
 		const { topbl, alpbbl, botbl } = metrics;
+		console.log('draw horizontal lines baselines', [topbl, alpbbl, botbl, 0, blMiddle]);
 		drawHorizontalLines(
 			this.rctx,
 			0,
@@ -364,6 +506,7 @@ export default class Chart implements Enqueue<CommonMsg> {
 			this.size.physicalPixelWidth,
 			'rgba(255,0,0,0.5)'
 		);
+		drawText(rctx, textsampleForMetrics, 'red', fontSH, 40, blMiddle, 'middle');
 		/*
 		const middleBaseLine = this.rctx.canvas.height - bottomPadding - -min;
 

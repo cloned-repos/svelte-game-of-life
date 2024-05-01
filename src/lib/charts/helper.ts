@@ -297,7 +297,7 @@ export function drawHorizontalLine(
 ) {
 	ctx.save();
 	ctx.closePath();
-	ctx.translate(0.5, 0.5);
+	ctx.lineWidth = 1;
 	ctx.setLineDash(lineDash);
 	ctx.strokeStyle = style;
 	ctx.beginPath();
