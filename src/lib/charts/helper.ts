@@ -187,6 +187,8 @@ export function getfontMetrics(ctx: CanvasRenderingContext2D, fontSH: string) {
 	const midbl_actualAscent = middleMetrics.actualBoundingBoxAscent;
 	const midbl_actualDescent = middleMetrics.actualBoundingBoxDescent;
 
+	// todo: checkout textMetics.width and (actualBoundingBoxRight-actualBoundingBoxLeft)
+
 	// these 2 are always the same?
 	// middle baseline is the norm
 	const topbl_font = midbl_fontAscent - topbl_fontAscent;
