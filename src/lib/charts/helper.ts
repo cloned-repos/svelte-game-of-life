@@ -12,8 +12,7 @@ import {
 	fontStyle,
 	fontVariant,
 	fontWeight,
-	systemSH,
-	textsampleForMetrics
+	systemSH
 } from './constants';
 import type {
 	CanvasSize,
@@ -157,14 +156,14 @@ function metricsFrom(
 	return metrics;
 }
 
-export function getfontMetrics(ctx: CanvasRenderingContext2D, fontSH: string) {
+export function getfontMetrics(ctx: CanvasRenderingContext2D, fontSH: string, text: string) {
 	ctx.save(); // save contexts
 	ctx.font = fontSH;
 	// get metrics from all possible baselines
-	const topMetrics = metricsFrom(textsampleForMetrics, 'top', ctx);
-	const middleMetrics = metricsFrom(textsampleForMetrics, 'middle', ctx);
-	const baseLineMetrics = metricsFrom(textsampleForMetrics, 'alphabetic', ctx);
-	const bottomLineMetrics = metricsFrom(textsampleForMetrics, 'bottom', ctx);
+	const topMetrics = metricsFrom(text, 'top', ctx);
+	const middleMetrics = metricsFrom(text, 'middle', ctx);
+	const baseLineMetrics = metricsFrom(text, 'alphabetic', ctx);
+	const bottomLineMetrics = metricsFrom(text, 'bottom', ctx);
 	ctx.restore();
 	//
 	const topbl_fontAscent = topMetrics.fontBoundingBoxAscent;
@@ -212,13 +211,19 @@ export function getfontMetrics(ctx: CanvasRenderingContext2D, fontSH: string) {
 		actualDescent: botbl_actual - botbl_actualDescent,
 		cellHeight: 0,
 		min: 0,
-		max: 0
+		max: 0,
+		aLeft: 0,
+		aRight: 0,
+		width: 0
 	};
 
 	const sorted = Object.values(metrics).sort((a, b) => a - b);
 	metrics.min = sorted[0];
 	metrics.max = sorted[sorted.length - 1];
 	metrics.cellHeight = metrics.max - metrics.min;
+	metrics.aLeft = middleMetrics.actualBoundingBoxLeft;
+	metrics.aRight = middleMetrics.actualBoundingBoxRight;
+	metrics.width = middleMetrics.width;
 	return {
 		metrics,
 

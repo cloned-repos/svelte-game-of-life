@@ -7,8 +7,8 @@ import {
 	FONT_LOADED,
 	FONT_LOADING,
 	FONT_LOAD_ERROR,
-	defaultHarnas,
-	textsampleForMetrics
+	canonicalText,
+	defaultHarnas
 } from './constants';
 import {
 	clear,
@@ -305,10 +305,11 @@ export default class Chart implements Enqueue<CommonMsg> {
 		const fhAxe = selectFont(this.fonts, 'fohAxe');
 		fhAxe.size = fhAxe.size;
 		const fontSH = createFontShortHand(defaultFontOptionValues(fhAxe));
-		const { metrics, debug } = getfontMetrics(rctx, fontSH);
+		const { metrics, debug } = getfontMetrics(rctx, fontSH, canonicalText);
 		const px = createSizer(ratio);
 
 		console.log({ ratio, metrics, debug, size });
+		const { topbl, alpbbl, botbl } = metrics;
 
 		rctx.save();
 		rctx.closePath();
@@ -410,10 +411,13 @@ export default class Chart implements Enqueue<CommonMsg> {
 
 		rctx.beginPath();
 		this.rctx.lineWidth = 1;
-		rctx.moveTo(36.5, 8);
+		// 50-36 = 14  18-8 = 10, so the dx > dy
+		// acts more like a horizontal line, in that case y axis needs to be 0.5 and -0.5 for bpttom
+		// horizontal lines dont have horizontal correction only vertical correction
+		rctx.moveTo(36, 8 + 0.5); // 50-36 = 14  18-8 = 10, so the dx > dy
 		rctx.strokeStyle = 'orange';
 		rctx.fillStyle = 'orange';
-		rctx.lineTo(50.5, 18);
+		rctx.lineTo(50, 18 - 0.5);
 		rctx.stroke();
 		this.rctx.closePath();
 
@@ -449,7 +453,16 @@ export default class Chart implements Enqueue<CommonMsg> {
 		rctx.font = fontSH;
 		rctx.textBaseline = 'middle';
 		rctx.fillStyle = 'orange';
-		rctx.fillText(textsampleForMetrics, 70, middlebl);
+
+		rctx.fillText(canonicalText, 75, middlebl);
+		rctx.fillStyle = 'rgba(0,0,0,0.3)';
+		rctx.fillRect(75, topbl, 1, 40);
+		rctx.fillStyle = 'rgba(0,0,255,0.4)';
+		rctx.fillRect(75 - metrics.aLeft, topbl, 1, 40);
+		rctx.fillRect(Math.round(75 + metrics.aRight - 0.5), topbl, 1, 40);
+		rctx.fillStyle = 'rgba(255,0,0,0.4)';
+		rctx.fillRect(Math.round(75 + metrics.width - 0.5), topbl, 1, 40);
+
 		rctx.moveTo(70, middlebl);
 		rctx.fillStyle = 'rgba(255,0,0,0.5)';
 		rctx.fillRect(70, middlebl, 40, 1);
@@ -488,7 +501,6 @@ export default class Chart implements Enqueue<CommonMsg> {
 		// draw baselines
 		const bottomPadding = 20;
 		const blMiddle = 100; // this.size.physicalPixelHeight - (metrics.cellHeight << 1);
-		const { topbl, alpbbl, botbl } = metrics;
 		console.log('draw horizontal lines baselines', [topbl, alpbbl, botbl, 0, blMiddle]);
 		drawHorizontalLines(
 			this.rctx,
@@ -506,7 +518,7 @@ export default class Chart implements Enqueue<CommonMsg> {
 			this.size.physicalPixelWidth,
 			'rgba(255,0,0,0.5)'
 		);
-		drawText(rctx, textsampleForMetrics, 'red', fontSH, 40, blMiddle, 'middle');
+		drawText(rctx, canonicalText, 'red', fontSH, 40, blMiddle, 'middle');
 		/*
 		const middleBaseLine = this.rctx.canvas.height - bottomPadding - -min;
 

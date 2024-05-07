@@ -56,7 +56,7 @@ export const RegExpFontSizeREM = /^(?:\d*\.*\d*)rem$/i;
 export const RegExpFontSizeEM = /^(?:\d*\.*\d*)em$/i;
 export const RegExpFontSizePCT = /^(?:\d*\.*\d*)%$/i;
 
-export const textsampleForMetrics = 'MÊ|²{Qszdcy';
+export const canonicalText = 'jçëMÊ|²{Qszdcy';
 
 export const defaultHarnas: TestHarnas = {
 	Date: globalThis.Date,
