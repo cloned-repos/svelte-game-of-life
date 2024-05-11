@@ -275,25 +275,6 @@ export function getfontMetrics(ctx: CanvasRenderingContext2D, fontSH: string, te
 	};
 }
 
-export function drawLine(
-	ctx: CanvasRenderingContext2D,
-	x1: number,
-	y1: number,
-	x2: number,
-	y2: number,
-	style: string
-) {
-	ctx.save();
-	ctx.closePath();
-	ctx.strokeStyle = style;
-	ctx.beginPath();
-	ctx.moveTo(x1, y1);
-	ctx.lineTo(x2, y2);
-	ctx.stroke();
-	ctx.closePath();
-	ctx.restore();
-}
-
 export function drawHorizontalLine(
 	ctx: CanvasRenderingContext2D,
 	x1: number,
@@ -302,8 +283,6 @@ export function drawHorizontalLine(
 	style: string,
 	...lineDash: number[]
 ) {
-	ctx.save();
-	ctx.closePath();
 	ctx.lineWidth = 1;
 	ctx.setLineDash(lineDash);
 	ctx.strokeStyle = style;
@@ -311,8 +290,6 @@ export function drawHorizontalLine(
 	ctx.moveTo(x1, y1);
 	ctx.lineTo(x2, y1);
 	ctx.stroke();
-	ctx.closePath();
-	ctx.restore();
 }
 
 export function drawHorizontalLines(
@@ -326,13 +303,6 @@ export function drawHorizontalLines(
 	y1.forEach((y0) => drawHorizontalLine(ctx, x1, y0, x2, style, ...lineDash));
 }
 
-export function clear(ctx: CanvasRenderingContext2D) {
-	ctx.save();
-	ctx.closePath();
-	ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-	ctx.restore();
-}
-
 export function drawText(
 	ctx: CanvasRenderingContext2D,
 	text: string,
@@ -342,14 +312,10 @@ export function drawText(
 	y: number,
 	textBaseline: CanvasRenderingContext2D['textBaseline']
 ) {
-	ctx.save();
-	ctx.closePath();
 	ctx.font = fontSH;
 	ctx.textBaseline = textBaseline;
 	ctx.fillStyle = fillStyle;
 	ctx.fillText(text, x, y);
-	ctx.closePath();
-	ctx.restore();
 }
 
 export function createChartCreator(
@@ -394,35 +360,6 @@ export function fontSafeCheck(fontSH: string): boolean | null {
 	}
 }
 
-export function* eventGenerator<T extends CommonMsg>(
-	queue: CommonMsg[],
-	selector: (ev: CommonMsg) => boolean
-): Generator<{ readonly idx: number; target: T; remove: () => void }, undefined, void> {
-	let i = 0;
-	while (i < queue.length) {
-		const length = queue.length;
-		const ev = queue[i];
-		const fr = i;
-		if (selector(ev)) {
-			yield {
-				get idx() {
-					return fr;
-				},
-				target: ev as T,
-				remove() {
-					queue.splice(fr, 1);
-				}
-			};
-			if (length !== queue.length) {
-				// remove() was called
-				continue;
-			}
-		}
-		i++;
-	}
-	return;
-}
-
 export function updateStatistics(waits: Waits, ns: IOWaitsGroupNames, start: number, end: number) {
 	const delay = end - start;
 	waits[ns][delay] = waits[ns][delay] || 0;
@@ -436,13 +373,6 @@ export function isFontLoadErrorPL(u: any): u is FontLoadErrorPL {
 export function deviceCssPxRatio(size: CanvasSize): number {
 	return 0.5 * (size.physicalPixelHeight / size.height + size.physicalPixelWidth / size.width);
 }
-
-/*
-export const RegExpFontSizePx = /^(?:\d*\.*\d*)px$/i;
-export const RegExpFontSizeREM = /^(?:\d*\.*\d*)rem$/i;
-export const RegExpFontSizeEM = /^(?:\d*\.*\d*)em$/i;
-export const RegExpFontSizePCT = /^(?:\d*\.*\d*)%$/i;
-*/
 
 export function isFontSizeRelative(size: FontSize): size is FontSizeRelative {
 	return fontSizeRelative.includes(size as never);
@@ -458,22 +388,6 @@ export function isFontSizeInPx(size: FontSize): size is FontSizeLengthPx {
 
 export function isFontSizeInRem(size: FontSize): size is FontSizeLengthRem {
 	return RegExpFontSizeREM.test(size);
-}
-
-export function scaleFontSize(size: FontSize, ratio: number): FontSize {
-	/*if (isFontSizeAbsolute(size) || isFontSizeRelative(size)) {
-		return size;
-	}*/
-	if (isFontSizeInPx(size)) {
-		const nSize = parseFloat(size.slice(0, -2)) * ratio;
-		return `${nSize}px`;
-	}
-	/*
-	if (isFontSizeInRem(size)) {
-		const nSize = parseFloat(size.slice(0, -3)) * ratio;
-		return `${nSize}rem`;
-	}*/
-	return size;
 }
 
 export function selectFont(fonts: ChartFontInfo, key: `fo${string}`): FontOptions {
@@ -498,3 +412,7 @@ export function createSizer(scale: number) {
 		return n * scale;
 	};
 }
+
+const { trunc, round, max, min, abs } = Math;
+
+export { trunc, round, max, min, abs };

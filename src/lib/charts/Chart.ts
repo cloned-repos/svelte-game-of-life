@@ -11,7 +11,6 @@ import {
 	defaultHarnas
 } from './constants';
 import {
-	clear,
 	createFontShortHand,
 	createObserverForCanvas,
 	createSizer,
@@ -20,12 +19,10 @@ import {
 	drawHorizontalLine,
 	drawHorizontalLines,
 	drawText,
-	eventGenerator,
 	fontSafeCheck,
 	getfontMetrics,
 	isCanvasSizeEqual,
 	isFontLoadErrorPL,
-	scaleFontSize,
 	selectFont,
 	updateStatistics
 } from './helper';
@@ -295,8 +292,10 @@ export default class Chart implements Enqueue<CommonMsg> {
 	}
 
 	processChartRender() {
-		clear(this.rctx!);
 		const { size, rctx, canvas } = this;
+
+		this.rctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
 		canvas.width = size.physicalPixelWidth;
 		canvas.height = size.physicalPixelHeight;
 		const ratio = devicePixelRatio;
@@ -311,19 +310,6 @@ export default class Chart implements Enqueue<CommonMsg> {
 		console.log({ ratio, metrics, debug, size });
 		const { topbl, alpbbl, botbl } = metrics;
 
-		rctx.save();
-		rctx.closePath();
-		// rctx.scale(ratio, ratio);
-
-		/*
-		rctx.beginPath();
-		//this.rctx.lineWidth = ratio;
-		rctx.moveTo(px(10), 0);
-		rctx.lineTo(px(20), 0);
-		rctx.strokeStyle = 'red';
-		rctx.stroke();
-		rctx.closePath();
-        */
 		rctx.beginPath();
 		this.rctx.lineWidth = 1;
 		rctx.moveTo(1, 2);
