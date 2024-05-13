@@ -20,7 +20,6 @@ import {
 	drawHorizontalLines,
 	drawText,
 	fontSafeCheck,
-	getfontMetrics,
 	isCanvasSizeEqual,
 	isFontLoadErrorPL,
 	selectFont,
@@ -46,11 +45,12 @@ import type {
 } from './types';
 import { systemSH } from './constants';
 import { draw } from 'svelte/transition';
+import Context from './Context';
 
 const debugRender = createNS('Chart/render');
 
 export default class Chart implements Enqueue<CommonMsg> {
-	private rctx: CanvasRenderingContext2D;
+	private ctx: Context;
 
 	private size: CanvasSize;
 
@@ -72,10 +72,7 @@ export default class Chart implements Enqueue<CommonMsg> {
 		initialFonts?: (FontKey & Font)[],
 		private readonly testHarnas: TestHarnas = defaultHarnas
 	) {
-		this.rctx = canvas.getContext('2d', {
-			willReadFrequently: true,
-			alpha: true
-		})!;
+		this.ctx = new Context(canvas);
 		const csc = getComputedStyle(canvas);
 		this.size = {
 			physicalPixelHeight: canvas.height,
@@ -213,10 +210,11 @@ export default class Chart implements Enqueue<CommonMsg> {
 
 	processFontLoadResultEvents() {
 		let renderFlag = false;
-		const toDelete: (FontLoaded | FontLoadError)[] = [];
-		this.queue.forEach((evt) => {
+		for (let i = 0; i < this.queue.length; ) {
+			const evt = this.queue[i];
 			if (!(evt.type === FONT_LOAD_ERROR || evt.type === FONT_LOADED)) {
-				return;
+				i++;
+				continue;
 			}
 			if (!this.fonts[`fo${evt.key}`]) {
 				if (evt.type === FONT_LOAD_ERROR) {
@@ -228,19 +226,13 @@ export default class Chart implements Enqueue<CommonMsg> {
 					renderFlag = true;
 				}
 			}
-			toDelete.push(evt);
-			return;
-		});
-		for (let i = 0, walking = 0; i < toDelete.length; i++) {
-			// indexOf is only interested in object reference not the type
-			walking = this.queue.indexOf(toDelete[i] as any, walking);
-			this.queue.splice(walking, 1);
+			this.queue.splice(i, 1);
 		}
 		return renderFlag;
 	}
 
 	processChartResize() {
-		console.log('process-chart-render');
+		// console.log('process-chart-resize');
 		let last: ChangeSize | undefined;
 		// delete all but the last one
 		for (let i = this.queue.length - 1; i >= 0; i--) {
@@ -275,8 +267,15 @@ export default class Chart implements Enqueue<CommonMsg> {
 			this.processFontLoadingEvents();
 			const rc1 = this.processFontLoadResultEvents();
 			const rc2 = this.processChartResize();
+			if (rc1) {
+				console.log('because font loading');
+			}
+			if (rc2) {
+				console.log('because size change');
+			}
 			if (rc1 || rc2) {
-				const event = new CustomEvent('chart-debug', { detail: this.getInfo() });
+				// const event = new CustomEvent('debug-on-render', { detail: this.getInfo() });
+				// this.canvas.dispatchEvent(event);
 				this.processChartRender();
 			}
 			if (this.cancelAnimationFrame) {
@@ -292,24 +291,29 @@ export default class Chart implements Enqueue<CommonMsg> {
 	}
 
 	processChartRender() {
-		const { size, rctx, canvas } = this;
+		const { size, ctx, canvas } = this;
 
-		this.rctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
-		canvas.width = size.physicalPixelWidth;
-		canvas.height = size.physicalPixelHeight;
+		ctx.setSize(size.physicalPixelWidth, size.physicalPixelHeight);
 		const ratio = devicePixelRatio;
 
 		// 20px from the bottom
 		const fhAxe = selectFont(this.fonts, 'fohAxe');
-		fhAxe.size = fhAxe.size;
 		const fontSH = createFontShortHand(defaultFontOptionValues(fhAxe));
-		const { metrics, debug } = getfontMetrics(rctx, fontSH, canonicalText);
-		const px = createSizer(ratio);
+		const { metrics, debug } = ctx.getfontMetrics(fontSH, canonicalText) || {};
+		if (!metrics) {
+			return;
+		}
+		if (!debug) {
+			// do nothing
+			return;
+		}
 
-		console.log({ ratio, metrics, debug, size });
+		// console.log({ ratio, metrics, debug, size });
 		const { topbl, alpbbl, botbl } = metrics;
 
+		ctx.beginPath().setLineWidth(1).strokeStyle('red').line(0, 0, 12, 0).stroke().closePath();
+
+		/*
 		rctx.beginPath();
 		this.rctx.lineWidth = 1;
 		rctx.moveTo(1, 2);
@@ -482,7 +486,7 @@ export default class Chart implements Enqueue<CommonMsg> {
 		//this.rctx.lineWidth = ratio;
 		
 		*/
-		this.rctx.restore();
+		/*this.rctx.restore();
 		//
 		// draw baselines
 		const bottomPadding = 20;
@@ -528,11 +532,6 @@ export default class Chart implements Enqueue<CommonMsg> {
 
 	// note, enqueue can only happen if the Chart instance is connected to the canvas and can receive events
 	public enqueue(msg: CommonMsg): void {
-		// this.rctx === null, only if the Chart instance is disconnected because the canvas was destroyed by svelte
-		if (!this.rctx) {
-			// do nothing
-			return;
-		}
 		(msg as { ts: string }).ts = new this.testHarnas.Date().toISOString();
 		this.queue.push(msg as CommonMsg & { ts: string });
 	}

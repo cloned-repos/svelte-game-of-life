@@ -41,8 +41,6 @@ export function createObserverForCanvas(canvas: HTMLCanvasElement, chart: Chart)
 		const height = entry.borderBoxSize[0].blockSize;
 		const width = entry.borderBoxSize[0].inlineSize;
 		const target: HTMLCanvasElement = entry.target as HTMLCanvasElement;
-		//target.width = physicalPixelWidth; //physicalPixelWidth;
-		//target.height = physicalPixelHeight; //physicalPixelHeight;
 		const size = { physicalPixelWidth, physicalPixelHeight, height, width };
 		chart.enqueue({ type: CHANGE_SIZE, size });
 	});
@@ -144,9 +142,9 @@ export function createFontShortHand(opt: FontOptions) {
 	return rc;
 }
 
-function metricsFrom(
+export function metricsFrom(
 	text: string,
-	baseline: CanvasRenderingContext2D['textBaseline'],
+	baseline: CanvasTextBaseline,
 	ctx: CanvasRenderingContext2D
 ): TextMetrics {
 	ctx.save();
@@ -154,125 +152,6 @@ function metricsFrom(
 	const metrics = ctx.measureText(text);
 	ctx.restore();
 	return metrics;
-}
-
-export function getfontMetrics(ctx: CanvasRenderingContext2D, fontSH: string, text: string) {
-	ctx.save(); // save contexts
-	ctx.font = fontSH;
-	// get metrics from all possible baselines
-	const topMetrics = metricsFrom(text, 'top', ctx);
-	const middleMetrics = metricsFrom(text, 'middle', ctx);
-	const baseLineMetrics = metricsFrom(text, 'alphabetic', ctx);
-	const bottomLineMetrics = metricsFrom(text, 'bottom', ctx);
-	ctx.restore();
-	//
-	const topbl_fontAscent = topMetrics.fontBoundingBoxAscent;
-	const topbl_actualAscent = topMetrics.actualBoundingBoxAscent;
-	const topbl_fontDescent = topMetrics.fontBoundingBoxDescent;
-	const topbl_actualDescent = topMetrics.actualBoundingBoxDescent;
-
-	const alpbl_fontAscent = baseLineMetrics.fontBoundingBoxAscent;
-	const alpbl_actualAscent = baseLineMetrics.actualBoundingBoxAscent;
-	const alpbl_fontDescent = baseLineMetrics.fontBoundingBoxDescent;
-	const alpbl_actualDescent = baseLineMetrics.actualBoundingBoxDescent;
-
-	const botbl_fontAscent = bottomLineMetrics.fontBoundingBoxAscent;
-	const botbl_actualAscent = bottomLineMetrics.actualBoundingBoxAscent;
-	const botbl_fontDescent = bottomLineMetrics.fontBoundingBoxDescent;
-	const botbl_actualDescent = bottomLineMetrics.actualBoundingBoxDescent;
-
-	const midbl_fontAscent = middleMetrics.fontBoundingBoxAscent;
-	const midbl_fontDescent = middleMetrics.fontBoundingBoxDescent;
-	const midbl_actualAscent = middleMetrics.actualBoundingBoxAscent;
-	const midbl_actualDescent = middleMetrics.actualBoundingBoxDescent;
-
-	// todo: checkout textMetics.width and (actualBoundingBoxRight-actualBoundingBoxLeft)
-
-	// these 2 are always the same?
-	// middle baseline is the norm
-	const topbl_font = midbl_fontAscent - topbl_fontAscent;
-	const topbl_actual = midbl_actualAscent - topbl_actualAscent;
-
-	// these 2 should be the same, mid-ascent < alpha-ascent
-	const alpbl_font = midbl_fontAscent - alpbl_fontAscent;
-	const alpbl_actual = midbl_actualAscent - alpbl_actualAscent;
-
-	// these 2 should be the same, mid-ascent < bot-ascent
-	const botbl_font = midbl_fontAscent - botbl_fontAscent;
-	const botbl_actual = midbl_actualAscent - botbl_actualAscent;
-
-	const metrics = {
-		topbl: topbl_font,
-		fontAscent: topbl_font + topbl_fontAscent,
-		actualAscent: topbl_actual + topbl_actualAscent,
-		alpbbl: alpbl_font,
-		botbl: botbl_font,
-		fontDescent: botbl_font - botbl_fontDescent,
-		actualDescent: botbl_actual - botbl_actualDescent,
-		cellHeight: 0,
-		min: 0,
-		max: 0,
-		aLeft: 0,
-		aRight: 0,
-		width: 0
-	};
-
-	const sorted = Object.values(metrics).sort((a, b) => a - b);
-	metrics.min = sorted[0];
-	metrics.max = sorted[sorted.length - 1];
-	metrics.cellHeight = metrics.max - metrics.min;
-	metrics.aLeft = middleMetrics.actualBoundingBoxLeft;
-	metrics.aRight = middleMetrics.actualBoundingBoxRight;
-	metrics.width = middleMetrics.width;
-	return {
-		metrics,
-
-		debug: {
-			baselines: {
-				top: {
-					font: topbl_font,
-					actual: topbl_actual
-				},
-				alphabetic: {
-					font: alpbl_font,
-					actual: alpbl_actual
-				},
-				bottom: {
-					font: botbl_font,
-					actual: botbl_actual
-				}
-			},
-			// ascents and descents
-			ascents: {
-				font: {
-					alphabetic: alpbl_fontAscent,
-					middle: midbl_fontAscent,
-					bottom: botbl_fontAscent,
-					top: topbl_fontAscent
-				},
-				actual: {
-					alphabetic: alpbl_actualAscent,
-					middle: midbl_actualAscent,
-					bottom: botbl_actualAscent,
-					top: topbl_actualAscent
-				}
-			},
-			descents: {
-				font: {
-					alphabetic: -alpbl_fontDescent,
-					middle: -midbl_fontDescent,
-					bottom: -botbl_fontDescent,
-					top: -topbl_fontDescent
-				},
-				actual: {
-					alphabetic: -alpbl_actualDescent,
-					middle: -midbl_actualDescent,
-					bottom: -botbl_actualDescent,
-					top: -topbl_actualDescent
-				}
-			}
-		}
-	};
 }
 
 export function drawHorizontalLine(

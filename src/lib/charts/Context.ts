@@ -1,10 +1,39 @@
-import { abs, max, min, round, trunc } from './helper';
+import { abs, isCanvasSizeEqual, max, metricsFrom, min, round, trunc } from './helper';
 
 export default class Context {
 	private ctx: CanvasRenderingContext2D | null;
 	constructor(private readonly canvas: HTMLCanvasElement) {
-		this.ctx = canvas.getContext('2d');
+		this.ctx = canvas.getContext('2d', {
+			willReadFrequently: true,
+			alpha: true
+		})!;
 	}
+
+	/*
+	private drawHorizontalLine(x0: number, y0: number, w: number, lineWidth: number) {
+		const { ctx } = this;
+		if (!ctx) {
+			return this;
+		}
+		if (w < 1 || lineWidth < 1) {
+			// dont draw anything
+			return this;
+		}
+		ctx.fillRect(x0, y0, w, lineWidth);
+	}
+
+	private drawVerticalLine(x0: number, y0: number, h: number, lineWidth: number) {
+		const { ctx } = this;
+		if (!ctx) {
+			return this;
+		}
+		if (h < 1 || lineWidth < 1) {
+			// dont draw anything
+			return this;
+		}
+		ctx.fillRect(x0, y0, lineWidth, h);
+	}
+	*/
 
 	setSize(devicePixelWidth: number, devicePixelHeight: number) {
 		const w = trunc(devicePixelWidth);
@@ -16,12 +45,12 @@ export default class Context {
 		if (this.ctx === null) {
 			this.ctx = canvas.getContext('2d');
 			if (this.ctx === null) {
-				return;
+				return this;
 			}
 		}
-		if (width !== w && height != h) {
-			canvas.width = w;
-			canvas.width = h;
+		if (this.canvas.width !== w || this.canvas.height !== h) {
+			this.canvas.width = w;
+			this.canvas.height = h;
 		} else {
 			this.ctx.clearRect(0, 0, w, h);
 		}
@@ -41,7 +70,7 @@ export default class Context {
 		}
 		return this;
 	}
-	lineWidth(w: number) {
+	setLineWidth(w: number) {
 		const { ctx } = this;
 		if (ctx) {
 			ctx.lineWidth = w;
@@ -98,46 +127,202 @@ export default class Context {
 		return this;
 	}
 	line(px0: number, py0: number, px1: number, py1: number) {
-		let x1 = 0;
-		let x0 = 0;
-		let y1 = 0;
-		let y0 = 0;
 		const { ctx } = this;
 		if (!ctx) {
 			return this;
 		}
-		let xset = false;
-		let yset = false;
-		if (abs(px0 - px1) < 1) {
-			x1 = round(min(px0,px1));
-			x0 = round(px1);
-			xset = true;
-		}
-		if (abs(y0 - y1) < 1) {
-			// horizontal line
-			y1 = round(min(py1, py1));
-			y0 = round(py1);
-			yset = true;
-		}
-		if (x1 === x0 && y1 === y0) {
-			return this; // nothing to draw
-		}
-		if (x1 === x0) {
-			// vertical line
-			return this.fillRect(x0, y0, max(ctx.lineWidth, 1)), round(y1 - y0));
-		}
-		if (y1 === y0) {
-			// horizontal line
-			return this.fillRect(round(x0), round(y0), max(ctx.lineWidth, 1), round(y1 - y0));
-		}
-		/*
-           
+		const lineWidth = this.ctx?.lineWidth || 1;
+		const h = abs(py1 - py0);
+		const w = abs(px1 - px0);
+		const corr = round(lineWidth) % 2 ? 0.5 : 0;
 
-		*/
-		if (x1 > x0) {
-			x0 = round(x0 + 0.5);
+		/*
+		if (abs(px0 - px1) <= lineWidth) {
+			// its a vertical line
+			const minX = min(px0, px1);
+			const minY = min(py0, py1);
+			// always try to draw from top to bottom
+			this.drawVerticalLine(round(minX), round(minY), round(h), round(lineWidth));
+			return this;
 		}
-		const minX = x0 > x1 ? x0 : x1;
-		const minY;
+		if (abs(py0 - py1) < 1) {
+			// horizontal line
+			const minX = min(px0, px1);
+			const minY = min(py0, py1);
+			// always draw from left to right
+			this.drawHorizontalLine(round(minX), round(minY), round(w), round(lineWidth));
+			return this;
+		}
+		*/
+		if (h > w) {
+			// more vertical then horizontal
+			if (px0 < px1) {
+				// left to right
+				ctx.moveTo(round(px0) + corr, py0);
+				ctx.lineTo(round(px1) - corr, py1);
+			} else {
+				// right to left
+				ctx.moveTo(round(px0) - corr, py0);
+				ctx.lineTo(round(px1) + corr, py1);
+			}
+		} else {
+			// more horizontal then vertical
+			if (py0 < py1) {
+				// top to bottom
+				ctx.moveTo(round(px0), round(py0) + corr);
+				ctx.lineTo(round(px1), round(py1) - corr);
+			} else if (py0 > py1) {
+				// bottom to top
+				ctx.moveTo(round(px0), py0 - corr);
+				ctx.lineTo(round(px1), py1 + corr);
+			} else {
+				ctx.moveTo(round(px0), py0 + corr);
+				ctx.lineTo(round(px1), py1 + corr);
+			}
+		}
+		return this;
+	}
+	getfontMetrics(fontSH: string, text: string) {
+		const { ctx } = this;
+		if (!ctx) {
+			return null;
+		}
+		ctx.save(); // save contexts
+		ctx.font = fontSH;
+		// get metrics from all possible baselines
+		const topMetrics = metricsFrom(text, 'top', ctx);
+		const middleMetrics = metricsFrom(text, 'middle', ctx);
+		const baseLineMetrics = metricsFrom(text, 'alphabetic', ctx);
+		const bottomLineMetrics = metricsFrom(text, 'bottom', ctx);
+		ctx.restore();
+		//
+		const topbl_fontAscent = topMetrics.fontBoundingBoxAscent;
+		const topbl_actualAscent = topMetrics.actualBoundingBoxAscent;
+		const topbl_fontDescent = topMetrics.fontBoundingBoxDescent;
+		const topbl_actualDescent = topMetrics.actualBoundingBoxDescent;
+
+		const alpbl_fontAscent = baseLineMetrics.fontBoundingBoxAscent;
+		const alpbl_actualAscent = baseLineMetrics.actualBoundingBoxAscent;
+		const alpbl_fontDescent = baseLineMetrics.fontBoundingBoxDescent;
+		const alpbl_actualDescent = baseLineMetrics.actualBoundingBoxDescent;
+
+		const botbl_fontAscent = bottomLineMetrics.fontBoundingBoxAscent;
+		const botbl_actualAscent = bottomLineMetrics.actualBoundingBoxAscent;
+		const botbl_fontDescent = bottomLineMetrics.fontBoundingBoxDescent;
+		const botbl_actualDescent = bottomLineMetrics.actualBoundingBoxDescent;
+
+		const midbl_fontAscent = middleMetrics.fontBoundingBoxAscent;
+		const midbl_fontDescent = middleMetrics.fontBoundingBoxDescent;
+		const midbl_actualAscent = middleMetrics.actualBoundingBoxAscent;
+		const midbl_actualDescent = middleMetrics.actualBoundingBoxDescent;
+
+		// todo: checkout textMetics.width and (actualBoundingBoxRight-actualBoundingBoxLeft)
+
+		// these 2 are always the same?
+		// middle baseline is the norm
+		const topbl_font = midbl_fontAscent - topbl_fontAscent;
+		const topbl_actual = midbl_actualAscent - topbl_actualAscent;
+
+		// these 2 should be the same, mid-ascent < alpha-ascent
+		const alpbl_font = midbl_fontAscent - alpbl_fontAscent;
+		const alpbl_actual = midbl_actualAscent - alpbl_actualAscent;
+
+		// these 2 should be the same, mid-ascent < bot-ascent
+		const botbl_font = midbl_fontAscent - botbl_fontAscent;
+		const botbl_actual = midbl_actualAscent - botbl_actualAscent;
+
+		const metrics = {
+			topbl: topbl_font,
+			fontAscent: topbl_font + topbl_fontAscent,
+			actualAscent: topbl_actual + topbl_actualAscent,
+			alpbbl: alpbl_font,
+			botbl: botbl_font,
+			fontDescent: botbl_font - botbl_fontDescent,
+			actualDescent: botbl_actual - botbl_actualDescent,
+			cellHeight: 0,
+			min: 0,
+			max: 0,
+			aLeft: 0,
+			aRight: 0,
+			width: 0
+		};
+
+		const sorted = Object.values(metrics).sort((a, b) => a - b);
+		metrics.min = sorted[0];
+		metrics.max = sorted[sorted.length - 1];
+		metrics.cellHeight = metrics.max - metrics.min;
+		metrics.aLeft = middleMetrics.actualBoundingBoxLeft;
+		metrics.aRight = middleMetrics.actualBoundingBoxRight;
+		metrics.width = middleMetrics.width;
+		return {
+			metrics,
+
+			debug: {
+				baselines: {
+					top: {
+						font: topbl_font,
+						actual: topbl_actual
+					},
+					alphabetic: {
+						font: alpbl_font,
+						actual: alpbl_actual
+					},
+					bottom: {
+						font: botbl_font,
+						actual: botbl_actual
+					}
+				},
+				// ascents and descents
+				ascents: {
+					font: {
+						alphabetic: alpbl_fontAscent,
+						middle: midbl_fontAscent,
+						bottom: botbl_fontAscent,
+						top: topbl_fontAscent
+					},
+					actual: {
+						alphabetic: alpbl_actualAscent,
+						middle: midbl_actualAscent,
+						bottom: botbl_actualAscent,
+						top: topbl_actualAscent
+					}
+				},
+				descents: {
+					font: {
+						alphabetic: -alpbl_fontDescent,
+						middle: -midbl_fontDescent,
+						bottom: -botbl_fontDescent,
+						top: -topbl_fontDescent
+					},
+					actual: {
+						alphabetic: -alpbl_actualDescent,
+						middle: -midbl_actualDescent,
+						bottom: -botbl_actualDescent,
+						top: -topbl_actualDescent
+					}
+				}
+			}
+		};
+	}
+	beginPath() {
+		const { ctx } = this;
+		if (ctx) {
+			ctx.beginPath();
+		}
+		return this;
+	}
+	stroke() {
+		const { ctx } = this;
+		if (ctx) {
+			ctx.stroke();
+		}
+		return this;
+	}
+	closePath() {
+		const { ctx } = this;
+		if (ctx) {
+			ctx.closePath();
+		}
+		return this;
 	}
 }

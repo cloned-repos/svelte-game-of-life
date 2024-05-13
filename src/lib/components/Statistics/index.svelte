@@ -22,7 +22,7 @@
 	}
 
 	function onDebug(event: CustomEvent<ChartDebugInfo>) {
-		console.log(Object.assign(Object.create(null), event.detail));
+		// console.log('debug', Object.assign(Object.create(null), event.detail));
 	}
 
 	let inputValue: string;
@@ -106,8 +106,10 @@
 	<canvas
 		use:line_chart={createChart}
 		on:chart-resize={resizeNotification}
-		on:chart-debug={onDebug}>{(debug('rendering canvas?'), '')}</canvas
+		on:chart-debug={onDebug}
 	>
+		{(debug('rendering canvas?'), '')}
+	</canvas>
 </div>
 
 <style>
