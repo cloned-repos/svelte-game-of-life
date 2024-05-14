@@ -309,221 +309,74 @@ export default class Chart implements Enqueue<CommonMsg> {
 		}
 
 		// console.log({ ratio, metrics, debug, size });
-		const { topbl, alpbbl, botbl } = metrics;
-
-		ctx.beginPath().setLineWidth(1).strokeStyle('red').line(0, 0, 12, 0).stroke().closePath();
-
-		/*
-		rctx.beginPath();
-		this.rctx.lineWidth = 1;
-		rctx.moveTo(1, 2);
-		rctx.lineTo(12, 2);
-		rctx.strokeStyle = 'red';
-		rctx.stroke();
-		this.rctx.closePath();
-
-		rctx.beginPath();
-		this.rctx.lineWidth = 1;
-		rctx.moveTo(1, 4.5);
-		rctx.lineTo(12, 4.5);
-		rctx.strokeStyle = 'red';
-		rctx.stroke();
-		this.rctx.closePath();
-
-		rctx.beginPath();
-		this.rctx.lineWidth = 0.5;
-		rctx.moveTo(0.5, 8.5);
-		rctx.lineTo(9.5, 8.5);
-		rctx.strokeStyle = 'red';
-		rctx.stroke();
-		this.rctx.closePath();
-
-		rctx.beginPath();
-		this.rctx.lineWidth = 1;
-		rctx.moveTo(10, 8.5);
-		rctx.lineTo(10, 18.5);
-		rctx.strokeStyle = 'red';
-		rctx.stroke();
-		this.rctx.closePath();
-
-		rctx.beginPath();
-		this.rctx.lineWidth = 1;
-		rctx.moveTo(15.5, 8.5);
-		rctx.lineTo(15.5, 18.5);
-		rctx.strokeStyle = 'red';
-		rctx.stroke();
-		this.rctx.closePath();
-
-		rctx.beginPath();
-		this.rctx.lineWidth = 1;
-		rctx.moveTo(25, 8.0);
-		rctx.strokeStyle = 'red';
-		rctx.fillStyle = 'red';
-		rctx.fillRect(25, 8, 1, 10);
-		rctx.stroke();
-		this.rctx.closePath();
-
-		rctx.beginPath();
-		this.rctx.lineWidth = 1;
-		rctx.moveTo(26, 8.0);
-		rctx.strokeStyle = 'orange';
-		rctx.fillStyle = 'orange';
-		rctx.fillRect(26, 8, 1, 10);
-		rctx.stroke();
-		this.rctx.closePath();
-
-		rctx.beginPath();
-		this.rctx.lineWidth = 1;
-		rctx.moveTo(27.5, 8.0);
-		rctx.strokeStyle = 'red';
-		rctx.fillStyle = 'orange';
-		rctx.lineTo(27.5, 18);
-		rctx.stroke();
-		this.rctx.closePath();
-
-		rctx.beginPath();
-		this.rctx.lineWidth = 1;
-		rctx.moveTo(28.5, 8.0);
-		rctx.strokeStyle = 'orange';
-		rctx.fillStyle = 'orange';
-		rctx.lineTo(28.5, 18);
-		rctx.stroke();
-		this.rctx.closePath();
-
-		rctx.beginPath();
-		this.rctx.lineWidth = 1;
-		rctx.moveTo(29.5, 8.0);
-		rctx.strokeStyle = 'orange';
-		rctx.fillStyle = 'orange';
-		rctx.lineTo(35.5, 18);
-		rctx.stroke();
-		this.rctx.closePath();
-
-		rctx.beginPath();
-		this.rctx.lineWidth = 1;
-		// 50-36 = 14  18-8 = 10, so the dx > dy
-		// acts more like a horizontal line, in that case y axis needs to be 0.5 and -0.5 for bpttom
-		// horizontal lines dont have horizontal correction only vertical correction
-		rctx.moveTo(36, 8 + 0.5); // 50-36 = 14  18-8 = 10, so the dx > dy
-		rctx.strokeStyle = 'orange';
-		rctx.fillStyle = 'orange';
-		rctx.lineTo(50, 18 - 0.5);
-		rctx.stroke();
-		this.rctx.closePath();
-
-		rctx.beginPath();
-		this.rctx.lineWidth = 1;
-		rctx.moveTo(52.5, 17.5);
-		rctx.strokeStyle = 'orange';
-		rctx.fillStyle = 'orange';
-		rctx.lineTo(65.5, 8.5);
-		rctx.stroke();
-		this.rctx.closePath();
-
-		rctx.beginPath();
-		this.rctx.lineWidth = 1;
-		rctx.moveTo(66.5, 18);
-		rctx.strokeStyle = 'orange';
-		rctx.fillStyle = 'orange';
-		rctx.lineTo(66.5, 8);
-		rctx.stroke();
-		this.rctx.closePath();
-
-		rctx.beginPath();
-		this.rctx.lineWidth = 1;
-		rctx.moveTo(67.5, 18);
-		rctx.strokeStyle = 'red';
-		rctx.fillStyle = 'orange';
-		rctx.lineTo(67.5, 8);
-		rctx.stroke();
-		this.rctx.closePath();
+		const { topbl, alpbbl, botbl, actualDescent, actualAscent } = metrics;
 
 		const middlebl = 20;
-		rctx.beginPath();
-		rctx.font = fontSH;
-		rctx.textBaseline = 'middle';
-		rctx.fillStyle = 'orange';
 
-		rctx.fillText(canonicalText, 75, middlebl);
-		rctx.fillStyle = 'rgba(0,0,0,0.3)';
-		rctx.fillRect(75, topbl, 1, 40);
-		rctx.fillStyle = 'rgba(0,0,255,0.4)';
-		rctx.fillRect(75 - metrics.aLeft, topbl, 1, 40);
-		rctx.fillRect(Math.round(75 + metrics.aRight - 0.5), topbl, 1, 40);
-		rctx.fillStyle = 'rgba(255,0,0,0.4)';
-		rctx.fillRect(Math.round(75 + metrics.width - 0.5), topbl, 1, 40);
+		ctx.beginPath()
+			.setLineWidth(1)
+			.strokeStyle('red')
+			.line(1, 2, 12, 2)
+			.line(1, 4, 12, 4)
+			.setLineWidth(0.5)
+			.line(0, 8, 9, 8)
+			.stroke()
+			.closePath();
 
-		rctx.moveTo(70, middlebl);
-		rctx.fillStyle = 'rgba(255,0,0,0.5)';
-		rctx.fillRect(70, middlebl, 40, 1);
-		rctx.fillRect(70, Math.round(middlebl - metrics.topbl), 40, 1);
-		rctx.fillRect(70, Math.round(middlebl - metrics.alpbbl), 40, 1);
-		rctx.fillRect(70, Math.round(middlebl - metrics.botbl), 40, 1);
-
-		rctx.fillStyle = 'rgba(0,255,0,0.5)';
-
-		rctx.fillRect(70, Math.round(middlebl - metrics.actualAscent), 40, 1);
-		rctx.fillRect(70, Math.round(middlebl - metrics.actualDescent), 40, 1);
-
-		this.rctx.closePath();
-
-		/*
-		rctx.beginPath();
-		//this.rctx.lineWidth = ratio;
-		rctx.moveTo(0, 5.5);
-		rctx.lineTo(5, 12.5);
-		rctx.strokeStyle = 'green';
-		rctx.stroke();
-		this.rctx.closePath();
-		rctx.beginPath();
-		//this.rctx.lineWidth = ratio;
-		rctx.moveTo(px(20), px(0.5));
-		rctx.lineTo(px(30), px(0.5));
-		rctx.strokeStyle = 'red';
-		rctx.stroke();
-		rctx.closePath();
-
-		//this.rctx.lineWidth = ratio;
-		
-		*/
-		/*this.rctx.restore();
 		//
-		// draw baselines
-		const bottomPadding = 20;
-		const blMiddle = 100; // this.size.physicalPixelHeight - (metrics.cellHeight << 1);
-		console.log('draw horizontal lines baselines', [topbl, alpbbl, botbl, 0, blMiddle]);
-		drawHorizontalLines(
-			this.rctx,
-			0,
-			[topbl, alpbbl, botbl, 0].map((bl) => blMiddle - bl),
-			this.size.physicalPixelWidth,
-			'green'
-		);
-
-		const { fontAscent, fontDescent } = metrics;
-		drawHorizontalLines(
-			this.rctx,
-			0,
-			[fontAscent, fontDescent].map((bl) => blMiddle - bl),
-			this.size.physicalPixelWidth,
-			'rgba(255,0,0,0.5)'
-		);
-		drawText(rctx, canonicalText, 'red', fontSH, 40, blMiddle, 'middle');
-		/*
-		const middleBaseLine = this.rctx.canvas.height - bottomPadding - -min;
-
-		// lets draw
-		clear(this.rctx);
-		const redDot = 'red';
-		drawText(this.rctx, textsampleForMetrics, 'black', fontSH, 40, middleBaseLine, 'middle');
-		// draw all baselines in dotted red
-		debugRender('**queue is currently: %o', this.queue);
-		debugRender('**internal state is currently: %o', {
-			fontOptions: this.fontOptions,
-			size: this.size
-		});
-		// render chart data here
-		*/
+		ctx.beginPath()
+			.setLineWidth(1)
+			.strokeStyle('red')
+			.line(10, 8, 10, 18)
+			.line(15, 8, 15, 18)
+			.line(25, 8, 25, 18)
+			.stroke()
+			.closePath()
+			.beginPath()
+			.strokeStyle('orange')
+			.line(26, 8, 26, 18)
+			.line(27, 8, 27, 18)
+			.line(28, 8, 28, 18)
+			.line(29, 8, 35, 18)
+			.line(36, 8, 50, 18)
+			.line(52, 17, 65, 8)
+			.line(66, 18, 66, 8)
+			.line(67, 18, 67, 8)
+			.textBaseLine('middle')
+			.fillStyle('orange')
+			.font(fontSH)
+			.fillText(canonicalText, 75, middlebl)
+			.stroke()
+			.closePath()
+			.beginPath()
+			.strokeStyle('rgba(0,0,0,0.3)')
+			.line(75, topbl, 115, topbl)
+			.stroke()
+			.closePath()
+			.beginPath()
+			.strokeStyle('rgba(0,0,255,0.05)')
+			.line(75 - metrics.aLeft, topbl, 75 - metrics.aLeft, topbl + 40)
+			.line(75 + metrics.aRight, topbl, 75 + metrics.aRight, topbl + 40)
+			.stroke()
+			.closePath()
+			.beginPath()
+			.strokeStyle('rgba(0,0,0,0.6)')
+			.line(75 + metrics.width, topbl + 20, 75 + metrics.width, topbl + 40)
+			.stroke()
+			.beginPath()
+			.strokeStyle('rgba(255,0,0,0.5)')
+			.line(70, middlebl - topbl, 110, middlebl - topbl)
+			.line(70, middlebl, 110, middlebl)
+			.line(70, middlebl - alpbbl, 110, middlebl - alpbbl)
+			.line(70, middlebl - botbl, 110, middlebl - botbl)
+			.stroke()
+			.closePath()
+			.beginPath()
+			.strokeStyle('rgba(0,255,0,1)')
+			.line(70, middlebl - actualAscent, 110, middlebl - actualAscent)
+			.line(70, middlebl - actualDescent, 110, middlebl - actualDescent)
+			.stroke()
+			.closePath();
 	}
 
 	public destroy() {

@@ -9,32 +9,6 @@ export default class Context {
 		})!;
 	}
 
-	/*
-	private drawHorizontalLine(x0: number, y0: number, w: number, lineWidth: number) {
-		const { ctx } = this;
-		if (!ctx) {
-			return this;
-		}
-		if (w < 1 || lineWidth < 1) {
-			// dont draw anything
-			return this;
-		}
-		ctx.fillRect(x0, y0, w, lineWidth);
-	}
-
-	private drawVerticalLine(x0: number, y0: number, h: number, lineWidth: number) {
-		const { ctx } = this;
-		if (!ctx) {
-			return this;
-		}
-		if (h < 1 || lineWidth < 1) {
-			// dont draw anything
-			return this;
-		}
-		ctx.fillRect(x0, y0, lineWidth, h);
-	}
-	*/
-
 	setSize(devicePixelWidth: number, devicePixelHeight: number) {
 		const w = trunc(devicePixelWidth);
 		const h = trunc(devicePixelHeight);
@@ -136,33 +110,18 @@ export default class Context {
 		const w = abs(px1 - px0);
 		const corr = round(lineWidth) % 2 ? 0.5 : 0;
 
-		/*
-		if (abs(px0 - px1) <= lineWidth) {
-			// its a vertical line
-			const minX = min(px0, px1);
-			const minY = min(py0, py1);
-			// always try to draw from top to bottom
-			this.drawVerticalLine(round(minX), round(minY), round(h), round(lineWidth));
-			return this;
-		}
-		if (abs(py0 - py1) < 1) {
-			// horizontal line
-			const minX = min(px0, px1);
-			const minY = min(py0, py1);
-			// always draw from left to right
-			this.drawHorizontalLine(round(minX), round(minY), round(w), round(lineWidth));
-			return this;
-		}
-		*/
 		if (h > w) {
 			// more vertical then horizontal
 			if (px0 < px1) {
 				// left to right
 				ctx.moveTo(round(px0) + corr, py0);
 				ctx.lineTo(round(px1) - corr, py1);
-			} else {
+			} else if (px0 > px1) {
 				// right to left
 				ctx.moveTo(round(px0) - corr, py0);
+				ctx.lineTo(round(px1) + corr, py1);
+			} else {
+				ctx.moveTo(round(px0) + corr, py0);
 				ctx.lineTo(round(px1) + corr, py1);
 			}
 		} else {
@@ -173,11 +132,11 @@ export default class Context {
 				ctx.lineTo(round(px1), round(py1) - corr);
 			} else if (py0 > py1) {
 				// bottom to top
-				ctx.moveTo(round(px0), py0 - corr);
-				ctx.lineTo(round(px1), py1 + corr);
+				ctx.moveTo(round(px0), round(py0) - corr);
+				ctx.lineTo(round(px1), round(py1) + corr);
 			} else {
-				ctx.moveTo(round(px0), py0 + corr);
-				ctx.lineTo(round(px1), py1 + corr);
+				ctx.moveTo(round(px0), round(py0) + corr);
+				ctx.lineTo(round(px1), round(py1) + corr);
 			}
 		}
 		return this;
