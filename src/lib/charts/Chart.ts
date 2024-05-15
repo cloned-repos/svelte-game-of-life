@@ -34,13 +34,13 @@ import type {
 	FontLoadErrorPL,
 	FontLoaded,
 	FontLoading,
+	FontMetrics,
 	FontOptions,
 	GenericFontFamilies,
 	TestHarnas,
 	Waits
 } from './types';
 import { systemSH, fontGenericFamilies } from './constants';
-import { draw } from 'svelte/transition';
 import Context from './Context';
 
 const debugRender = createNS('Chart/render');
@@ -96,16 +96,17 @@ export default class Chart implements Enqueue<CommonMsg> {
 	processFontChangeEvents() {
 		// system fonts dont need to be loaded they are assigned in the "render" phase directly to ctx.font = ...
 		// document.fonts.check(..) a system font results in an error loading system fonts results in an error
-		const toDelete: ChangeFont[] = [];
 		const completed: ChangeFont[] = [];
 		const invlalidFontSH: FontLoadError[] = [];
 		const nextStep: FontLoading[] = [];
 		const ts = new this.testHarnas.Date().toISOString();
-		this.queue.forEach((evt, i, arr) => {
+		for (let i = 0; i < this.queue.length; ) {
+			const evt = this.queue[i];
 			if (evt.type !== FONT_CHANGE) {
-				return;
+				i++;
+				continue;
 			}
-			toDelete.push(evt);
+			this.queue.splice(i, 1);
 			const defaulted = defaultFontOptionValues(evt.font);
 			const familySearchName = evt.font.family.toLowerCase();
 			if (
@@ -113,7 +114,7 @@ export default class Chart implements Enqueue<CommonMsg> {
 				fontGenericFamilies.find((gff) => gff === familySearchName)
 			) {
 				completed.push(evt);
-				return;
+				continue;
 			}
 			const fontSH = createFontShortHand(defaulted);
 			const loaded = fontSafeCheck(fontSH);
@@ -134,18 +135,17 @@ export default class Chart implements Enqueue<CommonMsg> {
 				font: evt.font,
 				reqId: this.testHarnas.random()
 			});
-			//
-		});
-		for (let i = 0, walking = 0; i < toDelete.length; i++) {
-			// indexOf is only interested in object reference not the type
-			walking = this.queue.indexOf(toDelete[i] as any, walking);
-			this.queue.splice(walking, 1);
 		}
 		invlalidFontSH.forEach((evt) => {
 			this.fonts[`fo${evt.key}`] = { font: evt.font, error: evt.error, ts: evt.ts };
 		});
 		completed.forEach((evt) => {
-			this.fonts[`fo${evt.key}`] = { ...evt.font };
+			const fontSH = createFontShortHand(defaultFontOptionValues(evt.font));
+			const fMetrics = this.ctx.getfontMetrics(fontSH, canonicalText);
+			this.fonts[`fo${evt.key}`] = {
+				...evt.font,
+				...(fMetrics && { metrics: fMetrics.metrics })
+			};
 		});
 		nextStep.forEach((evt) => {
 			const reqId = this.testHarnas.random();
@@ -216,7 +216,12 @@ export default class Chart implements Enqueue<CommonMsg> {
 					const errPL: FontLoadErrorPL = { font: evt.font, ts: evt.ts, error: evt.error };
 					this.fonts[`fo${evt.key}`] = errPL;
 				} else {
-					this.fonts[`fo${evt.key}`] = { ...evt.font };
+					const fontSH = createFontShortHand(defaultFontOptionValues(evt.font));
+					const fMetrics = this.ctx.getfontMetrics(fontSH, canonicalText);
+					this.fonts[`fo${evt.key}`] = {
+						...evt.font,
+						...(fMetrics && { metrics: fMetrics.metrics })
+					};
 					renderFlag = true;
 				}
 			}
@@ -318,15 +323,12 @@ export default class Chart implements Enqueue<CommonMsg> {
 			.closePath();
 
 		//
-		ctx.beginPath()
-			.setLineWidth(1)
+		ctx.setLineWidth(1)
 			.strokeStyle('red')
 			.line(10, 8, 10, 18)
 			.line(15, 8, 15, 18)
 			.line(25, 8, 25, 18)
 			.stroke()
-			.closePath()
-			.beginPath()
 			.strokeStyle('orange')
 			.line(26, 8, 26, 18)
 			.line(27, 8, 27, 18)
@@ -337,25 +339,19 @@ export default class Chart implements Enqueue<CommonMsg> {
 			.line(66, 18, 66, 8)
 			.line(67, 18, 67, 8)
 			.stroke()
-			.closePath()
-			.beginPath()
 			.textBaseLine('middle')
 			.fillStyle('black')
 			.font(fontSH)
 			.fillText(canonicalText, 75, middlebl)
-			.stroke()
-			.closePath()
 			.beginPath()
 			.strokeStyle('rgba(0,0,0,0.3)')
 			.line(75, topbl, 115, topbl)
 			.stroke()
-			.closePath()
 			.beginPath()
 			.strokeStyle('rgba(0,0,255,0.05)')
 			.line(75 - metrics.aLeft, topbl, 75 - metrics.aLeft, topbl + 40)
 			.line(75 + metrics.aRight, topbl, 75 + metrics.aRight, topbl + 40)
 			.stroke()
-			.closePath()
 			.beginPath()
 			.strokeStyle('rgba(0,0,0,0.6)')
 			.line(75 + metrics.width, topbl + 20, 75 + metrics.width, topbl + 40)
@@ -367,13 +363,11 @@ export default class Chart implements Enqueue<CommonMsg> {
 			.line(70, middlebl - alpbbl, 110, middlebl - alpbbl)
 			.line(70, middlebl - botbl, 110, middlebl - botbl)
 			.stroke()
-			.closePath()
 			.beginPath()
 			.strokeStyle('rgba(0,255,0,1)')
 			.line(70, middlebl - actualAscent, 110, middlebl - actualAscent)
 			.line(70, middlebl - actualDescent, 110, middlebl - actualDescent)
-			.stroke()
-			.closePath();
+			.stroke();
 	}
 
 	public destroy() {

@@ -1,4 +1,5 @@
 import { abs, isCanvasSizeEqual, max, metricsFrom, min, round, trunc } from './helper';
+import type { DebugFontMetrics, FontMetrics } from './types';
 
 export default class Context {
 	private ctx: CanvasRenderingContext2D | null;
@@ -141,7 +142,10 @@ export default class Context {
 		}
 		return this;
 	}
-	getfontMetrics(fontSH: string, text: string) {
+	getfontMetrics(
+		fontSH: string,
+		text: string
+	): null | { debug: DebugFontMetrics; metrics: FontMetrics } {
 		const { ctx } = this;
 		if (!ctx) {
 			return null;
@@ -215,7 +219,6 @@ export default class Context {
 		metrics.width = middleMetrics.width;
 		return {
 			metrics,
-
 			debug: {
 				baselines: {
 					top: {

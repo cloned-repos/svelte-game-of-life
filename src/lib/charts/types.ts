@@ -144,6 +144,7 @@ export type FontOptions = {
 	stretch?: FontStretch;
 	size: FontSize;
 	family: string;
+	metrics?: FontMetrics;
 };
 
 export type GenericFontFamilies =
@@ -178,4 +179,49 @@ export type ChartDebugInfo = {
 	fonts: ChartFontInfo;
 	canvasSize: CanvasSize;
 	waits: Waits;
+};
+
+export type FontMetrics = {
+	topbl: number;
+	fontAscent: number;
+	actualAscent: number;
+	alpbbl: number;
+	botbl: number;
+	fontDescent: number;
+	actualDescent: number;
+	cellHeight: number;
+	min: number;
+	max: number;
+	aLeft: number;
+	aRight: number;
+	width: number;
+};
+
+export type FontBaseLineInfo = {
+	alphabetic: number;
+	middle: number;
+	bottom: number;
+	top: number;
+};
+
+export type FontAndActualMeasure = {
+	font: number;
+	actual: number;
+};
+
+export type DebugFontMetrics = {
+	baselines: {
+		top: FontAndActualMeasure;
+		alphabetic: FontAndActualMeasure;
+		bottom: FontAndActualMeasure;
+	};
+	// ascents and descents
+	ascents: {
+		font: FontBaseLineInfo;
+		actual: FontBaseLineInfo;
+	};
+	descents: {
+		font: FontBaseLineInfo;
+		actual: FontBaseLineInfo;
+	};
 };
