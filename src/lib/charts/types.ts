@@ -1,5 +1,3 @@
-import type { getfontMetrics } from './helper';
-
 export type CanvasSize = {
 	physicalPixelHeight: number;
 	physicalPixelWidth: number;

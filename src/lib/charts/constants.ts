@@ -12,7 +12,8 @@ import type {
 	TestHarnas,
 	ChangeFont,
 	FontSizeRelative,
-	FontSizeAbsolute
+	FontSizeAbsolute,
+	GenericFontFamilies
 } from './types';
 export const systemSH = ['caption', 'icon', 'menu', 'message-box', 'small-caption', 'status-bar'];
 export const fontStyle: FontStyle[] = ['normal', 'italic', 'oblique'];
@@ -77,4 +78,14 @@ export const fontSizeAbsolute: FontSizeAbsolute[] = [
 	'large',
 	'x-large',
 	'xx-large'
+];
+
+export const fontGenericFamilies: GenericFontFamilies[] = [
+	'serif',
+	'sans-serif',
+	'monospace',
+	'cursive',
+	'fantasy',
+	'system-ui',
+	'math'
 ];

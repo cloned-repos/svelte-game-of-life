@@ -40,7 +40,7 @@ export function createObserverForCanvas(canvas: HTMLCanvasElement, chart: Chart)
 		const physicalPixelHeight = entry.devicePixelContentBoxSize[0].blockSize;
 		const height = entry.borderBoxSize[0].blockSize;
 		const width = entry.borderBoxSize[0].inlineSize;
-		const target: HTMLCanvasElement = entry.target as HTMLCanvasElement;
+		// const target: HTMLCanvasElement = entry.target as HTMLCanvasElement;
 		const size = { physicalPixelWidth, physicalPixelHeight, height, width };
 		chart.enqueue({ type: CHANGE_SIZE, size });
 	});
@@ -154,49 +154,6 @@ export function metricsFrom(
 	return metrics;
 }
 
-export function drawHorizontalLine(
-	ctx: CanvasRenderingContext2D,
-	x1: number,
-	y1: number,
-	x2: number,
-	style: string,
-	...lineDash: number[]
-) {
-	ctx.lineWidth = 1;
-	ctx.setLineDash(lineDash);
-	ctx.strokeStyle = style;
-	ctx.beginPath();
-	ctx.moveTo(x1, y1);
-	ctx.lineTo(x2, y1);
-	ctx.stroke();
-}
-
-export function drawHorizontalLines(
-	ctx: CanvasRenderingContext2D,
-	x1: number,
-	y1: number[],
-	x2: number,
-	style: string,
-	...lineDash: number[]
-) {
-	y1.forEach((y0) => drawHorizontalLine(ctx, x1, y0, x2, style, ...lineDash));
-}
-
-export function drawText(
-	ctx: CanvasRenderingContext2D,
-	text: string,
-	fillStyle: string,
-	fontSH: string,
-	x: number,
-	y: number,
-	textBaseline: CanvasRenderingContext2D['textBaseline']
-) {
-	ctx.font = fontSH;
-	ctx.textBaseline = textBaseline;
-	ctx.fillStyle = fillStyle;
-	ctx.fillText(text, x, y);
-}
-
 export function createChartCreator(
 	fallback: GenericFontFamilies,
 	fontOptions?: (Font & FontKey)[]
@@ -247,10 +204,6 @@ export function updateStatistics(waits: Waits, ns: IOWaitsGroupNames, start: num
 
 export function isFontLoadErrorPL(u: any): u is FontLoadErrorPL {
 	return u?.error instanceof DOMException && typeof u?.ts === 'string';
-}
-
-export function deviceCssPxRatio(size: CanvasSize): number {
-	return 0.5 * (size.physicalPixelHeight / size.height + size.physicalPixelWidth / size.width);
 }
 
 export function isFontSizeRelative(size: FontSize): size is FontSizeRelative {

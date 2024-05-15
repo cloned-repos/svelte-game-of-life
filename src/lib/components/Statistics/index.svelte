@@ -27,7 +27,7 @@
 
 	let inputValue: string;
 	let fontOptions: (FontKey & Font)[] = [
-		{ font: { family: 'Junction', size: '24px', weight: '400' }, key: 'hAxe' }
+		{ font: { family: 'sans-serif', size: `${13.333 * 1.25}px`, weight: '400' }, key: 'hAxe' }
 	];
 	const createChart = createChartCreator('sans-serif', fontOptions);
 	function handleInputChange(e: Event) {
@@ -35,7 +35,7 @@
 	}
 
 	function setFontSHValue(e: Event) {
-		fontOptions = [{ font: { family: 'Junction', size: '16px', weight: '900' }, key: 'hAxe' }];
+		fontOptions = [{ font: { family: 'Junction', size: '20px', weight: '500' }, key: 'vAxe' }];
 		const { chart } = createChart();
 		chart.enqueue({ type: FONT_CHANGE, ...fontOptions[0] });
 	}
@@ -102,6 +102,7 @@
 		<button name="start-anim" on:click={startChartAnimFrame}>{'start'}</button>
 		<button name="start-anim" on:click={doChartRender}>{'render'}</button>
 		<button name="stop-anim" on:click={stopAnimFrame}>{'stop'}</button>
+		<span class="btnstyle">{'jçëMÊ|²{Qszdcy'}</span>
 	</div>
 	<canvas
 		use:line_chart={createChart}
@@ -113,6 +114,10 @@
 </div>
 
 <style>
+	.btnstyle {
+		font-family: Arial;
+		font-size: 13.333px;
+	}
 	.me {
 		height: 450px;
 		/*border: 4px darkkhaki dashed;*/

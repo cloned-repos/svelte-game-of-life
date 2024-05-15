@@ -15,10 +15,6 @@ import {
 	createObserverForCanvas,
 	createSizer,
 	defaultFontOptionValues,
-	deviceCssPxRatio,
-	drawHorizontalLine,
-	drawHorizontalLines,
-	drawText,
 	fontSafeCheck,
 	isCanvasSizeEqual,
 	isFontLoadErrorPL,
@@ -43,7 +39,7 @@ import type {
 	TestHarnas,
 	Waits
 } from './types';
-import { systemSH } from './constants';
+import { systemSH, fontGenericFamilies } from './constants';
 import { draw } from 'svelte/transition';
 import Context from './Context';
 
@@ -110,12 +106,16 @@ export default class Chart implements Enqueue<CommonMsg> {
 				return;
 			}
 			toDelete.push(evt);
-			const fontSH = createFontShortHand(defaultFontOptionValues(evt.font))!;
-			// are you trying to use one of the system fonts
-			if (systemSH.find((sysf) => fontSH.includes(sysf))) {
+			const defaulted = defaultFontOptionValues(evt.font);
+			const familySearchName = evt.font.family.toLowerCase();
+			if (
+				systemSH.find((sysf) => sysf === familySearchName) ||
+				fontGenericFamilies.find((gff) => gff === familySearchName)
+			) {
 				completed.push(evt);
 				return;
 			}
+			const fontSH = createFontShortHand(defaulted);
 			const loaded = fontSafeCheck(fontSH);
 			if (loaded === null) {
 				invlalidFontSH.push({
@@ -160,13 +160,13 @@ export default class Chart implements Enqueue<CommonMsg> {
 	}
 
 	processFontLoadingEvents() {
-		const toDelete: FontLoading[] = [];
-
-		this.queue.forEach((evt, i, arr) => {
+		for (let i = 0; i < this.queue.length; ) {
+			const evt = this.queue[i];
 			if (evt.type !== FONT_LOADING) {
-				return;
+				i++;
+				continue;
 			}
-			toDelete.push(evt);
+			this.queue.splice(i, 1);
 			const fontSH = createFontShortHand(defaultFontOptionValues(evt.font))!;
 			const start = new this.testHarnas.Date(evt.ts);
 			document.fonts
@@ -200,11 +200,6 @@ export default class Chart implements Enqueue<CommonMsg> {
 						key: evt.key
 					});
 				});
-		});
-		for (let i = 0, walking = 0; i < toDelete.length; i++) {
-			// indexOf is only interested in object reference not the type
-			walking = this.queue.indexOf(toDelete[i] as any, walking);
-			this.queue.splice(walking, 1);
 		}
 	}
 
@@ -221,7 +216,6 @@ export default class Chart implements Enqueue<CommonMsg> {
 					const errPL: FontLoadErrorPL = { font: evt.font, ts: evt.ts, error: evt.error };
 					this.fonts[`fo${evt.key}`] = errPL;
 				} else {
-					console.log('font results processed', evt.font);
 					this.fonts[`fo${evt.key}`] = { ...evt.font };
 					renderFlag = true;
 				}
@@ -342,8 +336,11 @@ export default class Chart implements Enqueue<CommonMsg> {
 			.line(52, 17, 65, 8)
 			.line(66, 18, 66, 8)
 			.line(67, 18, 67, 8)
+			.stroke()
+			.closePath()
+			.beginPath()
 			.textBaseLine('middle')
-			.fillStyle('orange')
+			.fillStyle('black')
 			.font(fontSH)
 			.fillText(canonicalText, 75, middlebl)
 			.stroke()
