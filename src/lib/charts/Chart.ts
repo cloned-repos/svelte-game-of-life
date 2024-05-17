@@ -149,6 +149,7 @@ export default class Chart implements Enqueue<CommonMsg> {
 		});
 		nextStep.forEach((evt) => {
 			const reqId = this.testHarnas.random();
+			//
 			this.queue.push({
 				type: FONT_LOADING,
 				reqId,

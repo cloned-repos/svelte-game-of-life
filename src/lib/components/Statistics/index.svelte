@@ -27,7 +27,7 @@
 
 	let inputValue: string;
 	let fontOptions: (FontKey & Font)[] = [
-		{ font: { family: 'sans-serif', size: `${13.333 * 1.25}px`, weight: '400' }, key: 'hAxe' }
+		{ font: { family: 'sans-serif', size: `${13.333}px`, weight: '400' }, key: 'hAxe' }
 	];
 	const createChart = createChartCreator('sans-serif', fontOptions);
 	function handleInputChange(e: Event) {
