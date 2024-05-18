@@ -1,9 +1,6 @@
 import Chart from './Chart';
 import {
 	CHANGE_SIZE,
-	CHART_RENDER,
-	RegExpFontSizeEM,
-	RegExpFontSizePCT,
 	RegExpFontSizePx,
 	RegExpFontSizeREM,
 	fontSizeAbsolute,
@@ -11,25 +8,22 @@ import {
 	fontStretch,
 	fontStyle,
 	fontVariant,
-	fontWeight,
-	systemSH
+	fontWeight
 } from './constants';
 import type {
 	CanvasSize,
 	ChartFontInfo,
-	CommonMsg,
 	Font,
 	FontKey,
 	FontLoadErrorPL,
 	FontOptions,
 	FontSize,
 	FontSizeAbsolute,
-	FontSizeLengthPx,
-	FontSizeLengthRem,
 	FontSizeRelative,
 	GenericFontFamilies,
 	IOWaitsGroupNames,
-	RenderChart,
+	LengthPx,
+	LengthRem,
 	Waits
 } from './types';
 
@@ -127,16 +121,9 @@ export function createFontShortHand(opt: FontOptions) {
 	}
 
 	if (opt.size) {
-		//switch (true) {
-		//	case RegExpFontSizePx.test(opt.size):
-		//	case RegExpFontSizeREM.test(opt.size):
-		//	case RegExpFontSizeEM.test(opt.size):
-		//	case RegExpFontSizePCT.test(opt.size):
-		rc += (rc ? ' ' : '') + opt.size.toLocaleLowerCase();
-		//		break;
-		//	default:
-		//		return null;
-		// }
+		const size = opt.size.toLocaleLowerCase();
+		const lineHeight = opt.lineHeight ? `/${opt.lineHeight}` : '';
+		rc += (rc ? ' ' : '') + `${size}${lineHeight.toLocaleLowerCase()}`;
 	}
 	rc += ' ' + opt.family;
 	return rc;
@@ -156,7 +143,7 @@ export function metricsFrom(
 
 export function createChartCreator(
 	fallback: GenericFontFamilies,
-	fontOptions?: (Font & FontKey)[]
+	fontOptions: () => (Font & FontKey)[]
 ) {
 	let chart: Chart;
 	return function (canvas?: HTMLCanvasElement) {
@@ -172,7 +159,7 @@ export function createChartCreator(
 		if (false === canvas instanceof window.HTMLCanvasElement) {
 			throw new Error('the tag being "actionized" is not a <canvas /> tag');
 		}
-		chart = new Chart(canvas, fallback, fontOptions);
+		chart = new Chart(canvas, fallback, fontOptions());
 		return {
 			chart,
 			destroy() {
@@ -213,15 +200,15 @@ export function isFontSizeRelative(size: FontSize): size is FontSizeRelative {
 export function isFontSizeAbsolute(size: FontSize): size is FontSizeAbsolute {
 	return fontSizeAbsolute.includes(size as never);
 }
-
-export function isFontSizeInPx(size: FontSize): size is FontSizeLengthPx {
-	return RegExpFontSizePx.test(size);
+/*
+export function isLengthInPx(size: FontSize): size is LengthPx {
+	return RegExpFontSizePx.test(String(size));
 }
 
-export function isFontSizeInRem(size: FontSize): size is FontSizeLengthRem {
-	return RegExpFontSizeREM.test(size);
+export function isFontSizeInRem(size: FontSize): size is LengthRem {
+	return RegExpFontSizeREM.test(String(size));
 }
-
+*/
 export function selectFont(fonts: ChartFontInfo, key: `fo${string}`): FontOptions {
 	const foAxe = fonts['fohAxe'];
 	// not defined, seek fallback font

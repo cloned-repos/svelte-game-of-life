@@ -117,6 +117,7 @@ export default class Chart implements Enqueue<CommonMsg> {
 				continue;
 			}
 			const fontSH = createFontShortHand(defaulted);
+			console.log('fontSH', fontSH);
 			const loaded = fontSafeCheck(fontSH);
 			if (loaded === null) {
 				invlalidFontSH.push({
@@ -127,7 +128,7 @@ export default class Chart implements Enqueue<CommonMsg> {
 					key: evt.key,
 					font: evt.font
 				});
-				return;
+				continue;
 			}
 			nextStep.push({
 				type: FONT_LOADING,
@@ -175,7 +176,6 @@ export default class Chart implements Enqueue<CommonMsg> {
 				.then((faces: FontFace[]) => {
 					const end = new this.testHarnas.Date();
 					updateStatistics(this.waits, 'fontLoadTime', start.valueOf(), end.valueOf());
-					console.log('font loaded', evt.font);
 					this.queue.push({
 						type: FONT_LOADED,
 						font: evt.font,
@@ -290,6 +290,86 @@ export default class Chart implements Enqueue<CommonMsg> {
 		this.cancelAnimationFrame = 0;
 	}
 
+	private renderChart1() {
+		const { size, ctx, canvas } = this;
+
+		ctx.setSize(size.physicalPixelWidth, size.physicalPixelHeight);
+		const ratio = devicePixelRatio;
+
+		// 20px from the bottom
+		const fhAxe = selectFont(this.fonts, 'fohAxe');
+		const fontSH = createFontShortHand(defaultFontOptionValues(fhAxe));
+		const { metrics, debug } = ctx.getfontMetrics(fontSH, canonicalText) || {};
+		if (!metrics) {
+			return;
+		}
+		if (!debug) {
+			// do nothing
+			return;
+		}
+
+		// console.log({ ratio, metrics, debug, size });
+		const { topbl, alpbbl, botbl, actualDescent, actualAscent } = metrics;
+
+		const middlebl = 20;
+
+		ctx.beginPath()
+			.setLineWidth(1)
+			.strokeStyle('red')
+			.line(1, 2, 12, 2)
+			.line(1, 4, 12, 4)
+			.setLineWidth(0.5)
+			.line(0, 8, 9, 8)
+			.stroke()
+			.closePath();
+
+		//
+		ctx.setLineWidth(1)
+			.strokeStyle('red')
+			.line(10, 8, 10, 18)
+			.line(15, 8, 15, 18)
+			.line(25, 8, 25, 18)
+			.stroke()
+			.strokeStyle('orange')
+			.line(26, 8, 26, 18)
+			.line(27, 8, 27, 18)
+			.line(28, 8, 28, 18)
+			.line(29, 8, 35, 18)
+			.line(36, 8, 50, 18)
+			.line(52, 17, 65, 8)
+			.line(66, 18, 66, 8)
+			.line(67, 18, 67, 8)
+			.stroke()
+			.textBaseLine('middle')
+			.fillStyle('black')
+			.font(fontSH)
+			.fillText(canonicalText, 75, middlebl)
+			.beginPath()
+			.strokeStyle('rgba(0,0,0,0.3)')
+			.line(75, topbl, 115, topbl)
+			.stroke()
+			.beginPath()
+			.strokeStyle('rgba(0,0,255,0.05)')
+			.line(75 - metrics.aLeft, topbl, 75 - metrics.aLeft, topbl + 40)
+			.line(75 + metrics.aRight, topbl, 75 + metrics.aRight, topbl + 40)
+			.stroke()
+			.beginPath()
+			.strokeStyle('rgba(0,0,0,0.6)')
+			.line(75 + metrics.width, topbl + 20, 75 + metrics.width, topbl + 40)
+			.stroke()
+			.beginPath()
+			.strokeStyle('rgba(255,0,0,0.5)')
+			.line(70, middlebl - topbl, 110, middlebl - topbl)
+			.line(70, middlebl, 110, middlebl)
+			.line(70, middlebl - alpbbl, 110, middlebl - alpbbl)
+			.line(70, middlebl - botbl, 110, middlebl - botbl)
+			.stroke()
+			.beginPath()
+			.strokeStyle('rgba(0,255,0,1)')
+			.line(70, middlebl - actualAscent, 110, middlebl - actualAscent)
+			.line(70, middlebl - actualDescent, 110, middlebl - actualDescent)
+			.stroke();
+	}
 	processChartRender() {
 		const { size, ctx, canvas } = this;
 
@@ -300,6 +380,7 @@ export default class Chart implements Enqueue<CommonMsg> {
 		const fhAxe = selectFont(this.fonts, 'fohAxe');
 		const fontSH = createFontShortHand(defaultFontOptionValues(fhAxe));
 		const { metrics, debug } = ctx.getfontMetrics(fontSH, canonicalText) || {};
+		console.log(metrics);
 		if (!metrics) {
 			return;
 		}

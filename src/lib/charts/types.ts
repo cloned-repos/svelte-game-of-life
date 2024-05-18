@@ -84,6 +84,19 @@ export type CommonMsg =
 <'line-height> normal | <number> | <length> | <percentage> | inherit
 
 */
+// https://www.w3.org/TR/CSS2/syndata.html#value-def-length
+export type LengthPercentage = `${number}%`;
+
+export type LengthRem = `${number}rem`;
+
+export type LengthEm = `${number}em`;
+
+export type LengthPx = `${number}px`;
+
+export type Length = '0' | 0 | LengthPercentage | LengthEm | LengthRem | LengthPx;
+
+// https://www.w3.org/TR/CSS2/visudet.html#propdef-line-height
+export type LineHeight = 'normal' | Length;
 export type FontStyle = 'normal' | 'italic' | 'oblique';
 export type FontVariant = 'normal' | 'small-caps';
 export type FontWeight =
@@ -121,21 +134,8 @@ export type FontSizeAbsolute =
 
 export type FontSizeRelative = 'larger' | 'smaller';
 
-export type FontSizeLengthPercentage = `${number}%`;
-
-export type FontSizeLengthRem = `${number}rem`;
-
-export type FontSizeLengthem = `${number}em`;
-
-export type FontSizeLengthPx = `${number}px`;
-
-export type FontSize =
-	| FontSizeAbsolute
-	| FontSizeRelative
-	| FontSizeLengthPercentage
-	| FontSizeLengthRem
-	| FontSizeLengthem
-	| FontSizeLengthPx;
+// https://www.w3.org/TR/2018/REC-css-fonts-3-20180920/#propdef-font-size
+export type FontSize = FontSizeAbsolute | FontSizeRelative | Length;
 
 export type FontOptions = {
 	style?: FontStyle;
@@ -145,6 +145,8 @@ export type FontOptions = {
 	size: FontSize;
 	family: string;
 	metrics?: FontMetrics;
+	// https://www.w3.org/TR/CSS2/visudet.html#propdef-line-height
+	lineHeight?: LineHeight;
 };
 
 export type GenericFontFamilies =

@@ -26,18 +26,31 @@
 	}
 
 	let inputValue: string;
-	let fontOptions: (FontKey & Font)[] = [
-		{ font: { family: 'sans-serif', size: `${13.333}px`, weight: '400' }, key: 'hAxe' }
-	];
+	function fontOptions(): (FontKey & Font)[] {
+		return [
+			{
+				font: {
+					family: 'Junction',
+					size: `${1 * window.devicePixelRatio}em`,
+					weight: '400',
+					lineHeight: `400%`
+				},
+				key: 'hAxe'
+			}
+		];
+	}
 	const createChart = createChartCreator('sans-serif', fontOptions);
 	function handleInputChange(e: Event) {
 		inputValue = (e.target as HTMLInputElement).value;
 	}
 
 	function setFontSHValue(e: Event) {
-		fontOptions = [{ font: { family: 'Junction', size: '20px', weight: '500' }, key: 'vAxe' }];
+		const fontOptions: { font: FontOptions; key: 'vAxe' } = {
+			font: { family: 'Junction', size: '20px', weight: '500' },
+			key: 'vAxe'
+		};
 		const { chart } = createChart();
-		chart.enqueue({ type: FONT_CHANGE, ...fontOptions[0] });
+		chart.enqueue({ type: FONT_CHANGE, ...fontOptions });
 	}
 
 	function showQueue(e: Event) {
@@ -49,10 +62,12 @@
 		const { chart } = createChart();
 		chart.processFontChangeEvents();
 	}
+
 	function doFontLoadings(e: Event) {
 		const { chart } = createChart();
 		chart.processFontLoadingEvents();
 	}
+
 	function doFontLoadResults(e: Event) {
 		const { chart } = createChart();
 		chart.processFontLoadResultEvents();
@@ -114,10 +129,6 @@
 </div>
 
 <style>
-	.btnstyle {
-		font-family: Arial;
-		font-size: 13.333px;
-	}
 	.me {
 		height: 450px;
 		/*border: 4px darkkhaki dashed;*/
