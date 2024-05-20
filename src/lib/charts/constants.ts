@@ -13,11 +13,13 @@ import type {
 	ChangeFont,
 	FontSizeRelative,
 	FontSizeAbsolute,
-	GenericFontFamilies
+	GenericFontFamilies,
+	DeviceRatioAffectOptions
 } from './types';
 export const systemSH = ['caption', 'icon', 'menu', 'message-box', 'small-caption', 'status-bar'];
 export const fontStyle: FontStyle[] = ['normal', 'italic', 'oblique'];
 export const fontVariant: FontVariant[] = ['normal', 'small-caps'];
+
 export const fontWeight: FontWeight[] = [
 	'normal',
 	'bold',
@@ -52,10 +54,10 @@ export const CHANGE_SIZE: ChangeSize['type'] = 'chart-set-size';
 export const CHART_RENDER: RenderChart['type'] = 'chart-render';
 export const FONT_CHANGE: ChangeFont['type'] = 'font-change';
 
-export const RegExpFontSizePx = /^(?:\d*\.*\d*)px$/i;
-export const RegExpFontSizeREM = /^(?:\d*\.*\d*)rem$/i;
-export const RegExpFontSizeEM = /^(?:\d*\.*\d*)em$/i;
-export const RegExpFontSizePCT = /^(?:\d*\.*\d*)%$/i;
+export const RegExpFontSizePx = /^(?<nr>\d*\.*\d*)(?<u>px)$/i;
+export const RegExpFontSizeREM = /^(?<nr>\d*\.*\d*)(?<u>rem)$/i;
+export const RegExpFontSizeEM = /^(?<nr>\d*\.*\d*)(?<u>em)$/i;
+export const RegExpFontSizePERCENT = /^(?<nr>\d*\.*\d*)(?<u>%)$/i;
 
 export const canonicalText = 'jçëMÊ|²{Qszdcy';
 
@@ -67,6 +69,12 @@ export const defaultHarnas: TestHarnas = {
 	random: globalThis.Math.random,
 	getRequestAnimationFrame: () => window.requestAnimationFrame
 };
+
+export const defaultPixelRatioScaleOptions: DeviceRatioAffectOptions = {
+	font: true,
+	canvasPositioning: true,
+	lineWidth: true
+}
 
 export const fontSizeRelative: FontSizeRelative[] = ['larger', 'smaller'];
 

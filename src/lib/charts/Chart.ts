@@ -2,7 +2,6 @@ import createNS from '@mangos/debug-frontend';
 import type { Enqueue } from './Enqueue';
 import {
 	CHANGE_SIZE,
-	CHART_RENDER,
 	FONT_CHANGE,
 	FONT_LOADED,
 	FONT_LOADING,
@@ -12,12 +11,10 @@ import {
 } from './constants';
 import {
 	createFontShortHand,
-	createObserverForCanvas,
-	createSizer,
-	defaultFontOptionValues,
+	createResizeObserverForCanvas,
+		defaultFontOptionValues,
 	fontSafeCheck,
 	isCanvasSizeEqual,
-	isFontLoadErrorPL,
 	selectFont,
 	updateStatistics
 } from './helper';
@@ -28,14 +25,12 @@ import type {
 	ChartDebugInfo,
 	ChartFontInfo,
 	CommonMsg,
+	DeviceRatioAffectOptions,
 	Font,
 	FontKey,
 	FontLoadError,
 	FontLoadErrorPL,
-	FontLoaded,
 	FontLoading,
-	FontMetrics,
-	FontOptions,
 	GenericFontFamilies,
 	TestHarnas,
 	Waits
@@ -43,14 +38,14 @@ import type {
 import { systemSH, fontGenericFamilies } from './constants';
 import Context from './Context';
 
-const debugRender = createNS('Chart/render');
+const debug = createNS('class Chart');
 
 export default class Chart implements Enqueue<CommonMsg> {
 	private ctx: Context;
 
 	private size: CanvasSize;
 
-	private readonly destroyObserver: ReturnType<typeof createObserverForCanvas>;
+	private readonly destroyObserver: ReturnType<typeof createResizeObserverForCanvas>;
 
 	private readonly queue: ({ ts: string } & CommonMsg)[];
 
@@ -62,13 +57,16 @@ export default class Chart implements Enqueue<CommonMsg> {
 
 	constructor(
 		private readonly canvas: HTMLCanvasElement,
-		fallback: GenericFontFamilies,
+		private readonly fallback: GenericFontFamilies,
+
 		// https://html.spec.whatwg.org/multipage/canvas.html#2dcontext
 		//  '10px sans-serif' is the default for canvas
-		initialFonts?: (FontKey & Font)[],
+		private readonly initialFonts: () => (FontKey & Font)[],
+		private readonly getDeviceAspectRatio: (size?: CanvasSize) => number,
+		private readonly pixelDeviceRatio: DeviceRatioAffectOptions,
 		private readonly testHarnas: TestHarnas = defaultHarnas
 	) {
-		this.ctx = new Context(canvas);
+		this.ctx = new Context(canvas, getDeviceAspectRatio, pixelDeviceRatio);
 		const csc = getComputedStyle(canvas);
 		this.size = {
 			physicalPixelHeight: canvas.height,
@@ -76,21 +74,19 @@ export default class Chart implements Enqueue<CommonMsg> {
 			width: parseFloat(csc.width),
 			height: parseFloat(csc.height)
 		};
-		this.destroyObserver = createObserverForCanvas(canvas, this);
+		this.destroyObserver = createResizeObserverForCanvas(canvas, this);
 		this.queue = [];
-		this.fonts = Object.assign(Object.create(null), { fallback });
-		this.waits = Object.assign(Object.create(null), { fontLoadTime: Object.create(null) });
+		this.fonts = { fallback };
+		this.waits = { fontLoadTime: {}, fontloadErrorTime: {} };
 
-		// need to write it like this to make typscript understand "initialFonts" is defined
-		if (Array.isArray(initialFonts)) {
-			for (const fontOption of initialFonts) {
-				const font = defaultFontOptionValues(fontOption?.font);
-				const key = fontOption.key;
-				this.enqueue({ type: FONT_CHANGE, font, key });
-			}
+		const fonts = initialFonts();
+
+		for (const fontOption of fonts) {
+			const font = defaultFontOptionValues(fontOption?.font);
+			const key = fontOption.key;
+			this.enqueue({ type: FONT_CHANGE, font, key });
 		}
 		this.cancelAnimationFrame = 0;
-		this.fonts.fallback = fallback;
 	}
 
 	processFontChangeEvents() {
@@ -117,7 +113,7 @@ export default class Chart implements Enqueue<CommonMsg> {
 				continue;
 			}
 			const fontSH = createFontShortHand(defaulted);
-			console.log('fontSH', fontSH);
+			debug('/processFontChangeEvents, [fontSH]=[%s]', fontSH);
 			const loaded = fontSafeCheck(fontSH);
 			if (loaded === null) {
 				invlalidFontSH.push({
@@ -232,9 +228,8 @@ export default class Chart implements Enqueue<CommonMsg> {
 	}
 
 	processChartResize() {
-		// console.log('process-chart-resize');
 		let last: ChangeSize | undefined;
-		// delete all but the last one
+		// process only the last entered resize instructon, the earlier ones are of no consequence
 		for (let i = this.queue.length - 1; i >= 0; i--) {
 			const event = this.queue[i];
 			if (event.type !== CHANGE_SIZE) {
@@ -245,10 +240,11 @@ export default class Chart implements Enqueue<CommonMsg> {
 					last = event;
 					this.size = {
 						...event.size,
-						// we cannot use half pixel spaces at the far end of the canvas
+						// internal usable space (in css pixels) for the chart
 						height: Math.trunc(event.size.height),
 						width: Math.trunc(event.size.width)
 					};
+					// broadcast resize events, for implementers who want to debug
 					const ce = new CustomEvent('chart-resize', { detail: this.size });
 					this.canvas.dispatchEvent(ce);
 				}
@@ -268,14 +264,14 @@ export default class Chart implements Enqueue<CommonMsg> {
 			const rc1 = this.processFontLoadResultEvents();
 			const rc2 = this.processChartResize();
 			if (rc1) {
-				console.log('because font loading');
+				debug('/syncOnAnimationFrame: render because font was loaded');
 			}
 			if (rc2) {
-				console.log('because size change');
+				debug('/syncOnAnimationFrame: render because canvas size changed');
 			}
 			if (rc1 || rc2) {
-				// const event = new CustomEvent('debug-on-render', { detail: this.getInfo() });
-				// this.canvas.dispatchEvent(event);
+				const event = new CustomEvent('debug-on-render', { detail: this.getInfo() });
+				this.canvas.dispatchEvent(event);
 				this.processChartRender();
 			}
 			if (this.cancelAnimationFrame) {
@@ -372,15 +368,15 @@ export default class Chart implements Enqueue<CommonMsg> {
 	}
 	processChartRender() {
 		const { size, ctx, canvas } = this;
-
 		ctx.setSize(size.physicalPixelWidth, size.physicalPixelHeight);
-		const ratio = devicePixelRatio;
+		const ratio = this.getDeviceAspectRatio(size);
 
 		// 20px from the bottom
 		const fhAxe = selectFont(this.fonts, 'fohAxe');
 		const fontSH = createFontShortHand(defaultFontOptionValues(fhAxe));
-		const { metrics, debug } = ctx.getfontMetrics(fontSH, canonicalText) || {};
-		console.log(metrics);
+		const { metrics, debug: debugMetrics } = ctx.getfontMetrics(fontSH, canonicalText) || {};
+		debug('/processChartRender metrics:[%o]', metrics);
+		debug('/processChartRender debug-metrics:[%o]', debugMetrics);
 		if (!metrics) {
 			return;
 		}
@@ -389,7 +385,8 @@ export default class Chart implements Enqueue<CommonMsg> {
 			return;
 		}
 
-		// console.log({ ratio, metrics, debug, size });
+		debug('/processChartRender using ratio: %s', ratio);
+		debug('/processChartRender using canvas size: %o', size);
 		const { topbl, alpbbl, botbl, actualDescent, actualAscent } = metrics;
 
 		const middlebl = 20;

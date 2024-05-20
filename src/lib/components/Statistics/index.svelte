@@ -1,47 +1,56 @@
 <script lang="ts">
 	import createNS from '@mangos/debug-frontend';
-	import { onMount } from 'svelte';
 	import line_chart from '$lib/charts/action';
 	import type { CanvasSize, ChartDebugInfo, Font, FontKey, FontOptions } from '$lib/charts/types';
 	import { createChartCreator } from '$lib/charts/helper';
 	import { FONT_CHANGE } from '$lib/charts/constants';
-	import type Chart from '$lib/charts/Chart';
 
-	// const inits
+	// attributes
+	export let pos: string;
+	
+	// internal state
+	let width = 0;
+	let inputValue: string;
+	let state: CanvasSize = { 
+		physicalPixelHeight: 0,
+		physicalPixelWidth: 0,
+		height: 0,
+		width: 0
+	};
+
+	// initialization
 	const debug = createNS('statistics/index.svelte');
 
-	export let pos: string;
+	// we want this to be a function so Window Api's cannot be accessed during object definition
+	function testFontOptions(): (FontKey & Font)[] {
+		return [
+			{
+				font: {
+					family: 'Junction',
+					size: '1rem',
+					weight: '400',
+				},
+				key: 'hAxe'
+			}
+		];
+	}
 
-	let width = 'n/a';
+	const createChart = createChartCreator('sans-serif', testFontOptions);
 
-	let state: CanvasSize;
+	//  event handlers
 
 	function resizeNotification(event: CustomEvent<CanvasSize>) {
-		//state = event.detail;
-		//debug('state', state);
+		const state = event.detail;
+		debug('state', state);
 	}
 
 	function onDebug(event: CustomEvent<ChartDebugInfo>) {
 		// console.log('debug', Object.assign(Object.create(null), event.detail));
 	}
 
-	let inputValue: string;
-	function fontOptions(): (FontKey & Font)[] {
-		return [
-			{
-				font: {
-					family: 'Junction',
-					size: `${1 * window.devicePixelRatio}em`,
-					weight: '400',
-					lineHeight: `400%`
-				},
-				key: 'hAxe'
-			}
-		];
-	}
-	const createChart = createChartCreator('sans-serif', fontOptions);
-	function handleInputChange(e: Event) {
-		inputValue = (e.target as HTMLInputElement).value;
+	const handleInputChange = (e: Event) => {
+		const element: HTMLInputElement = (e as InputEvent).target as HTMLInputElement;
+		inputValue = element.value;
 	}
 
 	function setFontSHValue(e: Event) {
@@ -102,7 +111,7 @@
 		<li>width: {state?.width}</li>
 		<li>height: {state?.height}</li>
 		<li><span class="fa fa-battery-3" /></li>
-		<li>{(debug('rendering ul/il tag'), width)}</li>
+		<li>{debug('reactive trigger on "width" value change: %s', width)}</li>
 	</ul>
 	<div>
 		<input type="text" on:input={handleInputChange} bind:value={inputValue} />

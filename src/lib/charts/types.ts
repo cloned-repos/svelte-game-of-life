@@ -96,7 +96,7 @@ export type LengthPx = `${number}px`;
 export type Length = '0' | 0 | LengthPercentage | LengthEm | LengthRem | LengthPx;
 
 // https://www.w3.org/TR/CSS2/visudet.html#propdef-line-height
-export type LineHeight = 'normal' | Length;
+// export type LineHeight = 'normal' | Length;
 export type FontStyle = 'normal' | 'italic' | 'oblique';
 export type FontVariant = 'normal' | 'small-caps';
 export type FontWeight =
@@ -146,7 +146,7 @@ export type FontOptions = {
 	family: string;
 	metrics?: FontMetrics;
 	// https://www.w3.org/TR/CSS2/visudet.html#propdef-line-height
-	lineHeight?: LineHeight;
+	// lineHeight?: LineHeight;
 };
 
 export type GenericFontFamilies =
@@ -227,3 +227,9 @@ export type DebugFontMetrics = {
 		actual: FontBaseLineInfo;
 	};
 };
+
+export type DeviceRatioAffectOptions = {
+	font: boolean;
+	canvasPositioning: boolean;
+	lineWidth: boolean;
+}

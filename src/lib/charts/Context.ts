@@ -1,9 +1,13 @@
-import { abs, isCanvasSizeEqual, max, metricsFrom, min, round, trunc } from './helper';
-import type { DebugFontMetrics, FontMetrics } from './types';
+import { abs, isCanvasSizeEqual, max, metricsFrom, min, round, scaleFontSH, trunc } from './helper';
+import type { CanvasSize, DebugFontMetrics, DeviceRatioAffectOptions, FontMetrics } from './types';
 
 export default class Context {
 	private ctx: CanvasRenderingContext2D | null;
-	constructor(private readonly canvas: HTMLCanvasElement) {
+	constructor(
+		private readonly canvas: HTMLCanvasElement,
+		private readonly pixelRatio: (size?: CanvasSize) => number,
+		private readonly ratioOptions: DeviceRatioAffectOptions,
+	) {
 		this.ctx = canvas.getContext('2d', {
 			willReadFrequently: true,
 			alpha: true
@@ -41,7 +45,9 @@ export default class Context {
 	font(fontSH: string) {
 		const { ctx } = this;
 		if (ctx) {
-			ctx.font = fontSH;
+			const { font } = this.ratioOptions;
+			const finalFontSH = !font ? fontSH : scaleFontSH(fontSH, this.pixelRatio());
+			ctx.font = finalFontSH;
 		}
 		return this;
 	}

@@ -1,8 +1,11 @@
 import Chart from './Chart';
 import {
 	CHANGE_SIZE,
+	RegExpFontSizeEM,
+	RegExpFontSizePERCENT,
 	RegExpFontSizePx,
 	RegExpFontSizeREM,
+	defaultPixelRatioScaleOptions,
 	fontSizeAbsolute,
 	fontSizeRelative,
 	fontStretch,
@@ -13,6 +16,7 @@ import {
 import type {
 	CanvasSize,
 	ChartFontInfo,
+	DeviceRatioAffectOptions,
 	Font,
 	FontKey,
 	FontLoadErrorPL,
@@ -22,12 +26,12 @@ import type {
 	FontSizeRelative,
 	GenericFontFamilies,
 	IOWaitsGroupNames,
-	LengthPx,
-	LengthRem,
 	Waits
 } from './types';
 
-export function createObserverForCanvas(canvas: HTMLCanvasElement, chart: Chart) {
+
+// ResizeObserver for canvas
+export function createResizeObserverForCanvas(canvas: HTMLCanvasElement, chart: Chart) {
 	const observer = new ResizeObserver((entries) => {
 		const entry = entries[0];
 		const physicalPixelWidth = entry.devicePixelContentBoxSize[0].inlineSize;
@@ -44,17 +48,6 @@ export function createObserverForCanvas(canvas: HTMLCanvasElement, chart: Chart)
 	return function destroy() {
 		observer.disconnect();
 	};
-}
-
-export function isFontEqual(o1?: FontOptions, o2?: FontOptions) {
-	return (
-		o1?.family === o2?.family &&
-		o1?.size === o2?.size &&
-		o1?.stretch === o2?.stretch &&
-		o1?.style === o2?.style &&
-		o1?.variant === o2?.variant &&
-		o1?.weight === o2?.weight
-	);
 }
 
 export function isCanvasSizeEqual(a: CanvasSize, b: CanvasSize) {
@@ -122,8 +115,7 @@ export function createFontShortHand(opt: FontOptions) {
 
 	if (opt.size) {
 		const size = opt.size.toLocaleLowerCase();
-		const lineHeight = opt.lineHeight ? `/${opt.lineHeight}` : '';
-		rc += (rc ? ' ' : '') + `${size}${lineHeight.toLocaleLowerCase()}`;
+		rc += (rc ? ' ' : '') + size;
 	}
 	rc += ' ' + opt.family;
 	return rc;
@@ -143,7 +135,9 @@ export function metricsFrom(
 
 export function createChartCreator(
 	fallback: GenericFontFamilies,
-	fontOptions: () => (Font & FontKey)[]
+	fontOptions: () => (Font & FontKey)[],
+	devicePixelAspectRatio = standardDevicePixelAspectRatio,
+	pixelDeviceRatio: DeviceRatioAffectOptions = defaultPixelRatioScaleOptions,
 ) {
 	let chart: Chart;
 	return function (canvas?: HTMLCanvasElement) {
@@ -159,7 +153,7 @@ export function createChartCreator(
 		if (false === canvas instanceof window.HTMLCanvasElement) {
 			throw new Error('the tag being "actionized" is not a <canvas /> tag');
 		}
-		chart = new Chart(canvas, fallback, fontOptions());
+		chart = new Chart(canvas, fallback, fontOptions, devicePixelAspectRatio, pixelDeviceRatio);
 		return {
 			chart,
 			destroy() {
@@ -167,6 +161,10 @@ export function createChartCreator(
 			}
 		};
 	};
+}
+
+export function standardDevicePixelAspectRatio(size?: CanvasSize):  number {
+	return window.devicePixelRatio;
 }
 
 export function defaultFontOptionValues(fontOptions?: Partial<FontOptions>): FontOptions {
@@ -189,7 +187,7 @@ export function updateStatistics(waits: Waits, ns: IOWaitsGroupNames, start: num
 	waits[ns][delay]++;
 }
 
-export function isFontLoadErrorPL(u: any): u is FontLoadErrorPL {
+function isFontLoadErrorPL(u: any): u is FontLoadErrorPL {
 	return u?.error instanceof DOMException && typeof u?.ts === 'string';
 }
 
@@ -226,10 +224,37 @@ export function selectFont(fonts: ChartFontInfo, key: `fo${string}`): FontOption
 	return font;
 }
 
-export function createSizer(scale: number) {
-	return function toCSS(n: number) {
-		return n * scale;
-	};
+export function scaleFontSH(fontSH: string, scale: number): string {
+	const matched0 = fontSH.match(/(?<rest>.*?)(?<size>[^\s]+)\s+(?<family>[^\s]+)$/);
+	if (!matched0 || !matched0.groups){
+		return fontSH;
+	}
+	const { rest, family, size } = matched0.groups;
+	if (!size) {
+		return fontSH;
+	}
+	const prevFontSH = matched0.groups.size;
+	const regExp = RegExpFontSizePx.test(prevFontSH) 
+		? RegExpFontSizePx : RegExpFontSizeREM.test(prevFontSH) 
+		? RegExpFontSizeREM: RegExpFontSizeEM.test(prevFontSH) 
+		? RegExpFontSizeEM : RegExpFontSizePERCENT 
+		? RegExpFontSizePERCENT:  undefined;
+
+	if (regExp === undefined) {
+		return fontSH;
+	}
+
+	const matched = prevFontSH.match(regExp);
+	if (!matched || !matched.groups) {
+		return fontSH;
+	}
+	if (!matched.groups.u || !matched.groups.nr) {
+		return fontSH;
+	}
+	const nr = parseFloat(matched.groups.nr) * scale;
+	const u = matched.groups.u.toLocaleLowerCase();
+		
+	return `${rest} ${nr}${u} ${family}`;
 }
 
 const { trunc, round, max, min, abs } = Math;
