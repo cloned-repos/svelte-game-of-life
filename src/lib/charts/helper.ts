@@ -1,10 +1,13 @@
 import Chart from './Chart';
+import type Context from './Context';
 import {
 	CHANGE_SIZE,
+	RegExpFontSizeDevicePixel,
 	RegExpFontSizeEM,
 	RegExpFontSizePERCENT,
 	RegExpFontSizePx,
 	RegExpFontSizeREM,
+	canonicalText,
 	defaultPixelRatioScaleOptions,
 	fontSizeAbsolute,
 	fontSizeRelative,
@@ -29,7 +32,70 @@ import type {
 	Waits
 } from './types';
 
+const { trunc, round, max, min, abs } = Math;
+const { EPSILON } = Number;
 
+export { trunc, round, max, min, abs, EPSILON };
+
+function swap([a, b]: [number, number]) {
+	return [b, a];
+}
+
+export function calculateForDevicePixel(ctx: Context, font: FontOptions): FontOptions {
+	const size = String(font.size);
+	if (false === RegExpFontSizeDevicePixel.test(size)) {
+		// pass through if it is not devicepixel "dp" unit
+		return font;
+	}
+	const match = size.match(RegExpFontSizeDevicePixel)!;
+
+	let target = parseFloat(match.groups!.nr);
+	let px0 = target;
+	// calculate c0 first estimate
+
+	let {
+		metrics: { cellHeight: c0 }
+	} = ctx.getfontMetrics(createFontShortHand({ ...font, size: `${px0}px` }), canonicalText)!;
+
+	let px1 = c0;
+	// calculate c1 second estimate estimate
+
+	let {
+		metrics: { cellHeight: c1 }
+	} = ctx.getfontMetrics(createFontShortHand({ ...font, size: `${px1}px` }), canonicalText)!;
+
+	let lastPx = abs(c0 - target) > abs(c1 - target) ? px1 : px0;
+	let error = min(abs(c0 - target), abs(c1 - target));
+	for (;;) {
+		if (abs(c0 - target) < EPSILON) {
+			return { ...font, size: `${px0}px` };
+		}
+		if (abs(c1 - target) < EPSILON) {
+			return { ...font, size: `${px1}px` };
+		}
+		// parameterized
+		// make c0 is always closest to target
+		if (abs(c1 - target) < abs(c0 - target)) {
+			[c0, c1] = swap([c0, c1]);
+			[px0, px1] = swap([px0, px1]);
+		}
+		const dvX = px1 - px0;
+		const dvC = c1 - c0;
+		const l = (target - c0) / dvC;
+		const pxn = px0 + l * dvX;
+
+		const {
+			metrics: { cellHeight: cn }
+		} = ctx.getfontMetrics(createFontShortHand({ ...font, size: `${pxn}px` }), canonicalText)!;
+
+		// diverging? stop!
+		if (error >= abs(target - cn)) {
+			return { ...font, size: `${lastPx}px` };
+		}
+		c1 = cn;
+		px1 = pxn;
+	}
+}
 // ResizeObserver for canvas
 export function createResizeObserverForCanvas(canvas: HTMLCanvasElement, chart: Chart) {
 	const observer = new ResizeObserver((entries) => {
@@ -112,10 +178,11 @@ export function createFontShortHand(opt: FontOptions) {
 			rc += (rc ? ' ' : '') + opt.stretch;
 		}
 	}
-
-	if (opt.size) {
-		const size = opt.size.toLocaleLowerCase();
-		rc += (rc ? ' ' : '') + size;
+	const size = String(opt.size);
+	if (size) {
+		// 'dp' is illigal just replace with 'px' for shorthand
+		const finalSize = size.toLowerCase().endsWith('dp') ? size.replace('dp', 'px') : size;
+		rc += (rc ? ' ' : '') + finalSize;
 	}
 	rc += ' ' + opt.family;
 	return rc;
@@ -137,7 +204,7 @@ export function createChartCreator(
 	fallback: GenericFontFamilies,
 	fontOptions: () => (Font & FontKey)[],
 	devicePixelAspectRatio = standardDevicePixelAspectRatio,
-	pixelDeviceRatio: DeviceRatioAffectOptions = defaultPixelRatioScaleOptions,
+	pixelDeviceRatio: DeviceRatioAffectOptions = defaultPixelRatioScaleOptions
 ) {
 	let chart: Chart;
 	return function (canvas?: HTMLCanvasElement) {
@@ -163,7 +230,7 @@ export function createChartCreator(
 	};
 }
 
-export function standardDevicePixelAspectRatio(size?: CanvasSize):  number {
+export function standardDevicePixelAspectRatio(size?: CanvasSize): number {
 	return window.devicePixelRatio;
 }
 
@@ -224,6 +291,7 @@ export function selectFont(fonts: ChartFontInfo, key: `fo${string}`): FontOption
 	return font;
 }
 
+/*
 export function scaleFontSH(fontSH: string, scale: number): string {
 	const matched0 = fontSH.match(/(?<rest>.*?)(?<size>[^\s]+)\s+(?<family>[^\s]+)$/);
 	if (!matched0 || !matched0.groups){
@@ -234,10 +302,10 @@ export function scaleFontSH(fontSH: string, scale: number): string {
 		return fontSH;
 	}
 	const prevFontSH = matched0.groups.size;
-	const regExp = RegExpFontSizePx.test(prevFontSH) 
-		? RegExpFontSizePx : RegExpFontSizeREM.test(prevFontSH) 
-		? RegExpFontSizeREM: RegExpFontSizeEM.test(prevFontSH) 
-		? RegExpFontSizeEM : RegExpFontSizePERCENT 
+	const regExp = RegExpFontSizePx.test(prevFontSH) ? RegExpFontSizePx :
+	 RegExpFontSizeREM.test(prevFontSH) ? RegExpFontSizeREM: 
+	 RegExpFontSizeEM.test(prevFontSH) ? RegExpFontSizeEM : 
+	 RegExpFontSizePERCENT.test(prevFontSH) ?  
 		? RegExpFontSizePERCENT:  undefined;
 
 	if (regExp === undefined) {
@@ -256,7 +324,4 @@ export function scaleFontSH(fontSH: string, scale: number): string {
 		
 	return `${rest} ${nr}${u} ${family}`;
 }
-
-const { trunc, round, max, min, abs } = Math;
-
-export { trunc, round, max, min, abs };
+*/

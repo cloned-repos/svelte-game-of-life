@@ -58,6 +58,7 @@ export const RegExpFontSizePx = /^(?<nr>\d*\.*\d*)(?<u>px)$/i;
 export const RegExpFontSizeREM = /^(?<nr>\d*\.*\d*)(?<u>rem)$/i;
 export const RegExpFontSizeEM = /^(?<nr>\d*\.*\d*)(?<u>em)$/i;
 export const RegExpFontSizePERCENT = /^(?<nr>\d*\.*\d*)(?<u>%)$/i;
+export const RegExpFontSizeDevicePixel = /^(?<nr>\d*\.*\d*)(?<u>dp)$/i;
 
 export const canonicalText = 'jçëMÊ|²{Qszdcy';
 
@@ -74,7 +75,7 @@ export const defaultPixelRatioScaleOptions: DeviceRatioAffectOptions = {
 	font: true,
 	canvasPositioning: true,
 	lineWidth: true
-}
+};
 
 export const fontSizeRelative: FontSizeRelative[] = ['larger', 'smaller'];
 

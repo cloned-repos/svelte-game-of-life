@@ -10,9 +10,10 @@ import {
 	defaultHarnas
 } from './constants';
 import {
+	calculateForDevicePixel,
 	createFontShortHand,
 	createResizeObserverForCanvas,
-		defaultFontOptionValues,
+	defaultFontOptionValues,
 	fontSafeCheck,
 	isCanvasSizeEqual,
 	selectFont,
@@ -137,7 +138,15 @@ export default class Chart implements Enqueue<CommonMsg> {
 			this.fonts[`fo${evt.key}`] = { font: evt.font, error: evt.error, ts: evt.ts };
 		});
 		completed.forEach((evt) => {
-			const fontSH = createFontShortHand(defaultFontOptionValues(evt.font));
+			// const fontSH = createFontShortHand(defaultFontOptionValues(evt.font));
+			// here we have to do something special if it is a 'dp' unit size
+			// take the initial 'dp' unit size as 'dx
+			// walk your way through some interative algo to get cellHeight equal to original dp size
+			//  cellHeight (device pixel) = f(fontSize (in 'px'))
+			//  find px value such that cellHeight will equal the specified `${numper}dp`
+			//  and use that
+			evt.font = calculateForDevicePixel(this.ctx, defaultFontOptionValues(evt.font));
+			const fontSH = createFontShortHand(evt.font);
 			const fMetrics = this.ctx.getfontMetrics(fontSH, canonicalText);
 			this.fonts[`fo${evt.key}`] = {
 				...evt.font,

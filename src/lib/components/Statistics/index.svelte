@@ -7,11 +7,11 @@
 
 	// attributes
 	export let pos: string;
-	
+
 	// internal state
 	let width = 0;
 	let inputValue: string;
-	let state: CanvasSize = { 
+	let state: CanvasSize = {
 		physicalPixelHeight: 0,
 		physicalPixelWidth: 0,
 		height: 0,
@@ -28,7 +28,7 @@
 				font: {
 					family: 'Junction',
 					size: '1rem',
-					weight: '400',
+					weight: '400'
 				},
 				key: 'hAxe'
 			}
@@ -39,19 +39,8 @@
 
 	//  event handlers
 
-	function resizeNotification(event: CustomEvent<CanvasSize>) {
-		const state = event.detail;
-		debug('state', state);
-	}
-
-	function onDebug(event: CustomEvent<ChartDebugInfo>) {
-		// console.log('debug', Object.assign(Object.create(null), event.detail));
-	}
-
-	const handleInputChange = (e: Event) => {
-		const element: HTMLInputElement = (e as InputEvent).target as HTMLInputElement;
-		inputValue = element.value;
-	}
+	function resizeNotification(event: CustomEvent<CanvasSize>) {}
+	function onDebug(event: CustomEvent<ChartDebugInfo>) {}
 
 	function setFontSHValue(e: Event) {
 		const fontOptions: { font: FontOptions; key: 'vAxe' } = {
@@ -60,6 +49,7 @@
 		};
 		const { chart } = createChart();
 		chart.enqueue({ type: FONT_CHANGE, ...fontOptions });
+		width++;
 	}
 
 	function showQueue(e: Event) {
@@ -114,7 +104,7 @@
 		<li>{debug('reactive trigger on "width" value change: %s', width)}</li>
 	</ul>
 	<div>
-		<input type="text" on:input={handleInputChange} bind:value={inputValue} />
+		<input type="text" bind:value={inputValue} />
 		<input type="button" value="set font shorthand" on:click={setFontSHValue} />
 		<button name="show-queue" on:click={showQueue}>{'show'}</button>
 		<button name="font-checks" on:click={doFontChecks}>{'font-checks'}</button>

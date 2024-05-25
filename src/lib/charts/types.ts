@@ -93,7 +93,9 @@ export type LengthEm = `${number}em`;
 
 export type LengthPx = `${number}px`;
 
-export type Length = '0' | 0 | LengthPercentage | LengthEm | LengthRem | LengthPx;
+export type LengthDP = `${number}dp`;
+
+export type Length = '0' | 0 | LengthPercentage | LengthEm | LengthRem | LengthPx | LengthDP;
 
 // https://www.w3.org/TR/CSS2/visudet.html#propdef-line-height
 // export type LineHeight = 'normal' | Length;
@@ -232,4 +234,4 @@ export type DeviceRatioAffectOptions = {
 	font: boolean;
 	canvasPositioning: boolean;
 	lineWidth: boolean;
-}
+};
