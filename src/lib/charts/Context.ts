@@ -1,5 +1,29 @@
-import { abs, isCanvasSizeEqual, max, metricsFrom, min, round, trunc } from './helper';
-import type { CanvasSize, DebugFontMetrics, DeviceRatioAffectOptions, FontMetrics } from './types';
+import {
+	RegExpFontSizeDevicePixel,
+	canonicalText,
+	fontStretch,
+	fontStyle,
+	fontVariant,
+	fontWeight
+} from './constants';
+import {
+	EPSILON,
+	abs,
+	isCanvasSizeEqual,
+	max,
+	metricsFrom,
+	min,
+	round,
+	swap,
+	trunc
+} from './helper';
+import type {
+	CanvasSize,
+	DebugFontMetrics,
+	DeviceRatioAffectOptions,
+	FontMetrics,
+	FontOptions
+} from './types';
 
 export default class Context {
 	private ctx: CanvasRenderingContext2D | null;
@@ -12,6 +36,123 @@ export default class Context {
 			willReadFrequently: true,
 			alpha: true
 		})!;
+	}
+
+	calculateForDevicePixel(font: FontOptions): FontOptions {
+		const size = String(font.size);
+		if (false === RegExpFontSizeDevicePixel.test(size)) {
+			// pass through if it is not devicepixel "dp" unit
+			return font;
+		}
+		const match = size.match(RegExpFontSizeDevicePixel)!;
+
+		let target = parseFloat(match.groups!.nr);
+		let px0 = target;
+		// calculate c0 first estimate
+
+		let {
+			metrics: { cellHeight: c0 }
+		} = this.getfontMetrics(
+			this.createFontShortHand({ ...font, size: `${px0}px` }),
+			canonicalText
+		)!;
+
+		let px1 = c0;
+		// calculate c1 second estimate estimate
+
+		let {
+			metrics: { cellHeight: c1 }
+		} = this.getfontMetrics(
+			this.createFontShortHand({ ...font, size: `${px1}px` }),
+			canonicalText
+		)!;
+
+		let lastPx = abs(c0 - target) > abs(c1 - target) ? px1 : px0;
+		let error = min(abs(c0 - target), abs(c1 - target));
+		for (;;) {
+			if (abs(c0 - target) < EPSILON) {
+				return { ...font, size: `${px0}px` };
+			}
+			if (abs(c1 - target) < EPSILON) {
+				return { ...font, size: `${px1}px` };
+			}
+			// parameterized
+			// make c0 is always closest to target
+			if (abs(c1 - target) < abs(c0 - target)) {
+				[c0, c1] = swap([c0, c1]);
+				[px0, px1] = swap([px0, px1]);
+			}
+			const dvX = px1 - px0;
+			const dvC = c1 - c0;
+			const l = (target - c0) / dvC;
+			const pxn = px0 + l * dvX;
+
+			const {
+				metrics: { cellHeight: cn }
+			} = this.getfontMetrics(
+				this.createFontShortHand({ ...font, size: `${pxn}px` }),
+				canonicalText
+			)!;
+
+			// diverging? stop!
+			if (error >= abs(target - cn)) {
+				return { ...font, size: `${lastPx}px` };
+			}
+			c1 = cn;
+			px1 = pxn;
+		}
+	}
+
+	createFontShortHand(opt: FontOptions): string {
+		/* this is the font shorthand typedef from https://www.w3.org/TR/2018/REC-css-fonts-3-20180920/#font-prop
+	Operator:
+	'||' means at least one of these options need to be chosen
+	'|' =mutual exclusive OR
+	[ 
+		[ <‘font-style’> || <font-variant-css21> || <‘font-weight’> || <‘font-stretch’> ]? 
+		<‘font-size’> [ / <‘line-height’> ]?
+		<‘font-family’> 
+	] 
+	| caption | icon | menu | message-box | small-caption | status-bar
+*/
+		// some checks, if font-family  is one of the systemSH then other options must be not set
+		let rc = '';
+		// fontstyle check
+		if (opt.style) {
+			if (fontStyle.includes(opt.style)) {
+				rc = opt.style;
+			}
+		}
+		// fontvariant check
+		if (opt.variant) {
+			if (fontVariant.includes(opt.variant)) {
+				rc += (rc ? ' ' : '') + opt.variant;
+			}
+		}
+
+		if (opt.weight) {
+			if (fontWeight.includes(opt.weight)) {
+				rc += (rc ? ' ' : '') + opt.weight;
+			}
+		}
+
+		if (opt.stretch) {
+			if (fontStretch.includes(opt.stretch)) {
+				rc += (rc ? ' ' : '') + opt.stretch;
+			}
+		}
+		const size = String(opt.size);
+		if (size) {
+			if (size.toLowerCase().endsWith('dp')) {
+				// translate to unit "px" on the fly
+				// we translate to "px" untill the very last moment
+				const fontAdjusted = this.calculateForDevicePixel(opt);
+				return this.createFontShortHand(fontAdjusted);
+			}
+			rc += (rc ? ' ' : '') + size;
+		}
+		rc += ' ' + opt.family;
+		return rc;
 	}
 
 	setSize(devicePixelWidth: number, devicePixelHeight: number) {

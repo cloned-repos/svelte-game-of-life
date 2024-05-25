@@ -10,8 +10,6 @@ import {
 	defaultHarnas
 } from './constants';
 import {
-	calculateForDevicePixel,
-	createFontShortHand,
 	createResizeObserverForCanvas,
 	defaultFontOptionValues,
 	fontSafeCheck,
@@ -113,7 +111,7 @@ export default class Chart implements Enqueue<CommonMsg> {
 				completed.push(evt);
 				continue;
 			}
-			const fontSH = createFontShortHand(defaulted);
+			const fontSH = this.ctx.createFontShortHand(defaulted);
 			debug('/processFontChangeEvents, [fontSH]=[%s]', fontSH);
 			const loaded = fontSafeCheck(fontSH);
 			if (loaded === null) {
@@ -138,15 +136,7 @@ export default class Chart implements Enqueue<CommonMsg> {
 			this.fonts[`fo${evt.key}`] = { font: evt.font, error: evt.error, ts: evt.ts };
 		});
 		completed.forEach((evt) => {
-			// const fontSH = createFontShortHand(defaultFontOptionValues(evt.font));
-			// here we have to do something special if it is a 'dp' unit size
-			// take the initial 'dp' unit size as 'dx
-			// walk your way through some interative algo to get cellHeight equal to original dp size
-			//  cellHeight (device pixel) = f(fontSize (in 'px'))
-			//  find px value such that cellHeight will equal the specified `${numper}dp`
-			//  and use that
-			evt.font = calculateForDevicePixel(this.ctx, defaultFontOptionValues(evt.font));
-			const fontSH = createFontShortHand(evt.font);
+			const fontSH = this.ctx.createFontShortHand(defaultFontOptionValues(evt.font));
 			const fMetrics = this.ctx.getfontMetrics(fontSH, canonicalText);
 			this.fonts[`fo${evt.key}`] = {
 				...evt.font,
@@ -174,7 +164,7 @@ export default class Chart implements Enqueue<CommonMsg> {
 				continue;
 			}
 			this.queue.splice(i, 1);
-			const fontSH = createFontShortHand(defaultFontOptionValues(evt.font))!;
+			const fontSH = this.ctx.createFontShortHand(defaultFontOptionValues(evt.font))!;
 			const start = new this.testHarnas.Date(evt.ts);
 			document.fonts
 				.load(fontSH)
@@ -222,7 +212,7 @@ export default class Chart implements Enqueue<CommonMsg> {
 					const errPL: FontLoadErrorPL = { font: evt.font, ts: evt.ts, error: evt.error };
 					this.fonts[`fo${evt.key}`] = errPL;
 				} else {
-					const fontSH = createFontShortHand(defaultFontOptionValues(evt.font));
+					const fontSH = this.ctx.createFontShortHand(defaultFontOptionValues(evt.font));
 					const fMetrics = this.ctx.getfontMetrics(fontSH, canonicalText);
 					this.fonts[`fo${evt.key}`] = {
 						...evt.font,
@@ -303,7 +293,7 @@ export default class Chart implements Enqueue<CommonMsg> {
 
 		// 20px from the bottom
 		const fhAxe = selectFont(this.fonts, 'fohAxe');
-		const fontSH = createFontShortHand(defaultFontOptionValues(fhAxe));
+		const fontSH = this.ctx.createFontShortHand(defaultFontOptionValues(fhAxe));
 		const { metrics, debug } = ctx.getfontMetrics(fontSH, canonicalText) || {};
 		if (!metrics) {
 			return;
@@ -382,7 +372,7 @@ export default class Chart implements Enqueue<CommonMsg> {
 
 		// 20px from the bottom
 		const fhAxe = selectFont(this.fonts, 'fohAxe');
-		const fontSH = createFontShortHand(defaultFontOptionValues(fhAxe));
+		const fontSH = this.ctx.createFontShortHand(defaultFontOptionValues(fhAxe));
 		const { metrics, debug: debugMetrics } = ctx.getfontMetrics(fontSH, canonicalText) || {};
 		debug('/processChartRender metrics:[%o]', metrics);
 		debug('/processChartRender debug-metrics:[%o]', debugMetrics);
