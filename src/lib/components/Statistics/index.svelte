@@ -27,7 +27,7 @@
 			{
 				font: {
 					family: 'Junction',
-					size: '1rem',
+					size: '16ch',
 					weight: '400'
 				},
 				key: 'hAxe'

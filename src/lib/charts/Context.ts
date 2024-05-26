@@ -1,4 +1,5 @@
 import {
+	RegExpFontSizeCapHeight,
 	RegExpFontSizeDevicePixel,
 	canonicalText,
 	fontStretch,
@@ -38,34 +39,37 @@ export default class Context {
 		})!;
 	}
 
-	calculateForDevicePixel(font: FontOptions): FontOptions {
-		const size = String(font.size);
-		if (false === RegExpFontSizeDevicePixel.test(size)) {
+	private calculateForAltMetricUnit(font: FontOptions): FontOptions {
+		const size = String(font.size).toLocaleLowerCase();
+		if (
+			false === RegExpFontSizeDevicePixel.test(size) &&
+			false === RegExpFontSizeCapHeight.test(size)
+		) {
 			// pass through if it is not devicepixel "dp" unit
 			return font;
 		}
-		const match = size.match(RegExpFontSizeDevicePixel)!;
+		const propName: 'cellHeight' | 'capHeight' = size.endsWith('dp')
+			? 'cellHeight'
+			: 'capHeight';
+		const regexp = size.endsWith('dp') ? RegExpFontSizeDevicePixel : RegExpFontSizeCapHeight;
+		const match = size.match(regexp)!;
 
 		let target = parseFloat(match.groups!.nr);
 		let px0 = target;
 		// calculate c0 first estimate
 
-		let {
-			metrics: { cellHeight: c0 }
-		} = this.getfontMetrics(
+		let c0 = this.getfontMetrics(
 			this.createFontShortHand({ ...font, size: `${px0}px` }),
 			canonicalText
-		)!;
+		)!.metrics[propName];
 
 		let px1 = c0;
 		// calculate c1 second estimate estimate
 
-		let {
-			metrics: { cellHeight: c1 }
-		} = this.getfontMetrics(
+		let c1 = this.getfontMetrics(
 			this.createFontShortHand({ ...font, size: `${px1}px` }),
 			canonicalText
-		)!;
+		)!.metrics[propName];
 
 		let lastPx = abs(c0 - target) > abs(c1 - target) ? px1 : px0;
 		let error = min(abs(c0 - target), abs(c1 - target));
@@ -87,19 +91,19 @@ export default class Context {
 			const l = (target - c0) / dvC;
 			const pxn = px0 + l * dvX;
 
-			const {
-				metrics: { cellHeight: cn }
-			} = this.getfontMetrics(
+			const cn = this.getfontMetrics(
 				this.createFontShortHand({ ...font, size: `${pxn}px` }),
 				canonicalText
-			)!;
+			)!.metrics[propName];
 
 			// diverging? stop!
-			if (error >= abs(target - cn)) {
+			if (error <= abs(target - cn)) {
 				return { ...font, size: `${lastPx}px` };
 			}
 			c1 = cn;
 			px1 = pxn;
+			error = abs(target - cn);
+			lastPx = pxn;
 		}
 	}
 
@@ -141,12 +145,12 @@ export default class Context {
 				rc += (rc ? ' ' : '') + opt.stretch;
 			}
 		}
-		const size = String(opt.size);
+		const size = String(opt.size).toLocaleLowerCase();
 		if (size) {
-			if (size.toLowerCase().endsWith('dp')) {
+			if (size.endsWith('dp') || size.endsWith('ch')) {
 				// translate to unit "px" on the fly
 				// we translate to "px" untill the very last moment
-				const fontAdjusted = this.calculateForDevicePixel(opt);
+				const fontAdjusted = this.calculateForAltMetricUnit(opt);
 				return this.createFontShortHand(fontAdjusted);
 			}
 			rc += (rc ? ' ' : '') + size;
@@ -232,6 +236,7 @@ export default class Context {
 		}
 		return this;
 	}
+
 	moveTo(x: number, y: number) {
 		const { ctx } = this;
 		if (ctx) {
@@ -352,7 +357,8 @@ export default class Context {
 			max: 0,
 			aLeft: 0,
 			aRight: 0,
-			width: 0
+			width: 0,
+			capHeight: 0
 		};
 
 		const sorted = Object.values(metrics).sort((a, b) => a - b);
@@ -362,6 +368,7 @@ export default class Context {
 		metrics.aLeft = middleMetrics.actualBoundingBoxLeft;
 		metrics.aRight = middleMetrics.actualBoundingBoxRight;
 		metrics.width = middleMetrics.width;
+		metrics.capHeight = sorted[sorted.length - 2] - metrics.alpbbl;
 		return {
 			metrics,
 			debug: {

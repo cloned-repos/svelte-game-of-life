@@ -78,7 +78,7 @@ export default class Chart implements Enqueue<CommonMsg> {
 		this.fonts = { fallback };
 		this.waits = { fontLoadTime: {}, fontloadErrorTime: {} };
 
-		const fonts = initialFonts();
+		const fonts = this.initialFonts();
 
 		for (const fontOption of fonts) {
 			const font = defaultFontOptionValues(fontOption?.font);

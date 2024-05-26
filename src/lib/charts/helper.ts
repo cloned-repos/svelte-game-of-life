@@ -49,8 +49,10 @@ export function createResizeObserverForCanvas(canvas: HTMLCanvasElement, chart: 
 		const physicalPixelHeight = entry.devicePixelContentBoxSize[0].blockSize;
 		const height = entry.borderBoxSize[0].blockSize;
 		const width = entry.borderBoxSize[0].inlineSize;
-		// const target: HTMLCanvasElement = entry.target as HTMLCanvasElement;
+		//const target: HTMLCanvasElement = entry.target as HTMLCanvasElement;
 		const size = { physicalPixelWidth, physicalPixelHeight, height, width };
+		//target.height = physicalPixelHeight;
+		//target.width = physicalPixelWidth;
 		chart.enqueue({ type: CHANGE_SIZE, size });
 	});
 

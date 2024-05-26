@@ -39,7 +39,7 @@
 		height: 100%;
 		display: grid;
 		/*border: 4px black dashed;*/
-		background-color: lightblue;
+		/*background-color: lightblue;*/
 		grid:
 			'sidebar statistics' auto
 			'sidebar button_action_bar' auto

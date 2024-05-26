@@ -95,7 +95,17 @@ export type LengthPx = `${number}px`;
 
 export type LengthDP = `${number}dp`;
 
-export type Length = '0' | 0 | LengthPercentage | LengthEm | LengthRem | LengthPx | LengthDP;
+export type LengthCH = `${number}ch`;
+
+export type Length =
+	| '0'
+	| 0
+	| LengthPercentage
+	| LengthEm
+	| LengthRem
+	| LengthPx
+	| LengthDP
+	| LengthCH;
 
 // https://www.w3.org/TR/CSS2/visudet.html#propdef-line-height
 // export type LineHeight = 'normal' | Length;
@@ -199,6 +209,7 @@ export type FontMetrics = {
 	aLeft: number;
 	aRight: number;
 	width: number;
+	capHeight: number;
 };
 
 export type FontBaseLineInfo = {
