@@ -19,7 +19,7 @@ import {
 } from './helper';
 import type {
 	CanvasSize,
-	ChangeFont,
+	FontChange,
 	ChangeSize,
 	ChartDebugInfo,
 	ChartFontInfo,
@@ -62,10 +62,10 @@ export default class Chart implements Enqueue<CommonMsg> {
 		//  '10px sans-serif' is the default for canvas
 		private readonly initialFonts: () => (FontKey & Font)[],
 		private readonly getDeviceAspectRatio: (size?: CanvasSize) => number,
-		private readonly pixelDeviceRatio: DeviceRatioAffectOptions,
+		private readonly pixelDeviceRatioAffect: DeviceRatioAffectOptions,
 		private readonly testHarnas: TestHarnas = defaultHarnas
 	) {
-		this.ctx = new Context(canvas, getDeviceAspectRatio, pixelDeviceRatio);
+		this.ctx = new Context(canvas, getDeviceAspectRatio, pixelDeviceRatioAffect);
 		const csc = getComputedStyle(canvas);
 		this.size = {
 			physicalPixelHeight: canvas.height,
@@ -91,7 +91,7 @@ export default class Chart implements Enqueue<CommonMsg> {
 	processFontChangeEvents() {
 		// system fonts dont need to be loaded they are assigned in the "render" phase directly to ctx.font = ...
 		// document.fonts.check(..) a system font results in an error loading system fonts results in an error
-		const completed: ChangeFont[] = [];
+		const completed: FontChange[] = [];
 		const invlalidFontSH: FontLoadError[] = [];
 		const nextStep: FontLoading[] = [];
 		const ts = new this.testHarnas.Date().toISOString();
@@ -366,7 +366,7 @@ export default class Chart implements Enqueue<CommonMsg> {
 			.stroke();
 	}
 	processChartRender() {
-		const { size, ctx, canvas } = this;
+		const { size, ctx } = this;
 		ctx.setSize(size.physicalPixelWidth, size.physicalPixelHeight);
 		const ratio = this.getDeviceAspectRatio(size);
 

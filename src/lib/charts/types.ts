@@ -22,7 +22,7 @@ export type Font = {
 	font: FontOptions;
 };
 
-export type ChangeFont = Font &
+export type FontChange = Font &
 	FontKey & {
 		type: 'font-change';
 	};
@@ -61,7 +61,7 @@ export type CommonMsg =
 	| FontLoadError
 	| FontLoaded
 	| FontLoading
-	| ChangeFont;
+	| FontChange;
 
 /*
 [ 
@@ -242,7 +242,7 @@ export type DebugFontMetrics = {
 };
 
 export type DeviceRatioAffectOptions = {
-	font: boolean;
-	canvasPositioning: boolean;
-	lineWidth: boolean;
+	font?: (fontSH: string, devicePixelRatio: number) => string;
+	canvasPositioning?: (devicePixelRatio: number, ...metrics: number[]) => number[];
+	// lineWidth: (metric: number, devicePixelRatio: number) => number;
 };

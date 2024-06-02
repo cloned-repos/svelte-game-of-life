@@ -1,4 +1,5 @@
 // needed for runtime checks
+import { getFontSizeAndUnit, max, min } from './helper';
 import type {
 	FontVariant,
 	FontStyle,
@@ -10,11 +11,11 @@ import type {
 	ChangeSize,
 	RenderChart,
 	TestHarnas,
-	ChangeFont,
+	FontChange,
 	FontSizeRelative,
 	FontSizeAbsolute,
 	GenericFontFamilies,
-	DeviceRatioAffectOptions
+	DeviceRatioAffectOptions,
 } from './types';
 export const systemSH = ['caption', 'icon', 'menu', 'message-box', 'small-caption', 'status-bar'];
 export const fontStyle: FontStyle[] = ['normal', 'italic', 'oblique'];
@@ -52,16 +53,12 @@ export const FONT_LOADED: FontLoaded['type'] = 'font-loaded';
 export const FONT_LOAD_ERROR: FontLoadError['type'] = 'font-load-error';
 export const CHANGE_SIZE: ChangeSize['type'] = 'chart-set-size';
 export const CHART_RENDER: RenderChart['type'] = 'chart-render';
-export const FONT_CHANGE: ChangeFont['type'] = 'font-change';
+export const FONT_CHANGE: FontChange['type'] = 'font-change';
 
-export const RegExpFontSizePx = /^(?<nr>\d*\.*\d*)(?<u>px)$/i;
-export const RegExpFontSizeREM = /^(?<nr>\d*\.*\d*)(?<u>rem)$/i;
-export const RegExpFontSizeEM = /^(?<nr>\d*\.*\d*)(?<u>em)$/i;
-export const RegExpFontSizePERCENT = /^(?<nr>\d*\.*\d*)(?<u>%)$/i;
-export const RegExpFontSizeDevicePixel = /^(?<nr>\d*\.*\d*)(?<u>dp)$/i;
-export const RegExpFontSizeCapHeight = /^(?<nr>\d*\.*\d*)(?<u>ch)$/i;
+export const regExpFontSizeMetric = /^(?<nr>\d*\.*\d*)(?<u>(px|rem|em|%|dp|ch))$/i;
+export const regExpSliceFamilyAndFontSize = /(?<size>[^\s]+)\s+(?<family>[^\s]+|("[^"]+")|('[^\']+'))$/;
 
-export const canonicalText = '019jçëMÊ|²{Qszdcy0';
+export const canonicalText = 'jçë0193MÊ|²{Qszdcy0';
 
 export const defaultHarnas: TestHarnas = {
 	Date: globalThis.Date,
@@ -72,11 +69,6 @@ export const defaultHarnas: TestHarnas = {
 	getRequestAnimationFrame: () => window.requestAnimationFrame
 };
 
-export const defaultPixelRatioScaleOptions: DeviceRatioAffectOptions = {
-	font: true,
-	canvasPositioning: true,
-	lineWidth: true
-};
 
 export const fontSizeRelative: FontSizeRelative[] = ['larger', 'smaller'];
 
@@ -99,3 +91,23 @@ export const fontGenericFamilies: GenericFontFamilies[] = [
 	'system-ui',
 	'math'
 ];
+
+
+export const standardAffectOptions : DeviceRatioAffectOptions = {
+	font(fontSH: string, dpr: number): string {
+	   const length = getFontSizeAndUnit(fontSH);
+	   if (length === null) {
+			return fontSH;
+	   }
+	   const { fontSize, sizeUnit } = length;
+	   const key = `${fontSize}${sizeUnit}`;
+	   return fontSH.replace(key, `${fontSize*dpr}${sizeUnit}`);
+	},
+	canvasPositioning(devicePixelRatio: number, ...metrics: number[]): number[] {
+		return metrics.map(m => m * devicePixelRatio);
+	},
+	lineWidth(metric: number, dpr: number): number {
+		return dpr*metric;
+	}
+};
+

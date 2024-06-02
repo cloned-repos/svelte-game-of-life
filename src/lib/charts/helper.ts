@@ -2,19 +2,11 @@ import Chart from './Chart';
 import type Context from './Context';
 import {
 	CHANGE_SIZE,
-	RegExpFontSizeDevicePixel,
-	RegExpFontSizeEM,
-	RegExpFontSizePERCENT,
-	RegExpFontSizePx,
-	RegExpFontSizeREM,
-	canonicalText,
-	defaultPixelRatioScaleOptions,
+	regExpFontSizeMetric,
 	fontSizeAbsolute,
 	fontSizeRelative,
-	fontStretch,
 	fontStyle,
-	fontVariant,
-	fontWeight
+	regExpSliceFamilyAndFontSize
 } from './constants';
 import type {
 	CanvasSize,
@@ -99,11 +91,11 @@ export function metricsFrom(
 	return metrics;
 }
 
-export function createChartCreator(
+export function chartCreator(
 	fallback: GenericFontFamilies,
 	fontOptions: () => (Font & FontKey)[],
 	devicePixelAspectRatio = standardDevicePixelAspectRatio,
-	pixelDeviceRatio: DeviceRatioAffectOptions = defaultPixelRatioScaleOptions
+	pixelDeviceRatioAffect: DeviceRatioAffectOptions,
 ) {
 	let chart: Chart;
 	return function (canvas?: HTMLCanvasElement) {
@@ -119,7 +111,7 @@ export function createChartCreator(
 		if (false === canvas instanceof window.HTMLCanvasElement) {
 			throw new Error('the tag being "actionized" is not a <canvas /> tag');
 		}
-		chart = new Chart(canvas, fallback, fontOptions, devicePixelAspectRatio, pixelDeviceRatio);
+		chart = new Chart(canvas, fallback, fontOptions, devicePixelAspectRatio, pixelDeviceRatioAffect);
 		return {
 			chart,
 			destroy() {
@@ -130,7 +122,7 @@ export function createChartCreator(
 }
 
 export function standardDevicePixelAspectRatio(size?: CanvasSize): number {
-	return window.devicePixelRatio;
+	return max(1.0, min(window.devicePixelRatio, 2));
 }
 
 export function defaultFontOptionValues(fontOptions?: Partial<FontOptions>): FontOptions {
@@ -158,21 +150,15 @@ function isFontLoadErrorPL(u: any): u is FontLoadErrorPL {
 }
 
 export function isFontSizeRelative(size: FontSize): size is FontSizeRelative {
-	return fontSizeRelative.includes(size as never);
+	// "larger",  "smaller"
+	return fontSizeRelative.includes(String(size) as FontSizeRelative);
 }
 
 export function isFontSizeAbsolute(size: FontSize): size is FontSizeAbsolute {
-	return fontSizeAbsolute.includes(size as never);
-}
-/*
-export function isLengthInPx(size: FontSize): size is LengthPx {
-	return RegExpFontSizePx.test(String(size));
+	// 'xx-small' to xx-large
+	return fontSizeAbsolute.includes(String(size) as FontSizeAbsolute);
 }
 
-export function isFontSizeInRem(size: FontSize): size is LengthRem {
-	return RegExpFontSizeREM.test(String(size));
-}
-*/
 export function selectFont(fonts: ChartFontInfo, key: `fo${string}`): FontOptions {
 	const foAxe = fonts['fohAxe'];
 	// not defined, seek fallback font
@@ -190,37 +176,15 @@ export function selectFont(fonts: ChartFontInfo, key: `fo${string}`): FontOption
 	return font;
 }
 
-/*
-export function scaleFontSH(fontSH: string, scale: number): string {
-	const matched0 = fontSH.match(/(?<rest>.*?)(?<size>[^\s]+)\s+(?<family>[^\s]+)$/);
-	if (!matched0 || !matched0.groups){
-		return fontSH;
+export function getFontSizeAndUnit(shortSH: string): null | { fontSize: number, sizeUnit: string  } {
+	const tol = shortSH.toLowerCase();
+	const match = tol.match(regExpSliceFamilyAndFontSize);
+	if (match === null){
+		return null;
 	}
-	const { rest, family, size } = matched0.groups;
-	if (!size) {
-		return fontSH;
-	}
-	const prevFontSH = matched0.groups.size;
-	const regExp = RegExpFontSizePx.test(prevFontSH) ? RegExpFontSizePx :
-	 RegExpFontSizeREM.test(prevFontSH) ? RegExpFontSizeREM: 
-	 RegExpFontSizeEM.test(prevFontSH) ? RegExpFontSizeEM : 
-	 RegExpFontSizePERCENT.test(prevFontSH) ?  
-		? RegExpFontSizePERCENT:  undefined;
-
-	if (regExp === undefined) {
-		return fontSH;
-	}
-
-	const matched = prevFontSH.match(regExp);
-	if (!matched || !matched.groups) {
-		return fontSH;
-	}
-	if (!matched.groups.u || !matched.groups.nr) {
-		return fontSH;
-	}
-	const nr = parseFloat(matched.groups.nr) * scale;
-	const u = matched.groups.u.toLocaleLowerCase();
-		
-	return `${rest} ${nr}${u} ${family}`;
+	const size =match.groups!.size;
+	const metric = size.match(regExpFontSizeMetric)!;
+	const fontSize = parseFloat(metric.groups!.nr);
+	const sizeUnit = metric.groups!.u;
+	return { fontSize, sizeUnit };
 }
-*/

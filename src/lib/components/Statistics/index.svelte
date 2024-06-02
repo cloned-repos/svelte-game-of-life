@@ -2,8 +2,8 @@
 	import createNS from '@mangos/debug-frontend';
 	import line_chart from '$lib/charts/action';
 	import type { CanvasSize, ChartDebugInfo, Font, FontKey, FontOptions } from '$lib/charts/types';
-	import { createChartCreator } from '$lib/charts/helper';
-	import { FONT_CHANGE } from '$lib/charts/constants';
+	import { chartCreator, getFontSizeAndUnit, max, min } from '$lib/charts/helper';
+	import { FONT_CHANGE, standardAffectOptions } from '$lib/charts/constants';
 
 	// attributes
 	export let pos: string;
@@ -27,7 +27,7 @@
 			{
 				font: {
 					family: 'Junction',
-					size: '16ch',
+					size: '1rem',
 					weight: '400'
 				},
 				key: 'hAxe'
@@ -35,7 +35,21 @@
 		];
 	}
 
-	const createChart = createChartCreator('sans-serif', testFontOptions);
+	/*
+		export function chartCreator(
+			fallback: GenericFontFamilies,
+			fontOptions: () => (Font & FontKey)[],
+			devicePixelAspectRatio = standardDevicePixelAspectRatio,
+			pixelDeviceRatio: DeviceRatioAffectOptions = defaultPixelRatioScaleOptions
+		);
+	 */
+
+	const createChart = chartCreator(
+		'sans-serif',
+		testFontOptions,
+		undefined,
+		standardAffectOptions,
+	);
 
 	//  event handlers
 
@@ -130,20 +144,22 @@
 <style>
 	.me {
 		height: 450px;
-		/*border: 4px darkkhaki dashed;*/
+		border: 4px darkkhaki dashed;
 		width: 100%;
 		grid-area: var(--grid-pos);
 		display: flex;
 		flex-direction: column;
-		overflow: hidden; /* otherwise resize not work */
+		overflow: hidden;
 		resize: both;
+		
 	}
 
 	canvas {
 		min-height: 0; /* --> chrome needs this */
 		width: 100%;
 		height: 100%;
-		align-self: stretch;
+		/*align-self: stretch;*/
 		image-rendering: crisp-edges;
+		border: 2px solid red;
 	}
 </style>

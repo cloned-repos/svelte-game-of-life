@@ -1,11 +1,10 @@
 import {
-	RegExpFontSizeCapHeight,
-	RegExpFontSizeDevicePixel,
 	canonicalText,
 	fontStretch,
 	fontStyle,
 	fontVariant,
-	fontWeight
+	fontWeight,
+	regExpFontSizeMetric
 } from './constants';
 import {
 	EPSILON,
@@ -40,21 +39,17 @@ export default class Context {
 	}
 
 	private calculateForAltMetricUnit(font: FontOptions): FontOptions {
-		const size = String(font.size).toLocaleLowerCase();
-		if (
-			false === RegExpFontSizeDevicePixel.test(size) &&
-			false === RegExpFontSizeCapHeight.test(size)
-		) {
+		const size = String(font.size);
+		const metric = size.match(regExpFontSizeMetric);
+		const unit = metric!.groups!.u;
+		let target = parseFloat(metric!.groups!.nr);
+		if ( unit !== 'ch' && unit !== 'dp' ){
 			// pass through if it is not devicepixel "dp" unit
 			return font;
 		}
 		const propName: 'cellHeight' | 'capHeight' = size.endsWith('dp')
 			? 'cellHeight'
 			: 'capHeight';
-		const regexp = size.endsWith('dp') ? RegExpFontSizeDevicePixel : RegExpFontSizeCapHeight;
-		const match = size.match(regexp)!;
-
-		let target = parseFloat(match.groups!.nr);
 		let px0 = target;
 		// calculate c0 first estimate
 
@@ -92,7 +87,7 @@ export default class Context {
 			const pxn = px0 + l * dvX;
 
 			const cn = this.getfontMetrics(
-				this.createFontShortHand({ ...font, size: `${pxn}px` }),
+				this.createFontShortReal({ ...font, size: `${pxn}px` }),
 				canonicalText
 			)!.metrics[propName];
 
@@ -108,6 +103,32 @@ export default class Context {
 	}
 
 	createFontShortHand(opt: FontOptions): string {
+		const size = String(opt.size).toLocaleLowerCase();
+		// are these our own defined units, "ch" or "dp"
+		if (size) {
+			if (size.endsWith('dp') || size.endsWith('ch')) {
+				// translate to unit "px" on the fly
+				// we translate to "px" untill the very last moment
+				const fontAdjusted = this.calculateForAltMetricUnit(opt);
+				return this.createFontShortReal(fontAdjusted);
+			}
+		}
+		return this.createFontShortReal(opt);
+	}
+
+	private getCanvasSize(): CanvasSize{
+		const size = this.canvas.getBoundingClientRect();
+		const cssWidth = trunc(size.right-size.left);
+		const cssHeight = trunc(size.bottom-size.top);
+		return {
+			physicalPixelHeight: this.canvas.height,
+			physicalPixelWidth: this.canvas.width,
+			width: cssWidth,
+			height: cssHeight,
+		};
+	}
+
+	private createFontShortReal(opt: FontOptions): string {
 		/* this is the font shorthand typedef from https://www.w3.org/TR/2018/REC-css-fonts-3-20180920/#font-prop
 	Operator:
 	'||' means at least one of these options need to be chosen
@@ -145,14 +166,8 @@ export default class Context {
 				rc += (rc ? ' ' : '') + opt.stretch;
 			}
 		}
-		const size = String(opt.size).toLocaleLowerCase();
+		const size = String(opt.size).toLowerCase();
 		if (size) {
-			if (size.endsWith('dp') || size.endsWith('ch')) {
-				// translate to unit "px" on the fly
-				// we translate to "px" untill the very last moment
-				const fontAdjusted = this.calculateForAltMetricUnit(opt);
-				return this.createFontShortHand(fontAdjusted);
-			}
 			rc += (rc ? ' ' : '') + size;
 		}
 		rc += ' ' + opt.family;
@@ -190,15 +205,34 @@ export default class Context {
 	font(fontSH: string) {
 		const { ctx } = this;
 		if (ctx) {
-			ctx.font = fontSH;
+			if (!this.ratioOptions.font) {
+				ctx.font = fontSH;
+				return this;
+			}
+			const size = this.canvas.getBoundingClientRect();
+			const cssWidth = trunc(size.right-size.left);
+			const cssHeight = trunc(size.bottom-size.top);
+			const ratio = this.pixelRatio({ 
+				physicalPixelHeight: this.canvas.height,
+				physicalPixelWidth: this.canvas.width,
+				width: cssWidth,
+				height: cssHeight,
+			})
+			const newFontSH = this.ratioOptions.font(fontSH, ratio);
+			ctx.font = this.ratioOptions.font(fontSH, ratio);
 		}
 		return this;
 	}
 	setLineWidth(w: number) {
 		const { ctx } = this;
-		if (ctx) {
-			ctx.lineWidth = w;
+		if (!ctx) {
+			return this;
 		}
+		let w0 = w;
+		if (this.ratioOptions.lineWidth) {	
+			w0 = this.ratioOptions.lineWidth(this.pixelRatio(this.getCanvasSize()), w);
+		}
+		ctx.lineWidth = w0;
 		return this;
 	}
 	strokeStyle(style: string) {
@@ -225,14 +259,30 @@ export default class Context {
 	fillRect(x: number, y: number, w: number, h: number) {
 		const { ctx } = this;
 		if (ctx) {
+			if (this.ratioOptions.canvasPositioning) {
+				const metrics = this.ratioOptions.canvasPositioning(this.pixelRatio(this.getCanvasSize()), x,y,w,h);
+				ctx.fillRect.apply(ctx, metrics as [number, number, number, number]);
+				return this;
+			}
 			ctx.fillRect(x, y, w, h);
 		}
 		return this;
 	}
 	fillText(text: string, x: number, y: number) {
 		const { ctx } = this;
+		
 		if (ctx) {
-			ctx.fillText(text, x, y);
+			if (!this.ratioOptions.canvasPositioning) {
+				ctx.fillText(text, x, y);
+				return this;
+			}
+			
+			const size = this.getCanvasSize();
+			const ratio = this.pixelRatio(size);
+			const metrics = this.ratioOptions.canvasPositioning(ratio, x,y);
+			
+			ctx.fillText.apply(ctx, [text, ...metrics] as [string, number, number]);
+			return this;
 		}
 		return this;
 	}
@@ -240,27 +290,46 @@ export default class Context {
 	moveTo(x: number, y: number) {
 		const { ctx } = this;
 		if (ctx) {
-			ctx.moveTo(x, y);
+			if (!this.ratioOptions.canvasPositioning) {
+				ctx.moveTo(x, y);
+				return this;
+			}
+			const metrics = this.ratioOptions.canvasPositioning(this.pixelRatio(this.getCanvasSize()), x,y);
+			
+			ctx.moveTo.apply(ctx, metrics as [number, number]);
 		}
 		return this;
 	}
 	lineTo(x: number, y: number) {
 		const { ctx } = this;
-		if (ctx) {
-			ctx.lineTo(x, y);
+		if (!ctx) {
+			return this;
 		}
-		return this;
+		if (!this.ratioOptions.canvasPositioning) {
+			ctx.lineTo(x, y);
+			return this;
+		}
+		const metrics = this.ratioOptions.canvasPositioning(this.pixelRatio(this.getCanvasSize()), x,y);
+		ctx.lineTo.apply(ctx, metrics as [number, number]);
+	    return this;
 	}
-	line(px0: number, py0: number, px1: number, py1: number) {
+	line(ppx0: number, ppy0: number, ppx1: number, ppy1: number) {
 		const { ctx } = this;
 		if (!ctx) {
 			return this;
 		}
-		const lineWidth = this.ctx?.lineWidth || 1;
-		const h = abs(py1 - py0);
-		const w = abs(px1 - px0);
-		const corr = round(lineWidth) % 2 ? 0.5 : 0;
-
+		let px0 = ppx0;
+		let py0 = ppy0;
+		let px1 = ppx1;
+		let py1 = ppy1;
+		if (this.ratioOptions.canvasPositioning) {
+			[px0, py0, px1, py1] = this.ratioOptions.canvasPositioning(this.pixelRatio(this.getCanvasSize()), ppx0, ppy0, ppx1, ppy1);
+		}
+		const	lineWidth = this.ctx?.lineWidth || 1;
+		const	h = abs(py1 - py0);
+		const	w = abs(px1 - px0);
+		const 	corr = round(lineWidth) % 2 ? 0.5 : 0;
+	
 		if (h > w) {
 			// more vertical then horizontal
 			if (px0 < px1) {
