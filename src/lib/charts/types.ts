@@ -244,5 +244,5 @@ export type DebugFontMetrics = {
 export type DeviceRatioAffectOptions = {
 	font?: (fontSH: string, devicePixelRatio: number) => string;
 	canvasPositioning?: (devicePixelRatio: number, ...metrics: number[]) => number[];
-	// lineWidth: (metric: number, devicePixelRatio: number) => number;
+	lineWidth?(metric: number, devicePixelRatio: number): number;
 };
