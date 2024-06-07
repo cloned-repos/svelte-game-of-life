@@ -1,4 +1,4 @@
-import { sveltekit, vitePreprocess } from '@sveltejs/kit/vite';
+import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vitest/config';
 import type { ManualChunkMeta } from 'rollup';
 
@@ -6,7 +6,7 @@ import type { ManualChunkMeta } from 'rollup';
 export default defineConfig({
 	plugins: [sveltekit()],
 	build: {
-		//minify: false
+		minify: false
 		//rollupOptions: {
 		//	output: {
 		/*manualChunks: (id: string, meta: ManualChunkMeta) => {
