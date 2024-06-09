@@ -1,37 +1,48 @@
 import { sveltekit } from '@sveltejs/kit/vite';
-import { defineConfig } from 'vitest/config';
-import type { ManualChunkMeta } from 'rollup';
+import { defineConfig } from 'vite';
+import type {
+	NormalizedOutputOptions,
+	OutputBundle,
+	PluginContext,
+	RenderedChunk,
+	SourceMapInput
+} from 'rollup';
+/*
+	generateBundle: (
+		this: PluginContext,
+		options: NormalizedOutputOptions,
+		bundle: OutputBundle,
+		isWrite: boolean
+	) => void;
 
-/** @type {import('@sveltejs/kit').Config} */
+	export interface OutputBundle {
+	[fileName: string]: OutputAsset | OutputChunk;
+}
+*/
 export default defineConfig({
-	plugins: [sveltekit()],
+	plugins: [
+		{
+			name: 'vite-inline-plugin',
+			version: '0.0.1',
+			renderChunk(
+				code: string,
+				chunk: RenderedChunk,
+				options: NormalizedOutputOptions,
+				meta: { chunks: Record<string, RenderedChunk> }
+			): { code: string; map?: SourceMapInput } | string | null {
+				if (code.includes('data-testid')) {
+					console.log('=====>');
+					//console.log(code);
+					console.log('<=====');
+				}
+
+				return null;
+			}
+		},
+		sveltekit()
+	],
 	build: {
-		minify: false
-		//rollupOptions: {
-		//	output: {
-		/*manualChunks: (id: string, meta: ManualChunkMeta) => {
-					if (id.endsWith('.css')) {
-						if (id.includes('?')) {
-							return;
-						}
-						// if it has "?", strip
-						const baseName = path.basename(id);
-						const ext = path.extname(baseName);
-						const final = baseName.replace(ext, '');
-						console.log(final, id);
-						return final;
-					}
-					//	return 'one';
-				}*/
-		//	}
-		//}
-	},
-	test: {
-		environment: 'jsdom',
-		globals: true,
-		include: ['**/__test__/**/*test.ts'],
-		coverage: {
-			provider: 'v8'
-		}
+		minify: false,
+		sourcemap: true
 	}
 });

@@ -48,7 +48,7 @@
 		'sans-serif',
 		testFontOptions,
 		undefined,
-		standardAffectOptions,
+		standardAffectOptions
 	);
 
 	//  event handlers
@@ -107,10 +107,10 @@
 	}
 </script>
 
-<div style="--grid-pos: {pos}" class="me">
+<div data-testid={'dingbats'} style="--grid-pos: {pos}" class="me">
 	Statistics
 	<ul>
-		<li>physical-width: {state?.physicalPixelWidth}</li>
+		<li data-testid={'dingbats2'}>physical-width: {state?.physicalPixelWidth}</li>
 		<li>physical-height: {state?.physicalPixelHeight}</li>
 		<li>width: {state?.width}</li>
 		<li>height: {state?.height}</li>
@@ -151,7 +151,6 @@
 		flex-direction: column;
 		overflow: hidden;
 		resize: both;
-		
 	}
 
 	canvas {
