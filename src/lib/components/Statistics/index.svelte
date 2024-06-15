@@ -109,7 +109,7 @@
 
 <div data-testid={'dingbats'} style="--grid-pos: {pos}" class="me">
 	Statistics
-	<ul>
+	<ul class="me-ul">
 		<li data-testid={'dingbats2'}>physical-width: {state?.physicalPixelWidth}</li>
 		<li>physical-height: {state?.physicalPixelHeight}</li>
 		<li>width: {state?.width}</li>
@@ -142,6 +142,9 @@
 </div>
 
 <style>
+	.me > ul {
+		list-style: none;
+	}
 	.me {
 		height: 450px;
 		border: 4px darkkhaki dashed;
