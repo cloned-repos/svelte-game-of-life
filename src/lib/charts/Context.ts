@@ -43,7 +43,7 @@ export default class Context {
 		const metric = size.match(regExpFontSizeMetric);
 		const unit = metric!.groups!.u;
 		let target = parseFloat(metric!.groups!.nr);
-		if ( unit !== 'ch' && unit !== 'dp' ){
+		if (unit !== 'ch' && unit !== 'dp') {
 			// pass through if it is not devicepixel "dp" unit
 			return font;
 		}
@@ -105,26 +105,24 @@ export default class Context {
 	createFontShortHand(opt: FontOptions): string {
 		const size = String(opt.size).toLocaleLowerCase();
 		// are these our own defined units, "ch" or "dp"
-		if (size) {
-			if (size.endsWith('dp') || size.endsWith('ch')) {
-				// translate to unit "px" on the fly
-				// we translate to "px" untill the very last moment
-				const fontAdjusted = this.calculateForAltMetricUnit(opt);
-				return this.createFontShortReal(fontAdjusted);
-			}
+		if (size.endsWith('dp') || size.endsWith('ch')) {
+			// translate to unit "px" on the fly
+			// we translate to "px" untill the very last moment
+			const fontAdjusted = this.calculateForAltMetricUnit(opt);
+			return this.createFontShortReal(fontAdjusted);
 		}
 		return this.createFontShortReal(opt);
 	}
 
-	private getCanvasSize(): CanvasSize{
+	private getCanvasSize(): CanvasSize {
 		const size = this.canvas.getBoundingClientRect();
-		const cssWidth = trunc(size.right-size.left);
-		const cssHeight = trunc(size.bottom-size.top);
+		const cssWidth = trunc(size.right - size.left);
+		const cssHeight = trunc(size.bottom - size.top);
 		return {
 			physicalPixelHeight: this.canvas.height,
 			physicalPixelWidth: this.canvas.width,
 			width: cssWidth,
-			height: cssHeight,
+			height: cssHeight
 		};
 	}
 
@@ -167,9 +165,8 @@ export default class Context {
 			}
 		}
 		const size = String(opt.size).toLowerCase();
-		if (size) {
-			rc += (rc ? ' ' : '') + size;
-		}
+		rc += (rc ? ' ' : '') + size;
+		// finally
 		rc += ' ' + opt.family;
 		return rc;
 	}
@@ -210,14 +207,14 @@ export default class Context {
 				return this;
 			}
 			const size = this.canvas.getBoundingClientRect();
-			const cssWidth = trunc(size.right-size.left);
-			const cssHeight = trunc(size.bottom-size.top);
-			const ratio = this.pixelRatio({ 
+			const cssWidth = trunc(size.right - size.left);
+			const cssHeight = trunc(size.bottom - size.top);
+			const ratio = this.pixelRatio({
 				physicalPixelHeight: this.canvas.height,
 				physicalPixelWidth: this.canvas.width,
 				width: cssWidth,
-				height: cssHeight,
-			})
+				height: cssHeight
+			});
 			const newFontSH = this.ratioOptions.font(fontSH, ratio);
 			ctx.font = this.ratioOptions.font(fontSH, ratio);
 		}
@@ -229,7 +226,7 @@ export default class Context {
 			return this;
 		}
 		let w0 = w;
-		if (this.ratioOptions.lineWidth) {	
+		if (this.ratioOptions.lineWidth) {
 			w0 = this.ratioOptions.lineWidth(this.pixelRatio(this.getCanvasSize()), w);
 		}
 		ctx.lineWidth = w0;
@@ -260,7 +257,13 @@ export default class Context {
 		const { ctx } = this;
 		if (ctx) {
 			if (this.ratioOptions.canvasPositioning) {
-				const metrics = this.ratioOptions.canvasPositioning(this.pixelRatio(this.getCanvasSize()), x,y,w,h);
+				const metrics = this.ratioOptions.canvasPositioning(
+					this.pixelRatio(this.getCanvasSize()),
+					x,
+					y,
+					w,
+					h
+				);
 				ctx.fillRect.apply(ctx, metrics as [number, number, number, number]);
 				return this;
 			}
@@ -270,17 +273,17 @@ export default class Context {
 	}
 	fillText(text: string, x: number, y: number) {
 		const { ctx } = this;
-		
+
 		if (ctx) {
 			if (!this.ratioOptions.canvasPositioning) {
 				ctx.fillText(text, x, y);
 				return this;
 			}
-			
+
 			const size = this.getCanvasSize();
 			const ratio = this.pixelRatio(size);
-			const metrics = this.ratioOptions.canvasPositioning(ratio, x,y);
-			
+			const metrics = this.ratioOptions.canvasPositioning(ratio, x, y);
+
 			ctx.fillText.apply(ctx, [text, ...metrics] as [string, number, number]);
 			return this;
 		}
@@ -294,8 +297,12 @@ export default class Context {
 				ctx.moveTo(x, y);
 				return this;
 			}
-			const metrics = this.ratioOptions.canvasPositioning(this.pixelRatio(this.getCanvasSize()), x,y);
-			
+			const metrics = this.ratioOptions.canvasPositioning(
+				this.pixelRatio(this.getCanvasSize()),
+				x,
+				y
+			);
+
 			ctx.moveTo.apply(ctx, metrics as [number, number]);
 		}
 		return this;
@@ -309,9 +316,13 @@ export default class Context {
 			ctx.lineTo(x, y);
 			return this;
 		}
-		const metrics = this.ratioOptions.canvasPositioning(this.pixelRatio(this.getCanvasSize()), x,y);
+		const metrics = this.ratioOptions.canvasPositioning(
+			this.pixelRatio(this.getCanvasSize()),
+			x,
+			y
+		);
 		ctx.lineTo.apply(ctx, metrics as [number, number]);
-	    return this;
+		return this;
 	}
 	line(ppx0: number, ppy0: number, ppx1: number, ppy1: number) {
 		const { ctx } = this;
@@ -323,13 +334,19 @@ export default class Context {
 		let px1 = ppx1;
 		let py1 = ppy1;
 		if (this.ratioOptions.canvasPositioning) {
-			[px0, py0, px1, py1] = this.ratioOptions.canvasPositioning(this.pixelRatio(this.getCanvasSize()), ppx0, ppy0, ppx1, ppy1);
+			[px0, py0, px1, py1] = this.ratioOptions.canvasPositioning(
+				this.pixelRatio(this.getCanvasSize()),
+				ppx0,
+				ppy0,
+				ppx1,
+				ppy1
+			);
 		}
-		const	lineWidth = this.ctx?.lineWidth || 1;
-		const	h = abs(py1 - py0);
-		const	w = abs(px1 - px0);
-		const 	corr = round(lineWidth) % 2 ? 0.5 : 0;
-	
+		const lineWidth = this.ctx?.lineWidth || 1;
+		const h = abs(py1 - py0);
+		const w = abs(px1 - px0);
+		const corr = round(lineWidth) % 2 ? 0.5 : 0;
+
 		if (h > w) {
 			// more vertical then horizontal
 			if (px0 < px1) {

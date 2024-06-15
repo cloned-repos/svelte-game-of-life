@@ -17,6 +17,9 @@
 	);
 	onMount(() => {
 		const cancel = startAnimFrameDispatcher();
+		fetch('/chat')
+			.then((result) => result.json())
+			.then((data) => console.log('fetch result', data));
 		return cancel; // same as useEffect in react, can return a function
 	});
 </script>

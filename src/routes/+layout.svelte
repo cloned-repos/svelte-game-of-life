@@ -13,7 +13,8 @@
 	import createBackEndMock from './debug-backend';
 	register(createBackEndMock());
 	const debug = createNS('app');
-	import './css/app.css';
+	import '../css/app.css';
+
 	import '@easyfonts/font-awesome-v6/solid.css';
 	import '@easyfonts/font-awesome-v6/defs.css';
 	import '@easyfonts/league-junction-typeface';
