@@ -17,13 +17,7 @@ import {
 	swap,
 	trunc
 } from './helper';
-import type {
-	CanvasSize,
-	DebugFontMetrics,
-	DeviceRatioAffectOptions,
-	FontMetrics,
-	FontOptions
-} from './types';
+import type { CanvasSize, DeviceRatioAffectOptions, FontMetrics, FontOptions } from './types';
 
 export default class Context {
 	private ctx: CanvasRenderingContext2D | null;
@@ -38,6 +32,7 @@ export default class Context {
 		})!;
 	}
 
+	/*
 	private calculateForAltMetricUnit(font: FontOptions): FontOptions {
 		const size = String(font.size);
 		const metric = size.match(regExpFontSizeMetric);
@@ -47,24 +42,18 @@ export default class Context {
 			// pass through if it is not devicepixel "dp" unit
 			return font;
 		}
-		const propName: 'cellHeight' | 'capHeight' = size.endsWith('dp')
-			? 'cellHeight'
-			: 'capHeight';
+		const propName: 'cellHeightFont' | 'topBottom' = size.endsWith('dp')
+			? 'cellHeightFont'
+			: 'topBottom';
 		let px0 = target;
 		// calculate c0 first estimate
-
-		let c0 = this.getfontMetrics(
-			this.createFontShortHand({ ...font, size: `${px0}px` }),
-			canonicalText
-		)!.metrics[propName];
+		let fsh = this.createFontShortHand({ ...font, size: `${px0}px` });
+		let c0 = this.getfontMetrics(fsh, canonicalText)!.metrics[propName];
 
 		let px1 = c0;
 		// calculate c1 second estimate estimate
-
-		let c1 = this.getfontMetrics(
-			this.createFontShortHand({ ...font, size: `${px1}px` }),
-			canonicalText
-		)!.metrics[propName];
+		fsh = this.createFontShortHand({ ...font, size: `${px1}px` });
+		let c1 = this.getfontMetrics(fsh, canonicalText)!.metrics[propName];
 
 		let lastPx = abs(c0 - target) > abs(c1 - target) ? px1 : px0;
 		let error = min(abs(c0 - target), abs(c1 - target));
@@ -101,16 +90,17 @@ export default class Context {
 			lastPx = pxn;
 		}
 	}
+	*/
 
 	createFontShortHand(opt: FontOptions): string {
-		const size = String(opt.size).toLocaleLowerCase();
+		/*const size = String(opt.size).toLocaleLowerCase();
 		// are these our own defined units, "ch" or "dp"
 		if (size.endsWith('dp') || size.endsWith('ch')) {
 			// translate to unit "px" on the fly
 			// we translate to "px" untill the very last moment
 			const fontAdjusted = this.calculateForAltMetricUnit(opt);
 			return this.createFontShortReal(fontAdjusted);
-		}
+		}*/
 		return this.createFontShortReal(opt);
 	}
 
@@ -206,17 +196,17 @@ export default class Context {
 				ctx.font = fontSH;
 				return this;
 			}
-			const size = this.canvas.getBoundingClientRect();
-			const cssWidth = trunc(size.right - size.left);
-			const cssHeight = trunc(size.bottom - size.top);
+			const { height, width } = getComputedStyle(this.canvas);
+			// path CanvasSize to
 			const ratio = this.pixelRatio({
 				physicalPixelHeight: this.canvas.height,
 				physicalPixelWidth: this.canvas.width,
-				width: cssWidth,
-				height: cssHeight
+				width: parseInt(height),
+				height: parseInt(height)
 			});
 			const newFontSH = this.ratioOptions.font(fontSH, ratio);
-			ctx.font = this.ratioOptions.font(fontSH, ratio);
+			console.log('newFontSH', newFontSH);
+			ctx.font = newFontSH;
 		}
 		return this;
 	}
@@ -378,10 +368,7 @@ export default class Context {
 		}
 		return this;
 	}
-	getfontMetrics(
-		fontSH: string,
-		text: string
-	): null | { debug: DebugFontMetrics; metrics: FontMetrics } {
+	getfontMetrics(fontSH: string, text: string): null | FontMetrics {
 		const { ctx } = this;
 		if (!ctx) {
 			return null;
@@ -394,112 +381,102 @@ export default class Context {
 		const baseLineMetrics = metricsFrom(text, 'alphabetic', ctx);
 		const bottomLineMetrics = metricsFrom(text, 'bottom', ctx);
 		ctx.restore();
-		//
+		// top baseline perspective
 		const topbl_fontAscent = topMetrics.fontBoundingBoxAscent;
 		const topbl_actualAscent = topMetrics.actualBoundingBoxAscent;
 		const topbl_fontDescent = topMetrics.fontBoundingBoxDescent;
 		const topbl_actualDescent = topMetrics.actualBoundingBoxDescent;
 
+		// alphabetic baseline perspective
 		const alpbl_fontAscent = baseLineMetrics.fontBoundingBoxAscent;
 		const alpbl_actualAscent = baseLineMetrics.actualBoundingBoxAscent;
 		const alpbl_fontDescent = baseLineMetrics.fontBoundingBoxDescent;
 		const alpbl_actualDescent = baseLineMetrics.actualBoundingBoxDescent;
 
+		// bottom baseline perspective
 		const botbl_fontAscent = bottomLineMetrics.fontBoundingBoxAscent;
 		const botbl_actualAscent = bottomLineMetrics.actualBoundingBoxAscent;
 		const botbl_fontDescent = bottomLineMetrics.fontBoundingBoxDescent;
 		const botbl_actualDescent = bottomLineMetrics.actualBoundingBoxDescent;
 
+		// middle baseline perspective
 		const midbl_fontAscent = middleMetrics.fontBoundingBoxAscent;
 		const midbl_fontDescent = middleMetrics.fontBoundingBoxDescent;
 		const midbl_actualAscent = middleMetrics.actualBoundingBoxAscent;
 		const midbl_actualDescent = middleMetrics.actualBoundingBoxDescent;
 
-		// todo: checkout textMetics.width and (actualBoundingBoxRight-actualBoundingBoxLeft)
+		// top baseline (posive) relative to the middle baseline, positive nr, how much px above the middle baseline
+		const topbl = midbl_fontAscent - topbl_fontAscent;
+		// is the same as above: const topbl_actual = midbl_actualAscent - topbl_actualAscent;
 
-		// these 2 are always the same?
-		// middle baseline is the norm
-		const topbl_font = midbl_fontAscent - topbl_fontAscent;
-		const topbl_actual = midbl_actualAscent - topbl_actualAscent;
-
-		// these 2 should be the same, mid-ascent < alpha-ascent
-		const alpbl_font = midbl_fontAscent - alpbl_fontAscent;
-		const alpbl_actual = midbl_actualAscent - alpbl_actualAscent;
+		// alphabetic baseline relative to the middle baseline, negative number since the alphabetic baseline is below the middle baseline
+		const alpbl = midbl_fontAscent - alpbl_fontAscent;
+		// is the same as above: const alpbl_actual = midbl_actualAscent - alpbl_actualAscent;
 
 		// these 2 should be the same, mid-ascent < bot-ascent
-		const botbl_font = midbl_fontAscent - botbl_fontAscent;
-		const botbl_actual = midbl_actualAscent - botbl_actualAscent;
+		const botbl = midbl_fontAscent - botbl_fontAscent;
+		// is the same as above: const botbl_actual = midbl_actualAscent - botbl_actualAscent;
 
-		const metrics = {
-			topbl: topbl_font,
-			fontAscent: topbl_font + topbl_fontAscent,
-			actualAscent: topbl_actual + topbl_actualAscent,
-			alpbbl: alpbl_font,
-			botbl: botbl_font,
-			fontDescent: botbl_font - botbl_fontDescent,
-			actualDescent: botbl_actual - botbl_actualDescent,
-			cellHeight: 0,
-			min: 0,
-			max: 0,
-			aLeft: 0,
-			aRight: 0,
-			width: 0,
-			capHeight: 0
-		};
-
-		const sorted = Object.values(metrics).sort((a, b) => a - b);
-		metrics.min = sorted[0];
-		metrics.max = sorted[sorted.length - 1];
-		metrics.cellHeight = metrics.max - metrics.min;
-		metrics.aLeft = middleMetrics.actualBoundingBoxLeft;
-		metrics.aRight = middleMetrics.actualBoundingBoxRight;
-		metrics.width = middleMetrics.width;
-		metrics.capHeight = sorted[sorted.length - 2] - metrics.alpbbl;
+		const sorted = [
+			midbl_fontAscent,
+			midbl_fontDescent,
+			midbl_actualAscent,
+			midbl_actualDescent
+		].sort((a, b) => a - b);
+		const min = sorted[0];
+		const max = sorted[sorted.length - 1];
+		//
+		const cellHeightFont = midbl_fontAscent - midbl_fontDescent;
+		const cellHeightActual = midbl_actualAscent - midbl_actualDescent;
+		const aLeft = middleMetrics.actualBoundingBoxLeft;
+		const aRight = middleMetrics.actualBoundingBoxRight;
+		const width = middleMetrics.width;
+		const capHeight = topbl - alpbl;
+		const topBottom = topbl - botbl;
 		return {
-			metrics,
-			debug: {
-				baselines: {
-					top: {
-						font: topbl_font,
-						actual: topbl_actual
-					},
-					alphabetic: {
-						font: alpbl_font,
-						actual: alpbl_actual
-					},
-					bottom: {
-						font: botbl_font,
-						actual: botbl_actual
-					}
+			aux: {
+				min,
+				max,
+				cellHeightActual,
+				cellHeightFont,
+				aLeft,
+				aRight,
+				width,
+				capHeight,
+				topBottom
+			},
+			baselines: {
+				top: topbl,
+				alphabetic: alpbl,
+				bottom: botbl
+			},
+			// ascents and descents
+			ascents: {
+				font: {
+					alphabetic: alpbl_fontAscent,
+					middle: midbl_fontAscent,
+					bottom: botbl_fontAscent,
+					top: topbl_fontAscent
 				},
-				// ascents and descents
-				ascents: {
-					font: {
-						alphabetic: alpbl_fontAscent,
-						middle: midbl_fontAscent,
-						bottom: botbl_fontAscent,
-						top: topbl_fontAscent
-					},
-					actual: {
-						alphabetic: alpbl_actualAscent,
-						middle: midbl_actualAscent,
-						bottom: botbl_actualAscent,
-						top: topbl_actualAscent
-					}
+				actual: {
+					alphabetic: alpbl_actualAscent,
+					middle: midbl_actualAscent,
+					bottom: botbl_actualAscent,
+					top: topbl_actualAscent
+				}
+			},
+			descents: {
+				font: {
+					alphabetic: -alpbl_fontDescent,
+					middle: -midbl_fontDescent,
+					bottom: -botbl_fontDescent,
+					top: -topbl_fontDescent
 				},
-				descents: {
-					font: {
-						alphabetic: -alpbl_fontDescent,
-						middle: -midbl_fontDescent,
-						bottom: -botbl_fontDescent,
-						top: -topbl_fontDescent
-					},
-					actual: {
-						alphabetic: -alpbl_actualDescent,
-						middle: -midbl_actualDescent,
-						bottom: -botbl_actualDescent,
-						top: -topbl_actualDescent
-					}
+				actual: {
+					alphabetic: -alpbl_actualDescent,
+					middle: -midbl_actualDescent,
+					bottom: -botbl_actualDescent,
+					top: -topbl_actualDescent
 				}
 			}
 		};
@@ -518,6 +495,14 @@ export default class Context {
 		}
 		return this;
 	}
+	fill() {
+		const { ctx } = this;
+		if (ctx) {
+			ctx.fill();
+		}
+		return this;
+	}
+
 	closePath() {
 		const { ctx } = this;
 		if (ctx) {

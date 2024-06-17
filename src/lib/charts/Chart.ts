@@ -1,4 +1,4 @@
-import createNS from '@mangos/debug-frontend';
+import createNS from '../../debug-frontend';
 import type { Enqueue } from './Enqueue';
 import {
 	CHANGE_SIZE,
@@ -14,7 +14,9 @@ import {
 	defaultFontOptionValues,
 	fontSafeCheck,
 	isCanvasSizeEqual,
+	isFontLoadErrorPL,
 	selectFont,
+	sumValues,
 	updateStatistics
 } from './helper';
 import type {
@@ -137,10 +139,10 @@ export default class Chart implements Enqueue<CommonMsg> {
 		});
 		completed.forEach((evt) => {
 			const fontSH = this.ctx.createFontShortHand(defaultFontOptionValues(evt.font));
-			const fMetrics = this.ctx.getfontMetrics(fontSH, canonicalText);
+			const metrics = this.ctx.getfontMetrics(fontSH, canonicalText);
 			this.fonts[`fo${evt.key}`] = {
 				...evt.font,
-				...(fMetrics && { metrics: fMetrics.metrics })
+				...(metrics && { metrics })
 			};
 		});
 		nextStep.forEach((evt) => {
@@ -213,10 +215,10 @@ export default class Chart implements Enqueue<CommonMsg> {
 					this.fonts[`fo${evt.key}`] = errPL;
 				} else {
 					const fontSH = this.ctx.createFontShortHand(defaultFontOptionValues(evt.font));
-					const fMetrics = this.ctx.getfontMetrics(fontSH, canonicalText);
+					const metrics = this.ctx.getfontMetrics(fontSH, canonicalText);
 					this.fonts[`fo${evt.key}`] = {
 						...evt.font,
-						...(fMetrics && { metrics: fMetrics.metrics })
+						...(metrics && { metrics })
 					};
 					renderFlag = true;
 				}
@@ -285,20 +287,60 @@ export default class Chart implements Enqueue<CommonMsg> {
 		this.cancelAnimationFrame = 0;
 	}
 
-	private renderChart1() {
+	// jkf: i am here
+	private calculateXLowerAxeHeight(): number {
+		const { size } = this;
+		const xAxeBottom = {
+			padding: 6,
+			labelHeight: 12,
+			LabelTickPadding: 3,
+			tick: 9,
+			smallTick: 3
+		};
+		return sumValues(xAxeBottom);
+	}
+
+	private drawAxis1() {
+		const labels = ['00:00'];
 		const { size, ctx, canvas } = this;
+		const fhAxe = selectFont(this.fonts, 'fohAxe');
+		// 16px;
 
-		ctx.setSize(size.physicalPixelWidth, size.physicalPixelHeight);
+		if (isFontLoadErrorPL(fhAxe)) {
+			return;
+		}
 
+		ctx.beginPath().textBaseLine('middle').fillStyle('black');
+		let blOffset = 16;
+		let xOffset = 10;
+		{
+			const label = labels[0] + ' 16px';
+			const f = structuredClone(fhAxe);
+			f.size = '16px';
+			const shortSH = ctx.createFontShortHand(f);
+			const metrics = ctx.getfontMetrics(shortSH, label)!;
+			debug(`${f.size}:`, metrics);
+			ctx.fillText(label, xOffset, blOffset);
+		}
+
+		ctx.fill().stroke().closePath();
+	}
+
+	private renderChart1() {
+		const { size, ctx } = this;
 		const fhAxe = selectFont(this.fonts, 'fohAxe');
 		const fontSH = this.ctx.createFontShortHand(defaultFontOptionValues(fhAxe));
 		const fontMetrics = ctx.getfontMetrics(fontSH, canonicalText);
 		if (fontMetrics === null) {
 			return;
 		}
-		const { debug, metrics } = fontMetrics;
 
-		const { topbl, alpbbl, botbl, actualDescent, actualAscent } = metrics;
+		const {
+			baselines: { top, alphabetic, bottom },
+			ascents: { actual: ascentsActual },
+			descents: { actual: descentActual },
+			aux: { aLeft, aRight, width }
+		} = fontMetrics;
 
 		const middlebl = 20;
 
@@ -335,32 +377,35 @@ export default class Chart implements Enqueue<CommonMsg> {
 			.fillText(canonicalText, 75, middlebl)
 			.beginPath()
 			.strokeStyle('rgba(0,0,0,0.3)')
-			.line(75, topbl, 115, topbl)
+			.line(75, top, 115, top)
 			.stroke()
 			.beginPath()
 			.strokeStyle('rgba(0,0,255,0.05)')
-			.line(75 - metrics.aLeft, topbl, 75 - metrics.aLeft, topbl + 40)
-			.line(75 + metrics.aRight, topbl, 75 + metrics.aRight, topbl + 40)
+			.line(75 - aLeft, top, 75 - aLeft, top + 40)
+			.line(75 + aRight, top, 75 + aRight, top + 40)
 			.stroke()
 			.beginPath()
 			.strokeStyle('rgba(0,0,0,0.6)')
-			.line(75 + metrics.width, topbl + 20, 75 + metrics.width, topbl + 40)
+			.line(75 + width, top + 20, 75 + width, top + 40)
 			.stroke()
 			.beginPath()
 			.strokeStyle('rgba(255,0,0,0.5)')
-			.line(70, middlebl - topbl, 110, middlebl - topbl)
+			.line(70, middlebl - top, 110, middlebl - top)
 			.line(70, middlebl, 110, middlebl)
-			.line(70, middlebl - alpbbl, 110, middlebl - alpbbl)
-			.line(70, middlebl - botbl, 110, middlebl - botbl)
+			.line(70, middlebl - alphabetic, 110, middlebl - alphabetic)
+			.line(70, middlebl - bottom, 110, middlebl - bottom)
 			.stroke()
 			.beginPath()
-			.strokeStyle('rgba(0,255,0,1)')
-			.line(70, middlebl - actualAscent, 110, middlebl - actualAscent)
-			.line(70, middlebl - actualDescent, 110, middlebl - actualDescent)
+			.strokeStyle('rgba(0,255,0,1)');
+
+		ctx.line(70, middlebl - ascentsActual.middle, 110, middlebl - ascentsActual.middle)
+			.line(70, middlebl - descentActual.middle, 110, middlebl - descentActual.middle)
 			.stroke();
 	}
 	processChartRender() {
-		this.renderChart1();
+		const { size, ctx } = this;
+		ctx.setSize(size.physicalPixelWidth, size.physicalPixelHeight);
+		this.drawAxis1();
 		// lets try to draw axis with ticks and labels
 	}
 

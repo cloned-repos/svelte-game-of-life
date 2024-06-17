@@ -1,8 +1,8 @@
 <script lang="ts">
-	import createNS from '@mangos/debug-frontend';
+	import createNS from '../../../debug-frontend';
 	import line_chart from '$lib/charts/action';
 	import type { CanvasSize, ChartDebugInfo, Font, FontKey, FontOptions } from '$lib/charts/types';
-	import { chartCreator, getFontSizeAndUnit, max, min } from '$lib/charts/helper';
+	import { configChartCreator, getFontSizeAndUnit, max, min } from '$lib/charts/helper';
 	import { FONT_CHANGE, standardAffectOptions } from '$lib/charts/constants';
 
 	// attributes
@@ -44,7 +44,7 @@
 		);
 	 */
 
-	const createChart = chartCreator(
+	const createChart = configChartCreator(
 		'sans-serif',
 		testFontOptions,
 		undefined,

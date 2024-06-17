@@ -55,6 +55,10 @@ export function createResizeObserverForCanvas(canvas: HTMLCanvasElement, chart: 
 	};
 }
 
+export function sumValues(o: Record<string, number>): number {
+	return Array.from(Object.values(o)).reduce((c, v) => v + c);
+}
+
 export function isCanvasSizeEqual(a: CanvasSize, b: CanvasSize) {
 	return (
 		a.height === b.height &&
@@ -91,11 +95,11 @@ export function metricsFrom(
 	return metrics;
 }
 
-export function chartCreator(
+export function configChartCreator(
 	fallback: GenericFontFamilies,
 	fontOptions: () => (Font & FontKey)[],
 	devicePixelAspectRatio = standardDevicePixelAspectRatio,
-	pixelDeviceRatioAffect: DeviceRatioAffectOptions,
+	pixelDeviceRatioAffect: DeviceRatioAffectOptions
 ) {
 	let chart: Chart;
 	return function (canvas?: HTMLCanvasElement) {
@@ -111,7 +115,13 @@ export function chartCreator(
 		if (false === canvas instanceof window.HTMLCanvasElement) {
 			throw new Error('the tag being "actionized" is not a <canvas /> tag');
 		}
-		chart = new Chart(canvas, fallback, fontOptions, devicePixelAspectRatio, pixelDeviceRatioAffect);
+		chart = new Chart(
+			canvas,
+			fallback,
+			fontOptions,
+			devicePixelAspectRatio,
+			pixelDeviceRatioAffect
+		);
 		return {
 			chart,
 			destroy() {
@@ -122,7 +132,7 @@ export function chartCreator(
 }
 
 export function standardDevicePixelAspectRatio(size?: CanvasSize): number {
-	return max(1.0, min(window.devicePixelRatio, 2));
+	return max(0, min(window.devicePixelRatio, 2));
 }
 
 export function defaultFontOptionValues(fontOptions?: Partial<FontOptions>): FontOptions {
@@ -145,7 +155,7 @@ export function updateStatistics(waits: Waits, ns: IOWaitsGroupNames, start: num
 	waits[ns][delay]++;
 }
 
-function isFontLoadErrorPL(u: any): u is FontLoadErrorPL {
+export function isFontLoadErrorPL(u: any): u is FontLoadErrorPL {
 	return u?.error instanceof DOMException && typeof u?.ts === 'string';
 }
 
@@ -176,13 +186,13 @@ export function selectFont(fonts: ChartFontInfo, key: `fo${string}`): FontOption
 	return font;
 }
 
-export function getFontSizeAndUnit(shortSH: string): null | { fontSize: number, sizeUnit: string  } {
+export function getFontSizeAndUnit(shortSH: string): null | { fontSize: number; sizeUnit: string } {
 	const tol = shortSH.toLowerCase();
 	const match = tol.match(regExpSliceFamilyAndFontSize);
-	if (match === null){
+	if (match === null) {
 		return null;
 	}
-	const size =match.groups!.size;
+	const size = match.groups!.size;
 	const metric = size.match(regExpFontSizeMetric)!;
 	const fontSize = parseFloat(metric.groups!.nr);
 	const sizeUnit = metric.groups!.u;

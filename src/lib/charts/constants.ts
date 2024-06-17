@@ -15,7 +15,7 @@ import type {
 	FontSizeRelative,
 	FontSizeAbsolute,
 	GenericFontFamilies,
-	DeviceRatioAffectOptions,
+	DeviceRatioAffectOptions
 } from './types';
 export const systemSH = ['caption', 'icon', 'menu', 'message-box', 'small-caption', 'status-bar'];
 export const fontStyle: FontStyle[] = ['normal', 'italic', 'oblique'];
@@ -56,7 +56,8 @@ export const CHART_RENDER: RenderChart['type'] = 'chart-render';
 export const FONT_CHANGE: FontChange['type'] = 'font-change';
 
 export const regExpFontSizeMetric = /^(?<nr>\d*\.*\d*)(?<u>(px|rem|em|%|dp|ch))$/i;
-export const regExpSliceFamilyAndFontSize = /(?<size>[^\s]+)\s+(?<family>[^\s]+|("[^"]+")|('[^\']+'))$/;
+export const regExpSliceFamilyAndFontSize =
+	/(?<size>[^\s]+)\s+(?<family>[^\s]+|("[^"]+")|('[^\']+'))$/;
 
 export const canonicalText = 'jçë0193MÊ|²{Qszdcy0';
 
@@ -68,7 +69,6 @@ export const defaultHarnas: TestHarnas = {
 	random: globalThis.Math.random,
 	getRequestAnimationFrame: () => window.requestAnimationFrame
 };
-
 
 export const fontSizeRelative: FontSizeRelative[] = ['larger', 'smaller'];
 
@@ -92,22 +92,21 @@ export const fontGenericFamilies: GenericFontFamilies[] = [
 	'math'
 ];
 
-
-export const standardAffectOptions : DeviceRatioAffectOptions = {
+export const standardAffectOptions: DeviceRatioAffectOptions = {
 	font(fontSH: string, dpr: number): string {
-	   const length = getFontSizeAndUnit(fontSH);
-	   if (length === null) {
+		const length = getFontSizeAndUnit(fontSH);
+		if (length === null) {
 			return fontSH;
-	   }
-	   const { fontSize, sizeUnit } = length;
-	   const key = `${fontSize}${sizeUnit}`;
-	   return fontSH.replace(key, `${fontSize*dpr}${sizeUnit}`);
+		}
+		const { fontSize, sizeUnit } = length;
+		const key = `${fontSize}${sizeUnit}`;
+		const rc = fontSH.replace(key, `${fontSize * dpr}${sizeUnit}`);
+		return rc;
 	},
 	canvasPositioning(devicePixelRatio: number, ...metrics: number[]): number[] {
-		return metrics.map(m => m * devicePixelRatio);
+		return metrics.map((m) => m * devicePixelRatio);
 	},
 	lineWidth(metric: number, dpr: number): number {
-		return dpr*metric;
+		return dpr * metric;
 	}
 };
-

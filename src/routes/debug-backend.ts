@@ -1,4 +1,4 @@
-import type { LoggerController } from '@mangos/debug-frontend';
+import type { LoggerController } from '../debug-frontend';
 
 export default function createBackEndMock() {
 	return (prefix = ''): LoggerController => ({

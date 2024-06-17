@@ -97,15 +97,9 @@ export type LengthDP = `${number}dp`;
 
 export type LengthCH = `${number}ch`;
 
-export type Length =
-	| '0'
-	| 0
-	| LengthPercentage
-	| LengthEm
-	| LengthRem
-	| LengthPx
-	| LengthDP
-	| LengthCH;
+export type Length = '0' | 0 | LengthPercentage | LengthEm | LengthRem | LengthPx;
+//| LengthDP
+//| LengthCH;
 
 // https://www.w3.org/TR/CSS2/visudet.html#propdef-line-height
 // export type LineHeight = 'normal' | Length;
@@ -195,22 +189,10 @@ export type ChartDebugInfo = {
 	waits: Waits;
 };
 
-export type FontMetrics = {
-	topbl: number;
-	fontAscent: number;
-	actualAscent: number;
-	alpbbl: number;
-	botbl: number;
-	fontDescent: number;
-	actualDescent: number;
-	cellHeight: number;
-	min: number;
-	max: number;
-	aLeft: number;
-	aRight: number;
-	width: number;
-	capHeight: number;
-};
+export type FontMetricSelectType = keyof Omit<
+	FontMetrics,
+	'min' | 'max' | 'aRight' | 'width' | 'aLeft'
+>;
 
 export type FontBaseLineInfo = {
 	alphabetic: number;
@@ -219,16 +201,39 @@ export type FontBaseLineInfo = {
 	top: number;
 };
 
-export type FontAndActualMeasure = {
+/*
+type FontAndActualMeasure = {
 	font: number;
 	actual: number;
 };
+*/
+/*
+export type FontMetrics = {
+	topbl: number;
+	fontAscent: number;
+	actualAscent: number;
+	alpbbl: number;
+	botbl: number;
+	fontDescent: number;
+	actualDescent: number;
+	// calculated
+	cellHeightFont: number;
+	cellHeightActual: number;
+	min: number;
+	max: number;
+	aLeft: number;
+	aRight: number;
+	width: number;
+	capHeight: number;
+	topBottom: number;
+};
+*/
 
-export type DebugFontMetrics = {
+export type FontMetrics = {
 	baselines: {
-		top: FontAndActualMeasure;
-		alphabetic: FontAndActualMeasure;
-		bottom: FontAndActualMeasure;
+		top: number;
+		alphabetic: number;
+		bottom: number;
 	};
 	// ascents and descents
 	ascents: {
@@ -238,6 +243,17 @@ export type DebugFontMetrics = {
 	descents: {
 		font: FontBaseLineInfo;
 		actual: FontBaseLineInfo;
+	};
+	aux: {
+		cellHeightFont: number;
+		cellHeightActual: number;
+		min: number;
+		max: number;
+		aLeft: number;
+		aRight: number;
+		width: number;
+		capHeight: number;
+		topBottom: number;
 	};
 };
 

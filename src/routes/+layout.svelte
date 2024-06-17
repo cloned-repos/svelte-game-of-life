@@ -9,7 +9,7 @@
 	import Status from '$lib/components/Status/index.svelte';
 	import SideBar from '$lib/components/SideBar/index.svelte';
 	//
-	import createNS, { register } from '@mangos/debug-frontend';
+	import createNS, { register } from '../debug-frontend';
 	import createBackEndMock from './debug-backend';
 	register(createBackEndMock());
 	const debug = createNS('app');
