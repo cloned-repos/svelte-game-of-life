@@ -316,10 +316,10 @@ export default class Chart implements Enqueue<CommonMsg> {
 		{
 			const label = labels[0] + ' 16px';
 			const f = structuredClone(fhAxe);
-			f.size = '16px';
+			f.size = `${blOffset}px`;
 			const shortSH = ctx.createFontShortHand(f);
 			const metrics = ctx.getfontMetrics(shortSH, label)!;
-			debug(`${f.size}:`, metrics);
+			ctx.font(shortSH);
 			ctx.fillText(label, xOffset, blOffset);
 		}
 

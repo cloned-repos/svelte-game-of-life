@@ -201,7 +201,7 @@ export default class Context {
 			const ratio = this.pixelRatio({
 				physicalPixelHeight: this.canvas.height,
 				physicalPixelWidth: this.canvas.width,
-				width: parseInt(height),
+				width: parseInt(width),
 				height: parseInt(height)
 			});
 			const newFontSH = this.ratioOptions.font(fontSH, ratio);
