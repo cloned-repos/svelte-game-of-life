@@ -341,15 +341,15 @@ export default class Context {
 			// more vertical then horizontal
 			if (px0 < px1) {
 				// left to right
-				ctx.moveTo(round(px0) + corr, py0);
-				ctx.lineTo(round(px1) - corr, py1);
+				ctx.moveTo(round(px0) + corr, round(py0));
+				ctx.lineTo(round(px1) - corr, round(py1));
 			} else if (px0 > px1) {
 				// right to left
-				ctx.moveTo(round(px0) - corr, py0);
-				ctx.lineTo(round(px1) + corr, py1);
+				ctx.moveTo(round(px0) - corr, round(py0));
+				ctx.lineTo(round(px1) + corr, round(py1));
 			} else {
-				ctx.moveTo(round(px0) + corr, py0);
-				ctx.lineTo(round(px1) + corr, py1);
+				ctx.moveTo(round(px0) + corr, round(py0));
+				ctx.lineTo(round(px1) + corr, round(py1));
 			}
 		} else {
 			// more horizontal then vertical

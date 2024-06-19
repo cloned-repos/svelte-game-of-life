@@ -310,19 +310,72 @@ export default class Chart implements Enqueue<CommonMsg> {
 			return;
 		}
 
-		ctx.beginPath().textBaseLine('middle').fillStyle('black');
+		ctx.beginPath().textBaseLine('middle').fillStyle('black').strokeStyle('rgba(255,0,0,0.5)');
 		let blOffset = 16;
-		let xOffset = 10;
-		{
-			const label = labels[0] + ' 16px';
+		let xOffset = 20;
+		$16px: {
+			const label = labels[0] + ' 16pxEQÊjy';
 			const f = structuredClone(fhAxe);
 			f.size = `${blOffset}px`;
 			const shortSH = ctx.createFontShortHand(f);
 			const metrics = ctx.getfontMetrics(shortSH, label)!;
 			ctx.font(shortSH);
 			ctx.fillText(label, xOffset, blOffset);
+			const left = xOffset - 4;
+			const right = metrics.aux.aRight;
+			ctx.setLineWidth(2);
+			ctx.line(
+				left,
+				blOffset - metrics.ascents.actual.middle,
+				left,
+				blOffset - metrics.descents.actual.middle
+			);
+			ctx.stroke();
+			// top base line
+			ctx.setLineWidth(1);
+			ctx.strokeStyle('hsla(120,60%,70%,0.5)');
+			ctx.line(
+				xOffset + metrics.aux.aLeft,
+				blOffset - metrics.baselines.top,
+				xOffset + metrics.aux.aRight,
+				blOffset - metrics.baselines.top
+			)
+				.stroke()
+				.closePath();
+			// alphabetic base line
+			ctx.beginPath();
+			ctx.strokeStyle('hsla(16, 88%, 54%, 0.5)');
+			ctx.line(
+				xOffset + metrics.aux.aLeft,
+				blOffset - metrics.baselines.alphabetic,
+				xOffset + metrics.aux.aRight,
+				blOffset - metrics.baselines.alphabetic
+			)
+				.stroke()
+				.closePath();
+			// bottom base line
+			ctx.beginPath();
+			ctx.strokeStyle('hsl(173, 100%, 50%, 0.5)');
+			ctx.line(
+				xOffset + metrics.aux.aLeft,
+				blOffset - metrics.baselines.bottom,
+				xOffset + metrics.aux.aRight,
+				blOffset - metrics.baselines.bottom
+			)
+				.stroke()
+				.closePath();
+			// font ascent
+			ctx.beginPath();
+			ctx.strokeStyle('hsl(52, 100%, 50%, 0.5)');
+			ctx.line(
+				xOffset + metrics.aux.aLeft,
+				blOffset - metrics.ascents.actual.middle,
+				xOffset + metrics.aux.aRight,
+				blOffset - metrics.ascents.actual.middle
+			)
+				.stroke()
+				.closePath();
 		}
-
 		ctx.fill().stroke().closePath();
 	}
 
