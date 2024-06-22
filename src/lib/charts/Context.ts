@@ -1,3 +1,4 @@
+import { tick } from 'svelte';
 import {
 	canonicalText,
 	fontStretch,
@@ -280,29 +281,28 @@ export default class Context {
 		return this;
 	}
 
-	moveTo(x: number, y: number) {
+	moveTo(x: number, y: number, withRatio = true) {
 		const { ctx } = this;
-		if (ctx) {
-			if (!this.ratioOptions.canvasPositioning) {
-				ctx.moveTo(x, y);
-				return this;
-			}
+		if (!ctx) {
+			return this;
+		}
+		if (withRatio && this.ratioOptions.canvasPositioning) {
 			const metrics = this.ratioOptions.canvasPositioning(
 				this.pixelRatio(this.getCanvasSize()),
 				x,
 				y
 			);
-
 			ctx.moveTo.apply(ctx, metrics as [number, number]);
 		}
+		ctx.moveTo(x, y);
 		return this;
 	}
-	lineTo(x: number, y: number) {
+	lineTo(x: number, y: number, withRatio = true) {
 		const { ctx } = this;
 		if (!ctx) {
 			return this;
 		}
-		if (!this.ratioOptions.canvasPositioning) {
+		if (!(withRatio && this.ratioOptions.canvasPositioning)) {
 			ctx.lineTo(x, y);
 			return this;
 		}
@@ -314,7 +314,64 @@ export default class Context {
 		ctx.lineTo.apply(ctx, metrics as [number, number]);
 		return this;
 	}
-	line(ppx0: number, ppy0: number, ppx1: number, ppy1: number) {
+	drawVerticalRuler(
+		x: number,
+		align: 'right' | 'left',
+		originY: number,
+		maxY: number, // 0 - positive
+		minY: number, // 0 - negative
+		tickLength: number, // 0 -
+		tickSpacing: number, // literally pixels
+		tickThickness: number,
+		color: string
+	) {
+		const { ctx } = this;
+		if (!ctx) {
+			return this;
+		}
+		const tickMax = align === 'right' ? x + tickLength : x - tickLength;
+		// draw vertical bar
+		this.lreal(x, originY - maxY, x, originY - minY);
+		// draw origin tick
+		this.line(x, originY, tickMax, originY);
+		// draw ticks above origin
+		ctx.strokeStyle = color;
+		// above origin
+		this.setLineWidth(tickThickness);
+		for (let cursor = originY - tickSpacing; cursor > originY - maxY; cursor -= tickSpacing) {
+			this.line(x, cursor, tickMax, cursor);
+		}
+		// below origin
+		for (let cursor = originY + tickSpacing; cursor < originY - minY; cursor += tickSpacing) {
+			this.line(x, cursor, tickMax, cursor);
+		}
+	}
+	lreal(ppx0: number, ppy0: number, ppx1: number, ppy1: number, withRatio = true) {
+		const { ctx } = this;
+		if (!ctx) {
+			return this;
+		}
+		let px0 = ppx0;
+		let py0 = ppy0;
+		let px1 = ppx1;
+		let py1 = ppy1;
+		if (this.ratioOptions.canvasPositioning) {
+			[px0, py0, px1, py1] = this.ratioOptions.canvasPositioning(
+				this.pixelRatio(this.getCanvasSize()),
+				ppx0,
+				ppy0,
+				ppx1,
+				ppy1
+			);
+		}
+		const lineWidth = this.ctx?.lineWidth || 1;
+		const h = abs(py1 - py0);
+		const w = abs(px1 - px0);
+		ctx.moveTo(px0, py0);
+		ctx.lineTo(px1, py1);
+		return this;
+	}
+	line(ppx0: number, ppy0: number, ppx1: number, ppy1: number, withRatio = true) {
 		const { ctx } = this;
 		if (!ctx) {
 			return this;
@@ -384,26 +441,26 @@ export default class Context {
 		// top baseline perspective
 		const topbl_fontAscent = topMetrics.fontBoundingBoxAscent;
 		const topbl_actualAscent = topMetrics.actualBoundingBoxAscent;
-		const topbl_fontDescent = topMetrics.fontBoundingBoxDescent;
-		const topbl_actualDescent = topMetrics.actualBoundingBoxDescent;
+		const topbl_fontDescent = -topMetrics.fontBoundingBoxDescent;
+		const topbl_actualDescent = -topMetrics.actualBoundingBoxDescent;
 
 		// alphabetic baseline perspective
 		const alpbl_fontAscent = baseLineMetrics.fontBoundingBoxAscent;
 		const alpbl_actualAscent = baseLineMetrics.actualBoundingBoxAscent;
-		const alpbl_fontDescent = baseLineMetrics.fontBoundingBoxDescent;
-		const alpbl_actualDescent = baseLineMetrics.actualBoundingBoxDescent;
+		const alpbl_fontDescent = -baseLineMetrics.fontBoundingBoxDescent;
+		const alpbl_actualDescent = -baseLineMetrics.actualBoundingBoxDescent;
 
 		// bottom baseline perspective
 		const botbl_fontAscent = bottomLineMetrics.fontBoundingBoxAscent;
 		const botbl_actualAscent = bottomLineMetrics.actualBoundingBoxAscent;
-		const botbl_fontDescent = bottomLineMetrics.fontBoundingBoxDescent;
-		const botbl_actualDescent = bottomLineMetrics.actualBoundingBoxDescent;
+		const botbl_fontDescent = -bottomLineMetrics.fontBoundingBoxDescent;
+		const botbl_actualDescent = -bottomLineMetrics.actualBoundingBoxDescent;
 
 		// middle baseline perspective
 		const midbl_fontAscent = middleMetrics.fontBoundingBoxAscent;
-		const midbl_fontDescent = middleMetrics.fontBoundingBoxDescent;
+		const midbl_fontDescent = -middleMetrics.fontBoundingBoxDescent;
 		const midbl_actualAscent = middleMetrics.actualBoundingBoxAscent;
-		const midbl_actualDescent = middleMetrics.actualBoundingBoxDescent;
+		const midbl_actualDescent = -middleMetrics.actualBoundingBoxDescent;
 
 		// top baseline (posive) relative to the middle baseline, positive nr, how much px above the middle baseline
 		const topbl = midbl_fontAscent - topbl_fontAscent;
@@ -425,6 +482,7 @@ export default class Context {
 		].sort((a, b) => a - b);
 		const min = sorted[0];
 		const max = sorted[sorted.length - 1];
+		console.log('sorted', sorted);
 		//
 		const cellHeightFont = midbl_fontAscent - midbl_fontDescent;
 		const cellHeightActual = midbl_actualAscent - midbl_actualDescent;
@@ -467,19 +525,27 @@ export default class Context {
 			},
 			descents: {
 				font: {
-					alphabetic: -alpbl_fontDescent,
-					middle: -midbl_fontDescent,
-					bottom: -botbl_fontDescent,
-					top: -topbl_fontDescent
+					alphabetic: alpbl_fontDescent,
+					middle: midbl_fontDescent,
+					bottom: botbl_fontDescent,
+					top: topbl_fontDescent
 				},
 				actual: {
-					alphabetic: -alpbl_actualDescent,
-					middle: -midbl_actualDescent,
-					bottom: -botbl_actualDescent,
-					top: -topbl_actualDescent
+					alphabetic: alpbl_actualDescent,
+					middle: midbl_actualDescent,
+					bottom: botbl_actualDescent,
+					top: topbl_actualDescent
 				}
 			}
 		};
+	}
+	setLineDash(dots: number[]): this {
+		const { ctx } = this;
+		if (!ctx) {
+			return this;
+		}
+		ctx.setLineDash(dots);
+		return this;
 	}
 	beginPath() {
 		const { ctx } = this;

@@ -287,7 +287,6 @@ export default class Chart implements Enqueue<CommonMsg> {
 		this.cancelAnimationFrame = 0;
 	}
 
-	// jkf: i am here
 	private calculateXLowerAxeHeight(): number {
 		const { size } = this;
 		const xAxeBottom = {
@@ -311,72 +310,154 @@ export default class Chart implements Enqueue<CommonMsg> {
 		}
 
 		ctx.beginPath().textBaseLine('middle').fillStyle('black').strokeStyle('rgba(255,0,0,0.5)');
-		let blOffset = 16;
 		let xOffset = 20;
-		$16px: {
-			const label = labels[0] + ' 16pxEQÊjy';
+		let prevBottom = 10;
+		const fontsizes = [10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36];
+		const capHeights = [];
+		const actualHeights = [];
+		const fontHeights = [];
+		for (let i = 0; i < fontsizes.length; i++) {
+			const fs = fontsizes[i];
+			const label = labels[0] + ` ${fs}px`;
 			const f = structuredClone(fhAxe);
-			f.size = `${blOffset}px`;
+			f.size = `${fs}px`;
 			const shortSH = ctx.createFontShortHand(f);
 			const metrics = ctx.getfontMetrics(shortSH, label)!;
 			ctx.font(shortSH);
-			ctx.fillText(label, xOffset, blOffset);
+			const {
+				aux: { capHeight, cellHeightActual, cellHeightFont }
+			} = metrics;
+			console.log(
+				'%spx -> capHeight:%s, cellHeightActual:%s, cellHeightFont:%s',
+				fs,
+				capHeight,
+				cellHeightActual,
+				cellHeightFont
+			);
+			capHeights.push(capHeight);
+			actualHeights.push(cellHeightActual);
+			fontHeights.push(cellHeightFont);
+			// here we position the font based on previous (if exists) "lineHeight" so fonts
+			// 		do not draw over each other
+			debug('metrics0: %o', metrics);
+			const lineHeight = metrics.aux.max - metrics.aux.min;
+			debug('lineHeight', lineHeight, metrics.aux.max, metrics.aux.min);
+			const baseLine = metrics.aux.max + prevBottom;
+			prevBottom += metrics.aux.cellHeightActual + 4;
+			ctx.fillText(label, xOffset, baseLine);
+			// draw ruler
 			const left = xOffset - 4;
 			const right = metrics.aux.aRight;
-			ctx.setLineWidth(2);
-			ctx.line(
+			ctx.setLineWidth(1);
+			/*
+					x: number,
+					align: 'right' | 'left',
+					originY: number,
+					maxY: number, // 0 - positive
+					minY: number, // 0 - negative
+					tickLength: number, // 0-3
+					tickSpacing: number, // literally pixels
+					tickThickness: number,
+					color: string
+		*/
+			ctx.drawVerticalRuler(
 				left,
-				blOffset - metrics.ascents.actual.middle,
-				left,
-				blOffset - metrics.descents.actual.middle
+				'left',
+				baseLine,
+				metrics.aux.max,
+				metrics.aux.min,
+				3,
+				4,
+				1,
+				'hsla(120,60%,70%,0.5)'
 			);
 			ctx.stroke();
 			// top base line
 			ctx.setLineWidth(1);
-			ctx.strokeStyle('hsla(120,60%,70%,0.5)');
-			ctx.line(
+			ctx.strokeStyle('hsl(120,60%,70%,0.5)');
+			ctx.lreal(
 				xOffset + metrics.aux.aLeft,
-				blOffset - metrics.baselines.top,
-				xOffset + metrics.aux.aRight,
-				blOffset - metrics.baselines.top
+				baseLine - metrics.baselines.top,
+				xOffset + metrics.aux.aRight * 0.25,
+				baseLine - metrics.baselines.top
+			);
+			// middle base line
+			ctx.setLineWidth(1);
+			ctx.lreal(
+				xOffset + metrics.aux.aLeft,
+				baseLine,
+				xOffset + metrics.aux.aRight * 0.25,
+				baseLine
 			)
 				.stroke()
 				.closePath();
 			// alphabetic base line
 			ctx.beginPath();
-			ctx.strokeStyle('hsla(16, 88%, 54%, 0.5)');
-			ctx.line(
+			ctx.lreal(
 				xOffset + metrics.aux.aLeft,
-				blOffset - metrics.baselines.alphabetic,
-				xOffset + metrics.aux.aRight,
-				blOffset - metrics.baselines.alphabetic
+				baseLine - metrics.baselines.alphabetic,
+				xOffset + metrics.aux.aRight * 0.25,
+				baseLine - metrics.baselines.alphabetic
 			)
 				.stroke()
 				.closePath();
 			// bottom base line
 			ctx.beginPath();
-			ctx.strokeStyle('hsl(173, 100%, 50%, 0.5)');
-			ctx.line(
+			ctx.lreal(
 				xOffset + metrics.aux.aLeft,
-				blOffset - metrics.baselines.bottom,
-				xOffset + metrics.aux.aRight,
-				blOffset - metrics.baselines.bottom
+				baseLine - metrics.baselines.bottom,
+				xOffset + metrics.aux.aRight * 0.25,
+				baseLine - metrics.baselines.bottom
+			)
+				.stroke()
+				.closePath();
+			// actual ascent
+			ctx.beginPath();
+			ctx.strokeStyle('rgba(255, 0,0,0.2)');
+			ctx.lreal(
+				xOffset + metrics.aux.aLeft + metrics.aux.aRight * 0.25,
+				baseLine - metrics.ascents.actual.middle,
+				xOffset + metrics.aux.aRight * 0.5,
+				baseLine - metrics.ascents.actual.middle
+			)
+				.stroke()
+				.closePath();
+			// actaul descent
+			ctx.beginPath();
+			ctx.lreal(
+				xOffset + metrics.aux.aLeft + metrics.aux.aRight * 0.25,
+				baseLine - metrics.descents.actual.middle,
+				xOffset + metrics.aux.aRight * 0.5,
+				baseLine - metrics.descents.actual.middle
 			)
 				.stroke()
 				.closePath();
 			// font ascent
 			ctx.beginPath();
-			ctx.strokeStyle('hsl(52, 100%, 50%, 0.5)');
-			ctx.line(
-				xOffset + metrics.aux.aLeft,
-				blOffset - metrics.ascents.actual.middle,
-				xOffset + metrics.aux.aRight,
-				blOffset - metrics.ascents.actual.middle
+			ctx.strokeStyle('#f06d0632');
+			ctx.lreal(
+				xOffset + metrics.aux.aLeft + metrics.aux.aRight * 0.5,
+				baseLine - metrics.ascents.font.middle,
+				xOffset + metrics.aux.aRight * 0.75,
+				baseLine - metrics.ascents.font.middle
+			)
+				.stroke()
+				.closePath();
+			// font descent
+			ctx.beginPath();
+			ctx.lreal(
+				xOffset + metrics.aux.aLeft + metrics.aux.aRight * 0.5,
+				baseLine - metrics.descents.font.middle,
+				xOffset + metrics.aux.aRight * 0.75,
+				baseLine - metrics.descents.font.middle
 			)
 				.stroke()
 				.closePath();
 		}
 		ctx.fill().stroke().closePath();
+		console.log({ capHeights });
+		console.log({ actualHeights });
+		console.log({ fontHeights });
 	}
 
 	private renderChart1() {
