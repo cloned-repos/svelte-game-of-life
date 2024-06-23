@@ -312,7 +312,7 @@ export default class Chart implements Enqueue<CommonMsg> {
 		ctx.beginPath().textBaseLine('middle').fillStyle('black').strokeStyle('rgba(255,0,0,0.5)');
 		let xOffset = 20;
 		let prevBottom = 10;
-		const fontsizes = [10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36];
+		const fontsizes = [8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42];
 		const capHeights = [];
 		const actualHeights = [];
 		const fontHeights = [];
@@ -334,16 +334,16 @@ export default class Chart implements Enqueue<CommonMsg> {
 				cellHeightActual,
 				cellHeightFont
 			);
-			capHeights.push(capHeight);
-			actualHeights.push(cellHeightActual);
-			fontHeights.push(cellHeightFont);
+			capHeights.push(Number(capHeight.toFixed(2)));
+			actualHeights.push(Number(cellHeightActual.toFixed(2)));
+			fontHeights.push(Number(cellHeightFont.toFixed(2)));
 			// here we position the font based on previous (if exists) "lineHeight" so fonts
 			// 		do not draw over each other
 			debug('metrics0: %o', metrics);
 			const lineHeight = metrics.aux.max - metrics.aux.min;
 			debug('lineHeight', lineHeight, metrics.aux.max, metrics.aux.min);
 			const baseLine = metrics.aux.max + prevBottom;
-			prevBottom += metrics.aux.cellHeightActual + 4;
+			prevBottom += lineHeight * 1.2;
 			ctx.fillText(label, xOffset, baseLine);
 			// draw ruler
 			const left = xOffset - 4;
@@ -434,7 +434,7 @@ export default class Chart implements Enqueue<CommonMsg> {
 				.closePath();
 			// font ascent
 			ctx.beginPath();
-			ctx.strokeStyle('#f06d0632');
+			ctx.strokeStyle('rgba(0,0,255,0.5)');
 			ctx.lreal(
 				xOffset + metrics.aux.aLeft + metrics.aux.aRight * 0.5,
 				baseLine - metrics.ascents.font.middle,
@@ -453,6 +453,7 @@ export default class Chart implements Enqueue<CommonMsg> {
 			)
 				.stroke()
 				.closePath();
+			ctx.fill().stroke().closePath();
 		}
 		ctx.fill().stroke().closePath();
 		console.log({ capHeights });

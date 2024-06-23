@@ -35,15 +35,6 @@
 		];
 	}
 
-	/*
-		export function chartCreator(
-			fallback: GenericFontFamilies,
-			fontOptions: () => (Font & FontKey)[],
-			devicePixelAspectRatio = standardDevicePixelAspectRatio,
-			pixelDeviceRatio: DeviceRatioAffectOptions = defaultPixelRatioScaleOptions
-		);
-	 */
-
 	const createChart = configChartCreator(
 		'sans-serif',
 		testFontOptions,
@@ -146,7 +137,7 @@
 		list-style: none;
 	}
 	.me {
-		height: 450px;
+		height: 650px;
 		border: 4px darkkhaki dashed;
 		width: 100%;
 		grid-area: var(--grid-pos);
