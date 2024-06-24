@@ -456,9 +456,10 @@ export default class Chart implements Enqueue<CommonMsg> {
 			ctx.fill().stroke().closePath();
 		}
 		ctx.fill().stroke().closePath();
-		console.log({ capHeights });
-		console.log({ actualHeights });
-		console.log({ fontHeights });
+		console.log(`px<-c(${fontsizes.join(',')})`);
+		console.log(`capH<-c(${capHeights.join(',')})`);
+		console.log(`actH<-c(${actualHeights.join(',')})`);
+		console.log(`fonH<-c(${fontHeights.join(',')})`);
 	}
 
 	private renderChart1() {
