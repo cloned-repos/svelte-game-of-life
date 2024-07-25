@@ -1,4 +1,237 @@
 
+hp:
+s(0,0)
+#
+m(19,0)
+l(3,0)
+l(0,3)
+l(0,24)
+l(3,27)
+l(14,27)
+#
+m(20,27)
+l(42,27)
+l(45,24)
+l(45,3)
+l(42,0)
+l(25,0)
+# letter 'h'
+m(13,9)
+l(17,27)
+m(15,18)
+l(19,18)
+l(21,16)
+l(20,9)
+# letter 'p', 
+# 22,0
+# 26,18
+# 30,18
+# 32,16 
+# 31,11
+# 29,9
+# 24,9"/>
+m(22,0)
+l(26,18)
+l(30,18)
+l(32,16)
+l(31,11)
+l(29,9)
+l(24,9)
+# move to end to start next letter
+e(54, 0)
+# β
+# <polyline xmlns="http://www.w3.org/2000/svg" points=" 0,-7 1,7 3,16 7,18 12,16 12,10 8,8 2,8"/>
+# <polyline xmlns="http://www.w3.org/2000/svg" points=" 8,8 11,7 12,3 9,0 5,0 1,3"/>
+m(0,-7)
+l(1,7)
+l(3,16)
+l(7,18)
+l(12,16)
+l(12,10)
+l(8,8)
+l(2,8)
+m(8,8)
+l(11,7)
+l(12,3)
+l(9,0)
+l(5,0)
+l(1,3)
+e(18,0)
+# weird stripe above baseline
+# https://phk.freebsd.dk/hacks/Wargames/_wargames_04.svg
+s(0,0)
+l(0,4)
+e(0,0)
+# https://phk.freebsd.dk/hacks/Wargames/_wargames_05.svg
+s(0,0)
+l(0,-4) # maybe this is the comma
+e(0,0)
+# https://phk.freebsd.dk/hacks/Wargames/_wargames_06.svg
+s(0,0)
+l(-4,0)
+e(0,0)
+# https://phk.freebsd.dk/hacks/Wargames/_wargames_07.svg
+s(0,0)
+l(4,0)
+e(0,0)
+#https://phk.freebsd.dk/hacks/Wargames/_wargames_0e.svg
+s(0,0)
+m(-4,0)
+l(4,0)
+e(0,0)
+# https://phk.freebsd.dk/hacks/Wargames/_wargames_0f.svg
+s(0,0)
+m(0,-4)
+l(0,4)
+e(0,0)
+# https://phk.freebsd.dk/hacks/Wargames/_wargames_10.svg
+# '*' star
+s(0,0)
+m(-5,0)
+l(5,0)
+m(4,-4)
+l(-4,4)
+m(0,5)
+l(0,-5)
+m(-4,-4)
+l(4,4)
+e(0,0)
+# ◯
+# https://phk.freebsd.dk/hacks/Wargames/_wargames_11.svg
+s(0,0)
+m(-2,5)
+# polyline xmlns="http://www.w3.org/2000/svg" points=" -2,-5 -5,-2 -5,2 -2,5 2,5 5,2 5,-2 2,-5 -2,-5"/>
+l(-5,-2)
+l(-5,2)
+l(-2,5)
+l(2,5)
+l(5,2)
+l(5,-2)
+l(2,-5)
+l(-2,-5) # this one not really needed when doing "closePath()"
+e(0,0)
+# https://phk.freebsd.dk/hacks/Wargames/_wargames_12.svg
+# ↑
+s(0,0)
+m(0,10)
+l(0,10)
+l(6,18)
+l(12,0)
+m(6,18)
+l(6,0)
+e(18,0)
+# ←
+# https://phk.freebsd.dk/hacks/Wargames/_wargames_13.svg
+s(0,0)
+m(6,3)
+#<polyline xmlns="http://www.w3.org/2000/svg" points=" 6,3 0,9 6,15"/>
+l(0,9)
+l(6,15)
+m(0,9)
+l(12,9)
+e(18,0)
+# ↓
+# https://phk.freebsd.dk/hacks/Wargames/_wargames_14.svg
+s(0,0)
+m(0,8)
+l(6,0)
+l(12,8)
+m(6,0)
+l(6,18)
+e(18,0)
+# →
+# https://phk.freebsd.dk/hacks/Wargames/_wargames_15.svg
+s(0,0)
+m(6,3)
+# <polyline xmlns="http://www.w3.org/2000/svg" points=" 6,3 12,9 6,15"/>
+l(12,9)
+l(6,15)
+m(0,9)
+l(12,9)
+e(18,0)
+# √
+# https://phk.freebsd.dk/hacks/Wargames/_wargames_16.svg
+s (0,0)
+m (0,3)
+# <polyline xmlns="http://www.w3.org/2000/svg" points=" 0,3 3,0 6,20 13,20"/>
+l(3,0)
+l(6,20)
+l(13,20)
+e(18,0)
+# π
+# https://phk.freebsd.dk/hacks/Wargames/_wargames_17.svg
+s(0,0)
+m(3,0)
+l(4,12)
+m(0,10)
+l(4,12)
+l(9,12)
+l(12,14)
+m(9,12)
+l(9,0)
+e(18,0)
+#
+# △
+# https://phk.freebsd.dk/hacks/Wargames/_wargames_18.svg
+# 
+s(0,0)
+l(6,15)
+l(12,0)
+l(0,0) ("close path")
+e(18,0)
+#
+# μ
+# https://phk.freebsd.dk/hacks/Wargames/_wargames_19.svg
+# 
+s(0,0)
+m(0,-7)
+l(2,11)  y=-7+9*x
+m(1,2)  x=1 so y = 2 ( klopt exact )
+l(6,0)
+l(10,2)
+l(11,11)
+m(10,2)
+l(13, 0)
+m(18,0)
+# # ◯ (higher up)
+# https://phk.freebsd.dk/hacks/Wargames/_wargames_1a.svg
+s(0,0)
+m(6,16)
+l(4,18)
+l(4,21)
+l(6,23)
+l(9,23)
+l(11,21)
+l(11,18)
+l(9,16)
+l(6,16) # close path
+e(18,0)
+# Ω
+# https://phk.freebsd.dk/hacks/Wargames/_wargames_1b.svg
+s(0,0)
+l(4, 0)
+l(1,7)
+l(1,12)
+l(4,16)
+l(9,16)
+l(12,12)
+l(12,7)
+l(9,0)
+l(13,0)
+e(18,0)
+# ρ (rho)
+# https://phk.freebsd.dk/hacks/Wargames/_wargames_1c.svg
+s(0,0)
+m(0,-7)
+l(3,9)
+l(7,12)
+l(11,11)
+l(13,8)
+l(13,4)
+l(10,0)
+l(5,0)
+l(2,3)
+e(18,0)
 # https://phk.freebsd.dk/hacks/Wargames/_wargames_1d.svg
 # Ω
 s(0,0)
@@ -31,3 +264,158 @@ e(18,0)
 # lambda
 # λ
 # https://phk.freebsd.dk/hacks/Wargames/_wargames_1f.svg
+
+s(0,0)
+l(6,10)
+m(0,17)
+l(3,18)
+l(9,2)
+l(12,0)
+e(18,0)
+
+# ! exclamation mark
+# https://phk.freebsd.dk/hacks/Wargames/_wargames_21.svg
+#
+s(0,0)
+m(6,0)
+l(6,0) <- this makes a point the same thickness as the line
+m(6,5)
+l(6,18)
+e(18,0)
+
+#  ” (slanted quotes)
+#  https://phk.freebsd.dk/hacks/Wargames/_wargames_22.svg
+#  
+s(0,0)
+m(3,14)
+l(4,18)
+m(7,14)
+l(8,18)
+e(18,0)
+
+# (#) hash
+# https://phk.freebsd.dk/hacks/Wargames/_wargames_23.svg
+#
+s(0,0)
+m(2,0)
+l(4,18)
+m(8,0)
+l(10,18)
+m(0,13)
+l(12,13)
+m(0, 5)
+l(12, 5)
+e(18, 0)
+
+# $ 
+# https://phk.freebsd.dk/hacks/Wargames/_wargames_24.svg
+#
+s(0,0)
+m(0,3)
+l(3,1)
+l(9,1)
+l(12,3)
+l(12,7)
+l(9,9)
+l(3,9)
+l(0,11)
+l(0,15)
+l(3,17)
+l(9,17)
+l(12,15)
+m(6,-1)
+m(6, 19)
+e(18,0)
+
+# %  
+# https://phk.freebsd.dk/hacks/Wargames/_wargames_25.svg
+#
+s(0,0)
+l(12,18)
+m(6,14)
+l(3,10)
+l(0,14)
+l(3,18)
+l(6,14) # closepath
+#
+m(9,8)
+l(12,4)
+l(9,0)
+l(6,4)
+l(9,8) # closepath
+e(18,0)
+# &
+# https://phk.freebsd.dk/hacks/Wargames/_wargames_26.svg
+#
+s(0,0)
+m(12,5)
+l(8,0)
+l(2,0)
+l(0,4)
+l(9,14)
+l(7,18)
+l(3,18)
+l(1,14)
+l(12,0)
+e(18,0)
+# ´
+# https://phk.freebsd.dk/hacks/Wargames/_wargames_27.svg
+#
+s(0,0)
+m(5, 14)
+l(7,18)
+l(7,18)
+e(18,0)
+# (  left bracket
+# https://phk.freebsd.dk/hacks/Wargames/_wargames_28.svg
+#
+s(0,0)
+m(12, -2)
+l(6,4)
+l(6,14)
+l(12, 20)
+e(18, 0)
+# ) right bracket
+# https://phk.freebsd.dk/hacks/Wargames/_wargames_29.svg
+#
+e(0,0)
+m(0,-2)
+l(6,4)
+l(6,14)
+l(0,20)
+e(18,0)
+# * star
+# https://phk.freebsd.dk/hacks/Wargames/_wargames_2a.svg
+#
+e(0,0)
+m(3,2)
+l(9,16)
+m(3,16)
+l(9,2)
+m(0,9)
+l(12,9)
+e(18,0)
+# +
+# https://phk.freebsd.dk/hacks/Wargames/_wargames_2b.svg
+#
+s(0,0)
+m(6,2)
+l(6,16)
+m(0,9)
+l(12,9)
+# , (looks like a comma)
+# https://phk.freebsd.dk/hacks/Wargames/_wargames_2c.svg
+#
+e(0,0)
+m(4,-4)
+l(6,1)
+e(18,0)
+# - (looks like a minus sign)
+# https://phk.freebsd.dk/hacks/Wargames/_wargames_2d.svg
+
+
+
+
+
+
+
