@@ -932,6 +932,155 @@ l(0,18)
 m(12,0)
 l(0,0)
 m(18,0)
+# [
+# https://phk.freebsd.dk/hacks/Wargames/_wargames_5b.svg
+# 
+s(0,0)
+m(12,20)
+l(6,20)
+l(6,-2)
+l(12,-2)
+m(18,0)
+# \
+# https://phk.freebsd.dk/hacks/Wargames/_wargames_5c.svg
+#
+s(0,0)
+m(0,18)
+l(12,0)
+e(18,0)
+# ]
+# https://phk.freebsd.dk/hacks/Wargames/_wargames_5d.svg
+#
+s(0,0)
+m(0,-2)
+l(6,-2)
+l(6,20)
+l(0,20)
+e(18,0)
+# ^
+# https://phk.freebsd.dk/hacks/Wargames/_wargames_5e.svg
+#
+s(0,0)
+m(0,7)
+l(6,16)
+l(12,7)
+e(18, 0)
+# _ (underscore??, but backward from origin, like underliing the prev char)
+# https://phk.freebsd.dk/hacks/Wargames/_wargames_5f.svg
+#
+s(0,0)
+m(-18,-5)
+l(0,-5)
+e(0,0)
+# ` right tick
+# https://phk.freebsd.dk/hacks/Wargames/_wargames_60.svg
+#
+s(0,0)
+m(5, 18)
+l(7,14)
+e(18,0)
+# a (lower case a)
+# https://phk.freebsd.dk/hacks/Wargames/_wargames_61.svg
+#
+s(0,0)
+m(0,10)
+l(5,12)
+l(11,10)
+l(11,2)
+l(8,0)
+l(4,0)
+l(0,2)
+l(0,5)
+l(11,6)
+m(11,2)
+l(13,0)
+e(18,0)
+# b
+# https://phk.freebsd.dk/hacks/Wargames/_wargames_62.svg
+#
+s(0,0)
+l(0,18)
+m(0,9)
+l(6,11)
+l(12,9)
+l(12,2)
+l(6,0)
+l(0,2)
+e(18,0)
+# c
+# https://phk.freebsd.dk/hacks/Wargames/_wargames_63.svg
+#
+s(0,0)
+m(11,9)
+l(6,11)
+l(0,9)
+l(0,2)
+l(6,0)
+l(11,2)
+e(18, 0)
+# d
+# https://phk.freebsd.dk/hacks/Wargames/_wargames_64.svg
+#
+s(0,0)
+m(12, 2)
+l(6,0)
+l(0,2)
+l(0,9)
+l(6,11)
+l(12,9)
+l(12,18)
+m(12,9)
+l(12,0)
+e(18,0)
+# e
+# https://phk.freebsd.dk/hacks/Wargames/_wargames_65.svg
+#
+s(0,0)
+m(0,6)
+l(12,7)
+l(9,12)
+l(3,12)
+l(0,9)
+l(0,2)
+l(3,0)
+l(9,0)
+l(12,2)
+e(18,0)
+# f
+# https://phk.freebsd.dk/hacks/Wargames/_wargames_66.svg
+#
+s(0,0)
+m(4,0)
+l(4,16)
+l(8,18)
+l(12,16)
+m(0,9)
+l(8,9)
+e(18,0)
+# g
+# https://phk.freebsd.dk/hacks/Wargames/_wargames_67.svg
+#
+s(0,0)
+m(11,2)
+l(6,0)
+l(0,2)
+l(0,9)
+l(6,11)
+l(11,9)
+l(11,11)
+m(11,2)
+l(11,-5)
+l(6,-7)
+l(0,-5)
+m(18,0)
+# h
+# https://phk.freebsd.dk/hacks/Wargames/_wargames_68.svg
+#
+
+
+
+
+
 
 
 
