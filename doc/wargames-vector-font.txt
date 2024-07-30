@@ -1076,7 +1076,113 @@ m(18,0)
 # h
 # https://phk.freebsd.dk/hacks/Wargames/_wargames_68.svg
 #
-
+s(0,0)
+l(0,18)
+m(0,9)
+l(6,11)
+l(12,9)
+l(12,0)
+e(18,0)
+# i
+# https://phk.freebsd.dk/hacks/Wargames/_wargames_69.svg
+#
+s(0,0)
+m(7,0)
+l(7,11)
+l(4,11)
+m(7,18)
+l(7,18)  # dot with the size of linewidth
+e(18, 0)
+# i
+# https://phk.freebsd.dk/hacks/Wargames/_wargames_69.svg
+#
+s(0,0)
+m(7,0)
+l(7,11)
+l(4,11)
+m(7,18)
+l(7,18)  # dot with the size of linewidth
+e(18, 0)
+# j
+# https://phk.freebsd.dk/hacks/Wargames/_wargames_6a.svg
+#
+s(0,0)
+m(0,-5)
+l(4,-7)
+l(8,-5)
+l(8,11)
+m(8,18)
+l(8,18) # dot with the size of linewidth
+e(18,0)
+# k
+# https://phk.freebsd.dk/hacks/Wargames/_wargames_6b.svg
+#
+s(0,0)
+l(0,18)
+m(0,5)
+l(12,11)
+m(4,7)
+l(12,0)
+e(18, 0)
+# l
+# https://phk.freebsd.dk/hacks/Wargames/_wargames_6c.svg
+# 
+s(0,0)
+m(3,0)
+l(9,0)
+m(6,0)
+l(6,18)
+l(3,18)
+e(18, 0)
+# m
+# https://phk.freebsd.dk/hacks/Wargames/_wargames_6d.svg
+# 
+s(0,0)
+l(0,12)
+m(0,9)
+l(4,12)
+l(6,9)
+l(6,0)
+m(6,9)
+l(10,12)
+l(12,9)
+l(12,0)
+e(18, 0)
+# n
+# https://phk.freebsd.dk/hacks/Wargames/_wargames_6e.svg
+# 
+s(0,0)
+l(0,11
+m(0,8)
+l(6,11)
+l(12,8)
+l(12,0)
+e(18,0)
+# o
+# https://phk.freebsd.dk/hacks/Wargames/_wargames_6f.svg
+# 
+s(0,0)
+m(6,0)
+l(0,2)
+l(0,9)
+l(6,11)
+l(12,9)
+l(12,2)
+l(6,0)  #closepath
+e(18,0)
+# p
+# https://phk.freebsd.dk/hacks/Wargames/_wargames_70.svg
+# 
+s(0,0)
+m(0,-7)
+l(0,11)
+m(0,9)
+l(6,11)
+l(12,9)
+l(12,2)
+l(6,0)
+l(0,2)
+e(18, 0)
 
 
 
