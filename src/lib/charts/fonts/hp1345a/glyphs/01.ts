@@ -1,4 +1,4 @@
-//https://phk.freebsd.dk/hacks/Wargames/
+// https://phk.freebsd.dk/hacks/Wargames/
 // https://phk.freebsd.dk/hacks/Wargames/_wargames_01.svg
 const raw = `
     m(19,0)
