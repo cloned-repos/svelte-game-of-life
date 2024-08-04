@@ -164,7 +164,7 @@ export type GenericFontFamilies =
 	| 'system-ui'
 	| 'math';
 
-export type TestHarnas = {
+export interface TestHarnas {
 	Date: typeof Date;
 	setTimeout: typeof setTimeout;
 	setInterval: typeof setInterval;

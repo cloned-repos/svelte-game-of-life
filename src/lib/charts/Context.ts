@@ -93,6 +93,9 @@ export default class Context {
 	}
 	*/
 
+	getCtx() {
+		return this.ctx!;
+	}
 	createFontShortHand(opt: FontOptions): string {
 		/*const size = String(opt.size).toLocaleLowerCase();
 		// are these our own defined units, "ch" or "dp"

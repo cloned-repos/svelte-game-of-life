@@ -38,6 +38,9 @@ import type {
 } from './types';
 import { systemSH, fontGenericFamilies } from './constants';
 import Context from './Context';
+import BaseRenderer from './BaseRenderer';
+import Harnas from '$lib/Harnas';
+import createGlyps from './fonts/hp1345a';
 
 const debug = createNS('class Chart');
 
@@ -54,6 +57,8 @@ export default class Chart implements Enqueue<CommonMsg> {
 
 	private readonly waits: Waits;
 
+	private readonly baseRenderer: BaseRenderer;
+
 	private cancelAnimationFrame: number;
 
 	constructor(
@@ -68,6 +73,8 @@ export default class Chart implements Enqueue<CommonMsg> {
 		private readonly testHarnas: TestHarnas = defaultHarnas
 	) {
 		this.ctx = new Context(canvas, getDeviceAspectRatio, pixelDeviceRatioAffect);
+		this.baseRenderer = new BaseRenderer(this.ctx.getCtx(), new Harnas); 
+		this.baseRenderer.enqueue({ type: 'st'});
 		const csc = getComputedStyle(canvas);
 		this.size = {
 			physicalPixelHeight: canvas.height,
@@ -88,6 +95,8 @@ export default class Chart implements Enqueue<CommonMsg> {
 			this.enqueue({ type: FONT_CHANGE, font, key });
 		}
 		this.cancelAnimationFrame = 0;
+		const font = createGlyps();
+		console.log(font);
 	}
 
 	processFontChangeEvents() {
