@@ -1,1 +1,1 @@
-export const regExp4Parsing = /^(?<instr>l|m|s|e)\((?<x>(\-|\+)?[0-9.]+),(?<y>(\-|\+)?[0-9.]+)\)/;
+export const regExp4Parsing = /^(?<instr>l|m|s|e)\(\s*(?<x>(\-|\+)?[0-9.]+)\s*,\s*(?<y>(\-|\+)?[0-9.]+)\s*\)/;
