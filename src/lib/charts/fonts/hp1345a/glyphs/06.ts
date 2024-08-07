@@ -3,3 +3,5 @@ const raw =`
 l(-4,0)
 e(0,0)
 `;
+
+export default raw;
