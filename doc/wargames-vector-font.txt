@@ -406,7 +406,7 @@ l(12,9)
 # , (looks like a comma)
 # https://phk.freebsd.dk/hacks/Wargames/_wargames_2c.svg
 #
-e(0,0)
+s(0,0)
 m(4,-4)
 l(6,1)
 e(18,0)
