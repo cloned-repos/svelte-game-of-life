@@ -8,6 +8,7 @@ import _6 from './glyphs/06';
 import _7 from './glyphs/07';
 import _14 from './glyphs/0e';
 import _15 from './glyphs/0f';
+import _33 from './glyphs/33';
 
 import t from './helpers';
 
@@ -23,6 +24,6 @@ export default function createGlyps() {
         7: t(_7),
         14: t(_14),
         15: t(_15),
-
+        33: t(_33),
     };
 }
