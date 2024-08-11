@@ -1,5 +1,7 @@
 // source: https://phk.freebsd.dk/hacks/Wargames/
 // all glyphs
+import type { FontMetrics } from '../types';
+import { getFontMetrics, isInstruction } from './helpers';
 import _01 from './glyphs/01';
 import _02 from './glyphs/02';
 
@@ -118,9 +120,10 @@ import _78 from './glyphs/78';
 import _79 from './glyphs/79';
 
 import t from './helpers';
+import type { Instruction } from './types';
 
 export default function createGlyps() {
-    return {
+    const glyps = {
         // hp glyph
         1: t(_01),
         2: t(_02),
@@ -236,4 +239,24 @@ export default function createGlyps() {
         120: t(_78),
         121: t(_79),
     };
+
+    // throw an error if there is an unknown command
+    const unknownInstructions = Object.entries(glyps).filter(([, instructions]) => instructions.find(instr => !isInstruction(instr)));
+    if (unknownInstructions.length) {
+        throw new AggregateError(unknownInstructions.map(([prop]) =>`Glyph ${prop} has unknown drawing instruction`) , 'unknown drawing instructions')
+    }
+    const glypsFinal = glyps as Record<string, Instruction[]>;
+    const metrics: FontMetrics = getFontMetrics(glypsFinal);
+    /*
+		with hp logo:
+		{
+			"minX": -18,
+			"minY": -8,
+			"maxX": 54,
+			"maxY": 27
+		}
+		without hp logo:
+			{"minX":-18,"minY":-8,"maxX":18,"maxY":23}
+	*/
+    return glyps;    
 }

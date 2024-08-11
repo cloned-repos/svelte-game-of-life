@@ -1,7 +1,6 @@
 const raw = `
 # ρ (rho)
 # https://phk.freebsd.dk/hacks/Wargames/_wargames_1c.svg
-s(0,0)
 m(0,-7)
 l(3,9)
 l(7,12)

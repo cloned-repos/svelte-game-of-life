@@ -1,7 +1,7 @@
 const raw = `
 # https://phk.freebsd.dk/hacks/Wargames/_wargames_1e.svg
 # greek theta θ
-s(0,0)
+
 m(7,0)
 l(2,0)
 l(0,4)

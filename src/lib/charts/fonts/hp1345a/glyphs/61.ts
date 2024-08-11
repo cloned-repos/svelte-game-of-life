@@ -2,7 +2,7 @@ const r =  `
 # a (lower case a)
 # https://phk.freebsd.dk/hacks/Wargames/_wargames_61.svg
 #
-s(0,0)
+
 m(0,10)
 l(5,12)
 l(11,10)

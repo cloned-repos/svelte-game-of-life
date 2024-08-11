@@ -1,4 +1,4 @@
-import type { IHarnas } from "$lib/Harnas";
+import type Context from "./Context";
 import type { Enqueue } from "./Enqueue";
 
 type MoveTo = {
@@ -31,6 +31,16 @@ type LineDash = {
     dashes: number[];
 }
 
+type FillStyle = {
+    type: 'fs';
+    style: string;
+}
+
+type StrokeStyle = {
+    type: 'ss';
+    style: string;
+}
+
 type Save = {
     type: 'sa';
 }
@@ -39,7 +49,7 @@ type Restore = {
     type: 'res'
 }
 
-type AllInstructions = LineDash | LineWidth | Fill | Stroke | LineTo | MoveTo | Restore;
+type AllInstructions = MoveTo | LineTo | Stroke | Fill | LineWidth | LineDash | FillStyle | StrokeStyle | Save | Restore;
 
 
 export default class BaseRenderer implements Enqueue<AllInstructions> {
@@ -47,7 +57,7 @@ export default class BaseRenderer implements Enqueue<AllInstructions> {
     private readonly queue: AllInstructions[];
     private inProcess: boolean;
 
-    constructor(private readonly crc: CanvasRenderingContext2D, harnas: IHarnas){
+    constructor(private readonly ctx: Context){
         this.queue = [];
         this.inProcess = false;
     }
@@ -55,8 +65,9 @@ export default class BaseRenderer implements Enqueue<AllInstructions> {
     processQueue(){
         const tasks = this.queue.splice(0);
         for (const t of tasks){
+            // long list of instruction handlers
             if (t.type === 'res'){
-                this.crc.restore();
+                this.ctx.restore();
                 continue;
             }
         }

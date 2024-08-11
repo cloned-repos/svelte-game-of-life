@@ -1,4 +1,5 @@
 
+import type { FontMetrics } from '../types';
 import { regExp4Parsing } from './constants';
 import type { Instruction } from './types';
 
@@ -23,11 +24,18 @@ function parseInstruction(line: string): {} | Instruction {
     return { t, x: parseFloat(x), y:parseFloat(y) };
 }
 
+export function isInstruction(u: any): u is Instruction {
+    return typeof u?.t === 'string' && typeof u?.x === 'number' && typeof u?.y === 'number';
+}
 
-export default function transform(raw: string): (Instruction | {})[] {
+export default function transform(raw: string): ({} | Instruction)[] {
     const lines = raw.split('\n').map(trimComments).map(trim).filter(Boolean);
     const instructions = lines.map(parseInstruction);
     return instructions;
 }
 
+export function getFontMetrics(glyps: Record<number, Instruction[]>): FontMetrics {
+    // to do
+    return null;
+}
 

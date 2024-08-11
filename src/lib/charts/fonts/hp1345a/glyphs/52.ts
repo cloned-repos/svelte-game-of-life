@@ -2,7 +2,7 @@ const r =  `
 # R
 # https://phk.freebsd.dk/hacks/Wargames/_wargames_52.svg
 #
-s(0,0)
+
 l(0,18)
 l(9,18)
 l(12,15)

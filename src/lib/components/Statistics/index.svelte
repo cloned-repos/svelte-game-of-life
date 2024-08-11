@@ -1,10 +1,8 @@
 <script lang="ts">
 	import createNS from '../../../debug-frontend';
 	import line_chart from '$lib/charts/action';
-	import type { CanvasSize, ChartDebugInfo, Font, FontKey, FontOptions } from '$lib/charts/types';
-	import { configChartCreator, getFontSizeAndUnit, max, min } from '$lib/charts/helper';
-	import { FONT_CHANGE, standardAffectOptions } from '$lib/charts/constants';
-
+	import type { CanvasSize, ChartDebugInfo } from '$lib/charts/types';
+	import { configChartCreator, standardAffectOptions, standardDevicePixelAspectRatio } from '$lib/charts/helper';
 	// attributes
 	export let pos: string;
 
@@ -21,24 +19,8 @@
 	// initialization
 	const debug = createNS('statistics/index.svelte');
 
-	// we want this to be a function so Window Api's cannot be accessed during object definition
-	function testFontOptions(): (FontKey & Font)[] {
-		return [
-			{
-				font: {
-					family: 'Junction',
-					size: '1rem',
-					weight: '400'
-				},
-				key: 'hAxe'
-			}
-		];
-	}
-
 	const createChart = configChartCreator(
-		'sans-serif',
-		testFontOptions,
-		undefined,
+	    standardDevicePixelAspectRatio,
 		standardAffectOptions
 	);
 
@@ -47,35 +29,12 @@
 	function resizeNotification(event: CustomEvent<CanvasSize>) {}
 	function onDebug(event: CustomEvent<ChartDebugInfo>) {}
 
-	function setFontSHValue(e: Event) {
-		const fontOptions: { font: FontOptions; key: 'vAxe' } = {
-			font: { family: 'Junction', size: '20px', weight: '500' },
-			key: 'vAxe'
-		};
-		const { chart } = createChart();
-		chart.enqueue({ type: FONT_CHANGE, ...fontOptions });
-		width++;
-	}
 
 	function showQueue(e: Event) {
 		const { chart } = createChart();
 		console.log('show queue', chart.getInfo());
 	}
 
-	function doFontChecks(e: Event) {
-		const { chart } = createChart();
-		chart.processFontChangeEvents();
-	}
-
-	function doFontLoadings(e: Event) {
-		const { chart } = createChart();
-		chart.processFontLoadingEvents();
-	}
-
-	function doFontLoadResults(e: Event) {
-		const { chart } = createChart();
-		chart.processFontLoadResultEvents();
-	}
 
 	function doChartResize(e: Event) {
 		const { chart } = createChart();
@@ -110,13 +69,7 @@
 	</ul>
 	<div>
 		<input type="text" bind:value={inputValue} />
-		<input type="button" value="set font shorthand" on:click={setFontSHValue} />
 		<button name="show-queue" on:click={showQueue}>{'show'}</button>
-		<button name="font-checks" on:click={doFontChecks}>{'font-checks'}</button>
-		<button name="font-loading" on:click={doFontLoadings}>{'font-loading'}</button>
-		<button name="font-loading-results" on:click={doFontLoadResults}
-			>{'font-loading-results'}</button
-		>
 		<button name="chart-resize" on:click={doChartResize}>{'chart-resize'}</button>
 		<button name="start-anim" on:click={startChartAnimFrame}>{'start'}</button>
 		<button name="start-anim" on:click={doChartRender}>{'render'}</button>
