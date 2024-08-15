@@ -19,7 +19,9 @@ import Context from './Context';
 import BaseRenderer from './BaseRenderer';
 import Harnas from '$lib/Harnas';
 import createGlyps from './fonts/hp1345a';
-import { isInstruction } from './fonts/hp1345a/helpers';
+import { getFontMetricsV2, isInstruction } from './fonts/hp1345a/helpers';
+import { getFontAndTextMetrics } from './fonts/helpers';
+
 
 const debug = createNS('class Chart');
 
@@ -56,104 +58,9 @@ export default class Chart implements Enqueue<CommonMsg> {
 		this.queue = [];
 		this.cancelAnimationFrame = 0;
 		const font = createGlyps();
-		delete (font as any)['1'];
-		// debug('our special font: [%o]', font);
-		// some analysis
-		let minX = NaN;
-		let minY = NaN;
-		let maxX = NaN;
-		let maxY = NaN;
-		for (const [id, glyph] of Object.entries(font)){
-			// find s commands
-			const findS = glyph.find(o => {
-				if (isInstruction(o) && o.t === 's') {
-					return true;
-				}
-				return false;
-			});
-			if (findS) {
-				debug('glyph: %s, %o', id, glyph);
-			}
-			const xMin: number = glyph.reduce((mx: number, v) => {
-				if (!isInstruction(v)) {
-					return mx;
-				}
-				if (isNaN(mx)) {
-					return v.x;
-				}
-				if (v.x < mx) {
-					return v.x;
-				}
-				return mx;
-			}, NaN);
-
-			minX = isNaN(minX) ? xMin:
-				   xMin < minX ? xMin: minX;
-			   
-			
-
-			const xMax: number = glyph.reduce((mx: number, v) => {
-				if (!isInstruction(v)) {
-					return mx;
-				}
-				if (isNaN(mx)) {
-					return v.x;
-				}
-				if (v.x > mx) {
-					return v.x;
-				}
-				return mx;
-			}, NaN);
-
-			maxX = isNaN(maxX) ? xMax:
-			xMax > maxX ? xMax: maxX;
-			   
-			
-
-			const yMin: number = glyph.reduce((mx: number, v) => {
-				if (!isInstruction(v)) {
-					return mx;
-				}
-				if (isNaN(mx)) {
-					return v.y;
-				}
-				if (v.y < mx) {
-					return v.y;
-				}
-				return mx;
-			}, NaN);
-
-			minY = isNaN(minY) ? yMin:
-				   yMin < minY ? yMin: minY;
-
-			const yMax: number = glyph.reduce((mx: number, v) => {
-				if (!isInstruction(v)) {
-					return mx;
-				}
-				if (isNaN(mx)) {
-					return v.y;
-				}
-				if (v.y > mx) {
-					return v.y;
-				}
-				return mx;
-			}, NaN);
-
-			maxY = isNaN(maxY) ? yMax:
-			yMax > maxY ? yMax: maxY;
-		}
-		/*
-		with hp logo:
-		{
-			"minX": -18,
-			"minY": -8,
-			"maxX": 54,
-			"maxY": 27
-		}
-		without hp logo:
-			{"minX":-18,"minY":-8,"maxX":18,"maxY":23}
-		*/
-		debug('extrema: %o', { minX, minY, maxX, maxY })
+		const fontMetrics = getFontMetricsV2(font);
+		debug('fontMetrics: %o', fontMetrics);
+		
 	}
 
 	processChartResize() {

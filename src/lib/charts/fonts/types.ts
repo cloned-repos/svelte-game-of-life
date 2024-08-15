@@ -37,11 +37,11 @@ export type FontLoadError = RPC &
 		type: 'font-load-error';
 	};
 
-    /*
+/*
 [ 
-	[ <‘font-style’> || <font-variant-css21> || <‘font-weight’> || <‘font-stretch’> ]? 
-	<‘font-size’> [ / <‘line-height’> ]?
-	<‘font-family’> 
+[ <‘font-style’> || <font-variant-css21> || <‘font-weight’> || <‘font-stretch’> ]? 
+<‘font-size’> [ / <‘line-height’> ]?
+<‘font-family’> 
 ] | caption | icon | menu | message-box | small-caption | status-bar
 
 <‘font-style’> = 	normal | italic | oblique
@@ -50,7 +50,7 @@ export type FontLoadError = RPC &
 <‘font-stretch’> =	normal | ultra-condensed | extra-condensed | condensed | semi-condensed | semi-expanded | expanded | extra-expanded | ultra-expanded
 <‘font-size’> =	<absolute-size> | <relative-size> | <length-percentage>
 <absolute-size> =[ xx-small | x-small | small | medium | large | x-large | xx-large ]
- <relative-size>=[ larger | smaller ]
+<relative-size>=[ larger | smaller ]
 <length-percentage>= [ <length> | <percentage> ], where the <percentage> will resolve to a <length>.
 
 // normal and inherit are keywords
@@ -159,6 +159,7 @@ export type FontBaseLineInfo = {
 };
 
 export type FontMetrics = {
+	errors?: AggregateError[];
 	baselines: {
 		top: number;
 		alphabetic: number;
@@ -183,6 +184,22 @@ export type FontMetrics = {
 		width: number;
 		capHeight: number;
 		topBottom: number;
+	};
+};
+
+export type FontMetricsV2 = {
+	errors?: AggregateError[];
+	baselines: {
+		alphabetic: number;
+	};
+	ascents: {
+		font: { alphabetic: number; };
+	};
+	descents: {
+		font: { alphabetic: number; };
+	};
+	aux: {
+		cellHeightFont: number;
 	};
 };
 

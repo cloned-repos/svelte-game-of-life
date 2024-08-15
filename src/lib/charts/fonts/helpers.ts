@@ -89,7 +89,7 @@ export function createFontID(opt: FontOptions): string | null {
 	return rc;
 }
 
-export function getFontMetrics(ctx: CanvasRenderingContext2D, fontSH: string, text: string): null | FontMetrics {
+export function getFontAndTextMetrics(ctx: CanvasRenderingContext2D, fontSH: string, text: string): null | FontMetrics {
 	ctx.save(); // save contexts
 	ctx.font = fontSH;
 	// get metrics from all possible baselines

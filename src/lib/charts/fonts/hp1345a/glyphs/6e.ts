@@ -3,7 +3,7 @@ const r =  `
 # https://phk.freebsd.dk/hacks/Wargames/_wargames_6e.svg
 # 
 
-l(0,11
+l(0,11)
 m(0,8)
 l(6,11)
 l(12,8)
