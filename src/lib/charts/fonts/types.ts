@@ -1,4 +1,4 @@
-import type { RPC } from "../types";
+import type { RPC } from '../types';
 
 export type FontKey = {
 	key: 'hAxe' | 'vAxe' | 'legendTop' | 'legendBottom';
@@ -124,7 +124,7 @@ export type FontOptions = {
 	stretch?: FontStretch;
 	size: FontSize;
 	family: string;
-	metrics?: FontMetrics;
+	metrics?: AuxiliaryTextMetrics;
 	// https://www.w3.org/TR/CSS2/visudet.html#propdef-line-height
 	// lineHeight?: LineHeight;
 };
@@ -145,11 +145,10 @@ export type ChartFontInfo = {
 	[index: `fo${string}`]: FontOptions | FontLoadErrorPL;
 };
 
-export type FontMetricSelectType = keyof Omit<
-	FontMetrics,
+export type AuxiliaryTextMetricSelectType = keyof Omit<
+	AuxiliaryTextMetrics,
 	'min' | 'max' | 'aRight' | 'width' | 'aLeft'
 >;
-
 
 export type FontBaseLineInfo = {
 	alphabetic: number;
@@ -158,8 +157,7 @@ export type FontBaseLineInfo = {
 	top: number;
 };
 
-export type FontMetrics = {
-	errors?: AggregateError[];
+export type AuxiliaryTextMetrics = {
 	baselines: {
 		top: number;
 		alphabetic: number;
@@ -186,20 +184,3 @@ export type FontMetrics = {
 		topBottom: number;
 	};
 };
-
-export type FontMetricsV2 = {
-	errors?: AggregateError[];
-	baselines: {
-		alphabetic: number;
-	};
-	ascents: {
-		font: { alphabetic: number; };
-	};
-	descents: {
-		font: { alphabetic: number; };
-	};
-	aux: {
-		cellHeightFont: number;
-	};
-};
-

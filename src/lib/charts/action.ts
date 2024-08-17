@@ -14,12 +14,10 @@ type ChartAttributes = {
 // action
 export default function line_chart(
 	canvas: HTMLCanvasElement,
-	chartCreator: ReturnType<typeof configChartCreator>
+	createChart: ReturnType<typeof configChartCreator>['createChart']
 ): ActionReturn<never, ChartAttributes> {
 	// finalize char creation since we now have the canvas
-	const { destroy, chart } = chartCreator(canvas);
-	chart.syncOnAnimationFrame();
-
+	const { destroy } = createChart(canvas);
 	return {
 		destroy
 	};

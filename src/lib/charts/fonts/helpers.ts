@@ -1,7 +1,22 @@
 // https://html.spec.whatwg.org/multipage/canvas.html#2dcontext
 
-import { fontSizeAbsolute, fontSizeRelative, fontStyle, regExpFontSizeMetric, regExpSliceFamilyAndFontSize } from "./constants";
-import type { ChartFontInfo, FontLoadErrorPL, FontMetrics, FontOptions, FontSize, FontSizeAbsolute, FontSizeRelative } from "./types";
+import {
+	fontSizeAbsolute,
+	fontSizeRelative,
+	fontStyle,
+	regExpFontSizeMetric,
+	regExpSliceFamilyAndFontSize
+} from './constants';
+
+import type {
+	ChartFontInfo,
+	FontLoadErrorPL,
+	FontOptions,
+	FontSize,
+	FontSizeAbsolute,
+	FontSizeRelative,
+	AuxiliaryTextMetrics
+} from './types';
 
 //  '10px sans-serif' is the default for canvas
 export function getFontSizeAndUnit(shortSH: string): null | { fontSize: number; sizeUnit: string } {
@@ -89,7 +104,11 @@ export function createFontID(opt: FontOptions): string | null {
 	return rc;
 }
 
-export function getFontAndTextMetrics(ctx: CanvasRenderingContext2D, fontSH: string, text: string): null | FontMetrics {
+export function getTextMetrics(
+	ctx: CanvasRenderingContext2D,
+	fontSH: string,
+	text: string
+): null | AuxiliaryTextMetrics {
 	ctx.save(); // save contexts
 	ctx.font = fontSH;
 	// get metrics from all possible baselines

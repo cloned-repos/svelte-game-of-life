@@ -1,11 +1,6 @@
 import Chart from './Chart';
-import {
-	CHANGE_SIZE,
-} from './constants';
-import type {
-	CanvasSize,
-	DeviceRatioAffectOptions,
-} from './types';
+import { CHANGE_SIZE } from './constants';
+import type { CanvasSize, DeviceRatioAffectOptions } from './types';
 
 const { trunc, round, max, min, abs } = Math;
 const { EPSILON } = Number;
@@ -48,39 +43,30 @@ export function isCanvasSizeEqual(a: CanvasSize, b: CanvasSize) {
 	);
 }
 
-
-
-
 export function configChartCreator(
 	devicePixelAspectRatio: (size?: CanvasSize) => number,
 	pixelDeviceRatioAffect: DeviceRatioAffectOptions
 ) {
 	let chart: Chart;
-	return function (canvas?: HTMLCanvasElement) {
-		if (canvas && chart) {
+
+	function getChart() {
+		return chart;
+	}
+	function createChart(canvas: HTMLCanvasElement) {
+		if (chart) {
 			throw new Error('can not add this action to multiple html tags');
 		}
-		if (chart) {
-			return { chart };
-		}
-		if (!canvas) {
-			throw new Error('no argument given for chart-action');
-		}
-		if (false === canvas instanceof window.HTMLCanvasElement) {
+		if (false === canvas instanceof HTMLCanvasElement) {
 			throw new Error('the tag being "actionized" is not a <canvas /> tag');
 		}
-		chart = new Chart(
-			canvas,
-			devicePixelAspectRatio,
-			pixelDeviceRatioAffect
-		);
+		chart = new Chart(canvas, devicePixelAspectRatio, pixelDeviceRatioAffect);
 		return {
-			chart,
 			destroy() {
 				chart.destroy();
 			}
 		};
-	};
+	}
+	return { getChart, createChart };
 }
 
 export function standardDevicePixelAspectRatio(size?: CanvasSize): number {
@@ -95,6 +81,3 @@ export const standardAffectOptions: DeviceRatioAffectOptions = {
 		return dpr * metric;
 	}
 };
-
-
-

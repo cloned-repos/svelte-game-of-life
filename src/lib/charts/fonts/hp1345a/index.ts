@@ -117,125 +117,182 @@ import _77 from './glyphs/77';
 import _78 from './glyphs/78';
 import _79 from './glyphs/79';
 
-import t from './helpers';
-import type { Instruction } from './types';
+import { filterTillNTrue, isInstruction, map, reduce, transform as t, toIterator } from './helpers';
+import type { FontMetrics, Instruction } from './types';
 
-export default function createGlyps() {
-    const glyps = {
-        // hp glyph
-        1: t(_01),
-        2: t(_02),
-        4: t(_04),
-        5: t(_05),
-        6: t(_06),
-        7: t(_07),
-        14: t(_0e),
-        15: t(_0f),
-        16: t(_10),
-        17: t(_11),
-        18: t(_12),
-        19: t(_13),
-        20: t(_14),
-        21: t(_15),
-        22: t(_16),
-        23: t(_17),
-        24: t(_18),
-        25: t(_19),
-        26: t(_1a),
-        27: t(_1b),
-        28: t(_1c),
-        29: t(_1d),
-        30: t(_1e),
-        31: t(_1f),
-        33: t(_21),
-        34: t(_22),
-        35: t(_23),
-        36: t(_24),
-        37: t(_25),
-        38: t(_26),
-        39: t(_27),
-        40: t(_28),
-        41: t(_29),
-        42: t(_2a),
-        43: t(_2b),
-        44: t(_2c),
-        45: t(_2d),
-        46: t(_2e),
-        47: t(_2f),
-        48: t(_30),
-        49: t(_31),
-        50: t(_32),
-        51: t(_33),
-        52: t(_34),
-        53: t(_35),
-        54: t(_36),
-        55: t(_37),
-        56: t(_38),
-        57: t(_39),
-        58: t(_3a),
-        59: t(_3b),
-        60: t(_3c),
-        61: t(_3d),
-        62: t(_3e),
-        63: t(_3f),
-        64: t(_40),
-        65: t(_41),
-        66: t(_42),
-        67: t(_43),
-        68: t(_44),
-        69: t(_45),
-        70: t(_46),
-        71: t(_47),
-        72: t(_48),
-        73: t(_49),
-        74: t(_4a),
-        75: t(_4b),
-        76: t(_4c),
-        77: t(_4d),
-        78: t(_4e),
-        79: t(_4f),
-        80: t(_50),
-        81: t(_51),
-        82: t(_52),
-        83: t(_53),
-        84: t(_54),
-        85: t(_55),
-        86: t(_56),
-        87: t(_57),
-        88: t(_58),
-        89: t(_59),
-        90: t(_5a),
-        91: t(_5b),
-        92: t(_5c),
-        93: t(_5d),
-        94: t(_5e),
-        95: t(_5f),
-        96: t(_60),
-        97: t(_61),
-        98: t(_62),
-        99: t(_63),
-        100: t(_64),
-        101: t(_65),
-        102: t(_66),
-        103: t(_67),
-        104: t(_68),
-        105: t(_69),
-        106: t(_6a),
-        107: t(_6b),
-        108: t(_6c),
-        109: t(_6d),
-        110: t(_6e),
-        111: t(_6f),
-        112: t(_70),
-        113: t(_71),
-        114: t(_72),
-        115: t(_73),
-        116: t(_74),
-        117: t(_75),
-        118: t(_76),
-        119: t(_77),
-        120: t(_78),
-        121: t(_79),
-    };
-    return glyps;    
+function createGlyps() {
+	const glyps = {
+		// hp glyph
+		1: t(_01),
+		2: t(_02),
+		4: t(_04),
+		5: t(_05),
+		6: t(_06),
+		7: t(_07),
+		14: t(_0e),
+		15: t(_0f),
+		16: t(_10),
+		17: t(_11),
+		18: t(_12),
+		19: t(_13),
+		20: t(_14),
+		21: t(_15),
+		22: t(_16),
+		23: t(_17),
+		24: t(_18),
+		25: t(_19),
+		26: t(_1a),
+		27: t(_1b),
+		28: t(_1c),
+		29: t(_1d),
+		30: t(_1e),
+		31: t(_1f),
+		33: t(_21),
+		34: t(_22),
+		35: t(_23),
+		36: t(_24),
+		37: t(_25),
+		38: t(_26),
+		39: t(_27),
+		40: t(_28),
+		41: t(_29),
+		42: t(_2a),
+		43: t(_2b),
+		44: t(_2c),
+		45: t(_2d),
+		46: t(_2e),
+		47: t(_2f),
+		48: t(_30),
+		49: t(_31),
+		50: t(_32),
+		51: t(_33),
+		52: t(_34),
+		53: t(_35),
+		54: t(_36),
+		55: t(_37),
+		56: t(_38),
+		57: t(_39),
+		58: t(_3a),
+		59: t(_3b),
+		60: t(_3c),
+		61: t(_3d),
+		62: t(_3e),
+		63: t(_3f),
+		64: t(_40),
+		65: t(_41),
+		66: t(_42),
+		67: t(_43),
+		68: t(_44),
+		69: t(_45),
+		70: t(_46),
+		71: t(_47),
+		72: t(_48),
+		73: t(_49),
+		74: t(_4a),
+		75: t(_4b),
+		76: t(_4c),
+		77: t(_4d),
+		78: t(_4e),
+		79: t(_4f),
+		80: t(_50),
+		81: t(_51),
+		82: t(_52),
+		83: t(_53),
+		84: t(_54),
+		85: t(_55),
+		86: t(_56),
+		87: t(_57),
+		88: t(_58),
+		89: t(_59),
+		90: t(_5a),
+		91: t(_5b),
+		92: t(_5c),
+		93: t(_5d),
+		94: t(_5e),
+		95: t(_5f),
+		96: t(_60),
+		97: t(_61),
+		98: t(_62),
+		99: t(_63),
+		100: t(_64),
+		101: t(_65),
+		102: t(_66),
+		103: t(_67),
+		104: t(_68),
+		105: t(_69),
+		106: t(_6a),
+		107: t(_6b),
+		108: t(_6c),
+		109: t(_6d),
+		110: t(_6e),
+		111: t(_6f),
+		112: t(_70),
+		113: t(_71),
+		114: t(_72),
+		115: t(_73),
+		116: t(_74),
+		117: t(_75),
+		118: t(_76),
+		119: t(_77),
+		120: t(_78),
+		121: t(_79)
+	};
+	return glyps;
+}
+
+export function getFontMetrics(
+	glyphs: Record<number, ({} | Instruction)[]> = createGlyps()
+): FontMetrics {
+	const errors: AggregateError[] = [];
+	const measure = { yMin: NaN, yMax: NaN };
+	for (const [id, glyph] of Object.entries(glyphs)) {
+		// find incorrect draw commands
+		const localGlyphErrors = filterTillNTrue(3, toIterator(glyph), (value) => {
+			return !isInstruction(value);
+		});
+
+		// if errors collect them
+		const errorTexts = Array.from(
+			map(localGlyphErrors, (instr) => `invalid instruction: ${JSON.stringify(instr)}`)
+		);
+		if (errorTexts.length) {
+			errors.push(new AggregateError(errorTexts, `glyph: ${id}`));
+			continue; // next glyph
+		}
+
+		reduce(measure, toIterator(glyph as Instruction[]), (c, instr) => {
+			c.yMax = Math.max(instr.y, c.yMax);
+			if (isNaN(c.yMax)) {
+				c.yMax = instr.y;
+			}
+			c.yMin = Math.min(instr.y, c.yMin);
+			if (isNaN(c.yMin)) {
+				c.yMin = instr.y;
+			}
+			return c;
+		});
+	}
+
+	const rc: FontMetrics = {
+		...(errors.length && { errors }),
+		baselines: {
+			alphabetic: 0
+		},
+		ascents: {
+			font: {
+				alphabetic: measure.yMax
+			}
+		},
+		descents: {
+			font: {
+				alphabetic: measure.yMin
+			}
+		},
+		aux: {
+			cellHeightFont: measure.yMax - measure.yMin
+		},
+		glyphs
+	};
+
+	return rc;
 }

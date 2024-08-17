@@ -1,27 +1,18 @@
 import createNS from '../../debug-frontend';
 import type { Enqueue } from './Enqueue';
-import {
-	CHANGE_SIZE,
-} from './constants';
-import {
-	createResizeObserverForCanvas,
-	isCanvasSizeEqual,
-} from './helper';
+import { CHANGE_SIZE } from './constants';
+import { createResizeObserverForCanvas, isCanvasSizeEqual } from './helper';
 import type {
 	CanvasSize,
 	ChangeSize,
 	ChartDebugInfo,
 	CommonMsg,
-	DeviceRatioAffectOptions,
+	DeviceRatioAffectOptions
 } from './types';
 
 import Context from './Context';
 import BaseRenderer from './BaseRenderer';
-import Harnas from '$lib/Harnas';
-import createGlyps from './fonts/hp1345a';
-import { getFontMetricsV2, isInstruction } from './fonts/hp1345a/helpers';
-import { getFontAndTextMetrics } from './fonts/helpers';
-
+import { getFontMetrics } from './fonts/hp1345a';
 
 const debug = createNS('class Chart');
 
@@ -42,11 +33,11 @@ export default class Chart implements Enqueue<CommonMsg> {
 		private readonly canvas: HTMLCanvasElement,
 
 		private readonly getDeviceAspectRatio: (size?: CanvasSize) => number,
-		private readonly pixelDeviceRatioAffect: DeviceRatioAffectOptions,
+		private readonly pixelDeviceRatioAffect: DeviceRatioAffectOptions
 	) {
 		this.ctx = new Context(canvas, getDeviceAspectRatio, pixelDeviceRatioAffect);
-		this.baseRenderer = new BaseRenderer(this.ctx); 
-		this.baseRenderer.enqueue({ type: 'st'});
+		this.baseRenderer = new BaseRenderer(this.ctx);
+		this.baseRenderer.enqueue({ type: 'st' });
 		const csc = getComputedStyle(canvas);
 		this.size = {
 			physicalPixelHeight: canvas.height,
@@ -57,10 +48,9 @@ export default class Chart implements Enqueue<CommonMsg> {
 		this.destroyObserver = createResizeObserverForCanvas(canvas, this);
 		this.queue = [];
 		this.cancelAnimationFrame = 0;
-		const font = createGlyps();
-		const fontMetrics = getFontMetricsV2(font);
+		this.syncOnAnimationFrame();
+		const fontMetrics = getFontMetrics();
 		debug('fontMetrics: %o', fontMetrics);
-		
 	}
 
 	processChartResize() {
@@ -96,7 +86,7 @@ export default class Chart implements Enqueue<CommonMsg> {
 		}
 		const run = (ts: number) => {
 			const shouldRender = this.processChartResize();
-		   	if (shouldRender) {
+			if (shouldRender) {
 				debug('/syncOnAnimationFrame: render because canvas size changed');
 			}
 			if (shouldRender) {
@@ -129,13 +119,12 @@ export default class Chart implements Enqueue<CommonMsg> {
 	enqueue(msg: CommonMsg): void {
 		// instructions are processon on "requestAnimationFrame"
 		this.queue.push(msg as CommonMsg & { ts: string });
-		
 	}
 
 	getInfo(): ChartDebugInfo {
 		return {
 			queue: this.queue.slice(0),
-			canvasSize: this.size,
+			canvasSize: this.size
 		};
 	}
 }

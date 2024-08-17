@@ -20,6 +20,7 @@ th,
 td {
 	margin: 0;
 	padding: 0;
+	box-sizing: border-box;
 }
 
 a {
@@ -29,18 +30,18 @@ a {
 }
 
 *:before,
-*:after,
-* {
+*:after {
 	box-sizing: border-box;
 }
 
+/*
 button,
 input {
 	line-height: normal;
 	outline: none;
 	border: none;
 }
-
+*/
 body {
 	min-height: 100vh;
 	margin: 0;
