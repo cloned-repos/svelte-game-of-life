@@ -116,6 +116,8 @@ import _76 from './glyphs/76';
 import _77 from './glyphs/77';
 import _78 from './glyphs/78';
 import _79 from './glyphs/79';
+import _b9 from './glyphs/b9';
+import _df from './glyphs/df';
 
 import { filterTillNTrue, isInstruction, map, reduce, transform as t, toIterator } from './helpers';
 import type { FontMetrics, Instruction } from './types';
@@ -235,7 +237,9 @@ function createGlyps() {
 		118: t(_76),
 		119: t(_77),
 		120: t(_78),
-		121: t(_79)
+		121: t(_79),
+		185: t(_b9),
+		223: t(_df),
 	};
 	return glyps;
 }

@@ -43,7 +43,8 @@ export function isCanvasSizeEqual(a: CanvasSize, b: CanvasSize) {
 	);
 }
 
-export function configChartCreator(
+export function 
+configChartCreator(
 	devicePixelAspectRatio: (size?: CanvasSize) => number,
 	pixelDeviceRatioAffect: DeviceRatioAffectOptions
 ) {
@@ -61,7 +62,7 @@ export function configChartCreator(
 		}
 		chart = new Chart(canvas, devicePixelAspectRatio, pixelDeviceRatioAffect);
 		return {
-			destroy() {
+			destroy:() => {
 				chart.destroy();
 			}
 		};

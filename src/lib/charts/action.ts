@@ -1,11 +1,6 @@
 import type { ActionReturn } from 'svelte/action';
-import createNS from '../../debug-frontend';
 import type { CanvasSize, ChartDebugInfo } from './types';
-import type { configChartCreator } from './helper';
-
 //
-const debug = createNS('charts/action');
-
 type ChartAttributes = {
 	'on:chart-resize'?: (e: CustomEvent<CanvasSize>) => void;
 	'on:chart-debug'?: (e: CustomEvent<ChartDebugInfo>) => void;
@@ -14,8 +9,8 @@ type ChartAttributes = {
 // action
 export default function line_chart(
 	canvas: HTMLCanvasElement,
-	createChart: ReturnType<typeof configChartCreator>['createChart']
-): ActionReturn<never, ChartAttributes> {
+	createChart: (canvas: HTMLCanvasElement) => { destroy: () => void }
+): ActionReturn<undefined, ChartAttributes> {
 	// finalize char creation since we now have the canvas
 	const { destroy } = createChart(canvas);
 	return {
