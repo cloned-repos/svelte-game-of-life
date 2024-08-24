@@ -34,7 +34,7 @@ export function transform(raw: string): ({} | Instruction)[] {
 	return instructions;
 }
 
-export function* toIterator<T>(p: T[]) {
+export function* toIterator<T>(p: T[] | IterableIterator<T>) {
 	for (const _i of p) {
 		(yield _i) as never;
 	}

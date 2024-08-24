@@ -1,5 +1,5 @@
 export type Instruction = {
-	t: 'l' | 'm' | 'e' | 's';
+	t: 'l' | 'm' | 'e';
 	x: number;
 	y: number;
 };
@@ -19,4 +19,16 @@ export type FontMetrics = {
 		cellHeightFont: number;
 	};
 	glyphs: Record<number, ({} | Instruction)[]>;
+};
+
+export type CustomTextMetrics = {
+	instructions: Instruction[];
+	ascents: {
+		actual: { alphabetic: number };
+	};
+	descents: {
+		actual: { alphabetic: number };
+	};
+	actualLeft: number;
+	actualRight: number;
 };

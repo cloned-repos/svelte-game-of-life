@@ -26,7 +26,7 @@ import _1c from './glyphs/1c';
 import _1d from './glyphs/1d';
 import _1e from './glyphs/1e';
 import _1f from './glyphs/1f';
-
+import _20 from './glyphs/20';
 import _21 from './glyphs/21';
 import _22 from './glyphs/22';
 import _23 from './glyphs/23';
@@ -120,13 +120,28 @@ import _b9 from './glyphs/b9';
 import _df from './glyphs/df';
 
 import { filterTillNTrue, isInstruction, map, reduce, transform as t, toIterator } from './helpers';
-import type { FontMetrics, Instruction } from './types';
+import type { CustomTextMetrics, FontMetrics, Instruction } from './types';
 
-function createGlyps() {
+function UnicodeMap(): Record<string, number> {
+	const map = {
+		'🖥️': 1,
+		β: 2,
+		'↑': 18,
+		'←': 19,
+		'↓': 20,
+		'→': 21,
+		'√': 0x16,
+		π: 0x17,
+		Δ: 0x18,
+		μ: 0x19
+	};
+	return map;
+}
+
+function createGlyps(): Record<string, ({} | Instruction)[]> {
 	const glyps = {
-		// hp glyph
-		1: t(_01),
-		2: t(_02),
+		1: t(_01), // hp glyph
+		2: t(_02), // beta symbol
 		4: t(_04),
 		5: t(_05),
 		6: t(_06),
@@ -135,20 +150,21 @@ function createGlyps() {
 		15: t(_0f),
 		16: t(_10),
 		17: t(_11),
-		18: t(_12),
-		19: t(_13),
-		20: t(_14),
-		21: t(_15),
-		22: t(_16),
-		23: t(_17),
-		24: t(_18),
-		25: t(_19),
-		26: t(_1a),
+		18: t(_12), // arrow up
+		19: t(_13), // arrow left
+		20: t(_14), // arrow down
+		21: t(_15), // arrow right
+		22: t(_16), // square root
+		23: t(_17), // PI π
+		24: t(_18), // Delta Δ
+		25: t(_19), // μ
+		26: t(_1a), //
 		27: t(_1b),
 		28: t(_1c),
 		29: t(_1d),
 		30: t(_1e),
 		31: t(_1f),
+		32: t(_20),
 		33: t(_21),
 		34: t(_22),
 		35: t(_23),
@@ -238,10 +254,74 @@ function createGlyps() {
 		119: t(_77),
 		120: t(_78),
 		121: t(_79),
-		185: t(_b9),
-		223: t(_df),
+		185: t(_b9), // use as unknown char symbol
+		223: t(_df)
 	};
 	return glyps;
+}
+
+export function getTextMetrics(text: Uint8Array, font: FontMetrics): CustomTextMetrics {
+	// map unknown char code points to 0xb9
+	const selectedGlyphs = Array.from(text)
+		.map((c) => {
+			if (font.glyphs[c] !== undefined && font.glyphs[c].every(isInstruction)) {
+				return c;
+			}
+			return 0xb9;
+		})
+		.map((c) => font.glyphs[c] as Instruction[]);
+
+	let offsetX = 0;
+	const finalGlyphs = selectedGlyphs
+		.map((glyph) => {
+			const gl = glyph.map<Instruction>((inst) => ({
+				t: inst.t,
+				x: inst.x + offsetX,
+				y: inst.y
+			}));
+			offsetX += gl.find((inst) => inst.t === 'e')!.x;
+			return gl;
+		})
+		.flat(1);
+
+	const measure = { yMin: NaN, yMax: NaN, xMax: NaN, xMin: NaN };
+	reduce(measure, toIterator(finalGlyphs as Instruction[]), (c, instr) => {
+		c.yMax = Math.max(instr.y, c.yMax);
+		if (isNaN(c.yMax)) {
+			c.yMax = instr.y;
+		}
+		c.yMin = Math.min(instr.y, c.yMin);
+		if (isNaN(c.yMin)) {
+			c.yMin = instr.y;
+		}
+		c.xMax = Math.max(instr.x, c.xMax);
+		if (isNaN(c.xMax)) {
+			c.xMax = instr.x;
+		}
+		c.xMin = Math.min(instr.x, c.xMin);
+		if (isNaN(c.xMin)) {
+			c.xMin = instr.x;
+		}
+		return c;
+	});
+
+	// now we calculate metrics
+	const rc: CustomTextMetrics = {
+		instructions: finalGlyphs.flatMap((i) => i),
+		ascents: {
+			actual: {
+				alphabetic: measure.yMax
+			}
+		},
+		descents: {
+			actual: {
+				alphabetic: measure.yMin
+			}
+		},
+		actualLeft: measure.yMin,
+		actualRight: measure.yMax
+	};
+	return rc;
 }
 
 export function getFontMetrics(

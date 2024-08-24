@@ -12,7 +12,7 @@ import type {
 
 import Context from './Context';
 import BaseRenderer from './BaseRenderer';
-import { getFontMetrics } from './fonts/hp1345a';
+import { getFontMetrics, getTextMetrics } from './fonts/hp1345a';
 
 const debug = createNS('class Chart');
 
@@ -50,6 +50,7 @@ export default class Chart implements Enqueue<CommonMsg> {
 		this.cancelAnimationFrame = 0;
 		this.syncOnAnimationFrame();
 		const fontMetrics = getFontMetrics();
+		// const textMetrics = getTextMetrics(, fontMetrics);
 		debug('fontMetrics: %o', fontMetrics);
 	}
 
