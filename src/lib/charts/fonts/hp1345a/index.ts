@@ -123,9 +123,18 @@ import { filterTillNTrue, isInstruction, map, reduce, transform as t, toIterator
 import type { CustomTextMetrics, FontMetrics, Instruction } from './types';
 
 function UnicodeMap(): Record<string, number> {
+	// Unicode PUA U+E000–U+F8FF
 	const map = {
 		'🖥️': 1,
 		β: 2,
+		['\uE000']: 4, // tick up (no advance)
+		['\uE001']: 5, // tick down (no advance)
+		['\uE002']: 6, // tick left (no advance)
+		['\uE003']: 7, // tick right (no advance)
+		['\uE004']: 14, // tick left and right (no advance)
+		['\uE005']: 15, // tick up and down (no advance)
+		['\uE006']: 16, // star in place (no advance)
+		['\uE007']: 17, // circle in place (no advance)
 		'↑': 18,
 		'←': 19,
 		'↓': 20,
@@ -133,7 +142,22 @@ function UnicodeMap(): Record<string, number> {
 		'√': 0x16,
 		π: 0x17,
 		Δ: 0x18,
-		μ: 0x19
+		μ: 0x19,
+		'°': 0x1a, // degree symbol
+		Ω: 0x1b,
+		ρ: 0x1c,
+		Γ: 0x1d,
+		θ: 0x1e,
+		λ: 0x1f,
+		' ': 0x20,
+		'!': 0x21,
+		'"': 0x22,
+		'#': 0x23,
+		'$': 0x24,
+
+
+
+
 	};
 	return map;
 }
