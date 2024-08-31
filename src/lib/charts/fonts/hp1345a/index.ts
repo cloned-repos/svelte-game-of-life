@@ -116,8 +116,14 @@ import _76 from './glyphs/76';
 import _77 from './glyphs/77';
 import _78 from './glyphs/78';
 import _79 from './glyphs/79';
+import _7a from './glyphs/7a';
+import _7b from './glyphs/7b';
+import _7c from './glyphs/7c';
+import _7d from './glyphs/7d';
 import _b9 from './glyphs/b9';
 import _df from './glyphs/df';
+
+import { UknownCharCode } from './constants';
 
 import { filterTillNTrue, isInstruction, map, reduce, transform as t, toIterator } from './helpers';
 import type { CustomTextMetrics, FontMetrics, Instruction } from './types';
@@ -135,6 +141,8 @@ function UnicodeMap(): Record<string, number> {
 		['\uE005']: 15, // tick up and down (no advance)
 		['\uE006']: 16, // star in place (no advance)
 		['\uE007']: 17, // circle in place (no advance)
+		['\uE008']: 0x5f, // underline but backwards (no advance)
+		['\uE009']: 0xb9, // unknown character
 		'↑': 18,
 		'←': 19,
 		'↓': 20,
@@ -153,11 +161,96 @@ function UnicodeMap(): Record<string, number> {
 		'!': 0x21,
 		'"': 0x22,
 		'#': 0x23,
-		'$': 0x24,
-
-
-
-
+		$: 0x24,
+		'%': 0x25,
+		'&': 0x26,
+		"'": 0x27,
+		'(': 0x28,
+		')': 0x29,
+		'*': 0x2a,
+		'+': 0x2b,
+		',': 0x2c,
+		'-': 0x2e,
+		'/': 0x2f,
+		'0': 0x30,
+		'1': 0x31,
+		'2': 0x32,
+		'3': 0x33,
+		'4': 0x34,
+		'5': 0x35,
+		'6': 0x36,
+		'7': 0x37,
+		'8': 0x38,
+		'9': 0x39,
+		':': 0x3a,
+		';': 0x3b,
+		'<': 0x3c,
+		'=': 0x3d,
+		'>': 0x3e,
+		'?': 0x3f,
+		'@': 0x40,
+		A: 0x41,
+		B: 0x42,
+		C: 0x43,
+		D: 0x44,
+		E: 0x45,
+		F: 0x46,
+		G: 0x47,
+		H: 0x48,
+		I: 0x49,
+		J: 0x4a,
+		K: 0x4b,
+		L: 0x4c,
+		M: 0x4d,
+		N: 0x4e,
+		O: 0x4f,
+		P: 0x50,
+		Q: 0x51,
+		R: 0x52,
+		S: 0x53,
+		T: 0x54,
+		U: 0x55,
+		V: 0x56,
+		W: 0x57,
+		X: 0x58,
+		Y: 0x59,
+		Z: 0x5a,
+		'[': 0x5b,
+		'\\': 0x5c,
+		']': 0x5d,
+		'^': 0x5e,
+		// 0x5f, underline but backwards see private unicode page 0xE000-0XE008
+		'`': 0x60,
+		a: 0x61,
+		b: 0x62,
+		c: 0x63,
+		d: 0x64,
+		e: 0x65,
+		f: 0x66,
+		g: 0x67,
+		h: 0x68,
+		i: 0x69,
+		j: 0x6a,
+		k: 0x6b,
+		l: 0x6c,
+		m: 0x6d,
+		n: 0x6e,
+		o: 0x6f,
+		p: 0x70,
+		q: 0x71,
+		r: 0x72,
+		s: 0x73,
+		t: 0x74,
+		u: 0x75,
+		v: 0x76,
+		w: 0x77,
+		x: 0x78,
+		y: 0x79,
+		z: 0x7a,
+		'{': 0x7b,
+		'|': 0x7c,
+		'}': 0x7d,
+		_: 0xdf // underline plus advance
 	};
 	return map;
 }
@@ -284,7 +377,7 @@ function createGlyps(): Record<string, ({} | Instruction)[]> {
 	return glyps;
 }
 
-export function getTextMetrics(text: Uint8Array, font: FontMetrics): CustomTextMetrics {
+export function getTextMetrics(utf8Encoded: Uint8Array, font: FontMetrics): CustomTextMetrics {
 	// map unknown char code points to 0xb9
 	const selectedGlyphs = Array.from(text)
 		.map((c) => {
