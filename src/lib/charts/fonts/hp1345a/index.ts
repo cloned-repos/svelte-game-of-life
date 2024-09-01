@@ -131,7 +131,7 @@ import type { CustomTextMetrics, FontMetrics, Instruction } from './types';
 function getUnicodeMapping(): Record<string, number> {
 	// Unicode PUA U+E000–U+F8FF
 	const map = {
-		'\uE00A': 1,
+		'\uE099': 1,
 		β: 2,
 		'\uE000': 4, // tick up (no advance)
 		'\uE001': 5, // tick down (no advance)
@@ -219,7 +219,7 @@ function getUnicodeMapping(): Record<string, number> {
 		'\\': 0x5c,
 		']': 0x5d,
 		'^': 0x5e,
-		// 0x5f, underline but backwards see private unicode page 0xE000-0XE008
+		// 0x5f, underline but backwards see private unicode page 0xE000-0xE008
 		'`': 0x60,
 		a: 0x61,
 		b: 0x62,
@@ -377,14 +377,21 @@ function getGlyps(): Record<string, ({} | Instruction)[]> {
 	return glyps;
 }
 
-export function getTextMetrics(text: string, font: FontMetrics): CustomTextMetrics | AggregateError[] {
-
+export function getTextMetrics(
+	text: string,
+	font: FontMetrics
+): CustomTextMetrics | AggregateError[] {
 	if (font.errors) {
 		return font.errors;
 	}
-	
-	const text2Glyphs: Instruction[][] = structuredClone(text.split('').map(char => font.unicode[char] ?? font.unicode[uknownCharCode]).map(code => font.glyphs[code] as Instruction[]));
-	
+
+	const text2Glyphs: Instruction[][] = structuredClone(
+		text
+			.split('')
+			.map((char) => font.unicode[char] ?? font.unicode[uknownCharCode])
+			.map((code) => font.glyphs[code] as Instruction[])
+	);
+
 	let offsetX = 0;
 	const finalGlyphs = text2Glyphs
 		.map((glyph) => {
@@ -493,9 +500,8 @@ export function getFontMetrics(
 			cellHeightFont: measure.yMax - measure.yMin
 		},
 		glyphs,
-		unicode,
+		unicode
 	};
 
 	return rc;
 }
-
