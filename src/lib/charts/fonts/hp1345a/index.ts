@@ -123,26 +123,26 @@ import _7d from './glyphs/7d';
 import _b9 from './glyphs/b9';
 import _df from './glyphs/df';
 
-import { UknownCharCode } from './constants';
+import { uknownCharCode } from './constants';
 
 import { filterTillNTrue, isInstruction, map, reduce, transform as t, toIterator } from './helpers';
 import type { CustomTextMetrics, FontMetrics, Instruction } from './types';
 
-function UnicodeMap(): Record<string, number> {
+function getUnicodeMapping(): Record<string, number> {
 	// Unicode PUA U+E000–U+F8FF
 	const map = {
-		'🖥️': 1,
+		'\uE00A': 1,
 		β: 2,
-		['\uE000']: 4, // tick up (no advance)
-		['\uE001']: 5, // tick down (no advance)
-		['\uE002']: 6, // tick left (no advance)
-		['\uE003']: 7, // tick right (no advance)
-		['\uE004']: 14, // tick left and right (no advance)
-		['\uE005']: 15, // tick up and down (no advance)
-		['\uE006']: 16, // star in place (no advance)
-		['\uE007']: 17, // circle in place (no advance)
-		['\uE008']: 0x5f, // underline but backwards (no advance)
-		['\uE009']: 0xb9, // unknown character
+		'\uE000': 4, // tick up (no advance)
+		'\uE001': 5, // tick down (no advance)
+		'\uE002': 6, // tick left (no advance)
+		'\uE003': 7, // tick right (no advance)
+		'\uE004': 14, // tick left and right (no advance)
+		'\uE005': 15, // tick up and down (no advance)
+		'\uE006': 16, // star in place (no advance)
+		'\uE007': 17, // circle in place (no advance)
+		'\uE008': 0x5f, // underline but backwards (no advance)
+		'\uE009': 0xb9, // unknown character
 		'↑': 18,
 		'←': 19,
 		'↓': 20,
@@ -255,7 +255,7 @@ function UnicodeMap(): Record<string, number> {
 	return map;
 }
 
-function createGlyps(): Record<string, ({} | Instruction)[]> {
+function getGlyps(): Record<string, ({} | Instruction)[]> {
 	const glyps = {
 		1: t(_01), // hp glyph
 		2: t(_02), // beta symbol
@@ -377,19 +377,16 @@ function createGlyps(): Record<string, ({} | Instruction)[]> {
 	return glyps;
 }
 
-export function getTextMetrics(utf8Encoded: Uint8Array, font: FontMetrics): CustomTextMetrics {
-	// map unknown char code points to 0xb9
-	const selectedGlyphs = Array.from(text)
-		.map((c) => {
-			if (font.glyphs[c] !== undefined && font.glyphs[c].every(isInstruction)) {
-				return c;
-			}
-			return 0xb9;
-		})
-		.map((c) => font.glyphs[c] as Instruction[]);
+export function getTextMetrics(text: string, font: FontMetrics): CustomTextMetrics | AggregateError[] {
 
+	if (font.errors) {
+		return font.errors;
+	}
+	
+	const text2Glyphs: Instruction[][] = structuredClone(text.split('').map(char => font.unicode[char] ?? font.unicode[uknownCharCode]).map(code => font.glyphs[code] as Instruction[]));
+	
 	let offsetX = 0;
-	const finalGlyphs = selectedGlyphs
+	const finalGlyphs = text2Glyphs
 		.map((glyph) => {
 			const gl = glyph.map<Instruction>((inst) => ({
 				t: inst.t,
@@ -442,8 +439,9 @@ export function getTextMetrics(utf8Encoded: Uint8Array, font: FontMetrics): Cust
 }
 
 export function getFontMetrics(
-	glyphs: Record<number, ({} | Instruction)[]> = createGlyps()
+	glyphs: Record<number, ({} | Instruction)[]> = getGlyps()
 ): FontMetrics {
+	// glyph cleaning and validation
 	const errors: AggregateError[] = [];
 	const measure = { yMin: NaN, yMax: NaN };
 	for (const [id, glyph] of Object.entries(glyphs)) {
@@ -474,6 +472,8 @@ export function getFontMetrics(
 		});
 	}
 
+	const unicode = getUnicodeMapping();
+
 	const rc: FontMetrics = {
 		...(errors.length && { errors }),
 		baselines: {
@@ -492,8 +492,10 @@ export function getFontMetrics(
 		aux: {
 			cellHeightFont: measure.yMax - measure.yMin
 		},
-		glyphs
+		glyphs,
+		unicode,
 	};
 
 	return rc;
 }
+

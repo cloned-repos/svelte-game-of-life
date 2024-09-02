@@ -19,6 +19,7 @@ export type FontMetrics = {
 		cellHeightFont: number;
 	};
 	glyphs: Record<number, ({} | Instruction)[]>;
+	unicode: Record<string, number>;
 };
 
 export type CustomTextMetrics = {
