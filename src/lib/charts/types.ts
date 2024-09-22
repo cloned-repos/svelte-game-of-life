@@ -1,3 +1,5 @@
+import type { Instruction } from './fonts/hp1345a/types';
+
 export type CanvasSize = {
 	physicalPixelHeight: number;
 	physicalPixelWidth: number;
@@ -6,16 +8,12 @@ export type CanvasSize = {
 };
 
 export type ChangeSize = {
-	type: 'chart-set-size';
+	type: 'set-size';
 	size: CanvasSize; // new canvas metrics
 };
 
-export type RPC = {
-	reqId: number;
-};
-
 export type RenderChart = {
-	type: 'chart-render';
+	type: 'render';
 };
 
 export type CommonMsg = ChangeSize | RenderChart;
@@ -46,18 +44,6 @@ export type BoundingBox = {
 	h: number;
 };
 
-/*
-    m11 m12 m13       x
-    m21 m22 m23  *  y
-    0    0  m33     1
+export type Matrix = { m11: number, m12: number; m13: number; m21: number; m22: number; m23: number };
 
-
-	translation (x+a,y+b)
-
-	m11 = 1, m12 = 0, m13 = a
-	m21 = 0, m22 = 1, m23 = b
-	m33 = 1
-
-	skew 
-*/
-export type Matrix2D = {};
+export type Vector = Instruction & { z: 1 };

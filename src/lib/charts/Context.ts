@@ -14,7 +14,7 @@ export default class Context {
 	) {
 		this.ctx = this.createContext();
 	}
-	createContext(){
+	private createContext(){
 		this.ctx = this.canvas.getContext('2d', {
 			willReadFrequently: true,
 			alpha: true
@@ -58,6 +58,7 @@ export default class Context {
 		}
 		return this;
 	}
+	
 	fillStyle(style: string | CanvasGradient | CanvasPattern) {
 		if (this.ctx) {
 			this.ctx.fillStyle = style;

@@ -37,7 +37,6 @@ export default class Chart implements Enqueue<CommonMsg> {
 	) {
 		this.ctx = new Context(canvas, getDeviceAspectRatio, pixelDeviceRatioAffect);
 		this.baseRenderer = new BaseRenderer(this.ctx);
-		this.baseRenderer.enqueue({ type: 'st' });
 		const csc = getComputedStyle(canvas);
 		this.size = {
 			physicalPixelHeight: canvas.height,

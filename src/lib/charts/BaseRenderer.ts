@@ -62,7 +62,7 @@ export default class BaseRenderer implements Enqueue<AllInstructions> {
         this.inProcess = false;
     }
 
-    processQueue(){
+    private processQueue(){
         const tasks = this.queue.splice(0);
         for (const t of tasks){
             // long list of instruction handlers
@@ -81,4 +81,6 @@ export default class BaseRenderer implements Enqueue<AllInstructions> {
         this.inProcess = true;
         queueMicrotask(() => this.processQueue.call(this));
     }
+
+   
 }
