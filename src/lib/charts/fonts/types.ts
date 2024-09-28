@@ -1,5 +1,3 @@
-import type { RPC } from '../types';
-
 export type FontKey = {
 	key: 'hAxe' | 'vAxe' | 'legendTop' | 'legendBottom';
 };
@@ -13,14 +11,12 @@ export type FontChange = Font &
 		type: 'font-change';
 	};
 
-export type FontLoading = RPC &
-	FontKey &
+export type FontLoading = FontKey &
 	Font & {
 		type: 'font-loading';
 	};
 
-export type FontLoaded = RPC &
-	Font &
+export type FontLoaded = Font &
 	FontKey & {
 		type: 'font-loaded';
 		ts: string; // time font loaded
@@ -31,8 +27,7 @@ export type FontLoadErrorPL = Font & {
 	ts: string; // time this error occurred
 };
 
-export type FontLoadError = RPC &
-	FontKey &
+export type FontLoadError = FontKey &
 	FontLoadErrorPL & {
 		type: 'font-load-error';
 	};

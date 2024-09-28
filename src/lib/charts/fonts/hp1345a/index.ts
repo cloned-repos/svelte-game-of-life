@@ -126,7 +126,7 @@ import _df from './glyphs/df';
 import { uknownCharCode } from './constants';
 
 import { filterTillNTrue, isInstruction, map, reduce, transform as t, toIterator } from './helpers';
-import type { CustomTextMetrics, FontMetrics, Instruction } from './types';
+import type { Text, FontMetrics, Instruction } from './types';
 
 function getUnicodeMapping(): Record<string, number> {
 	// Unicode PUA U+E000–U+F8FF
@@ -377,14 +377,10 @@ function getGlyps(): Record<string, ({} | Instruction)[]> {
 	return glyps;
 }
 
-export function getTextMetrics(
-	text: string,
-	font: FontMetrics
-): CustomTextMetrics | AggregateError[] {
+export function text2Instructions(text: string, font: FontMetrics): Text | AggregateError[] {
 	if (font.errors) {
 		return font.errors;
 	}
-
 	const text2Glyphs: Instruction[][] = structuredClone(
 		text
 			.split('')
@@ -406,28 +402,16 @@ export function getTextMetrics(
 		.flat(1);
 
 	const measure = { yMin: NaN, yMax: NaN, xMax: NaN, xMin: NaN };
-	reduce(measure, toIterator(finalGlyphs as Instruction[]), (c, instr) => {
-		c.yMax = Math.max(instr.y, c.yMax);
-		if (isNaN(c.yMax)) {
-			c.yMax = instr.y;
-		}
-		c.yMin = Math.min(instr.y, c.yMin);
-		if (isNaN(c.yMin)) {
-			c.yMin = instr.y;
-		}
-		c.xMax = Math.max(instr.x, c.xMax);
-		if (isNaN(c.xMax)) {
-			c.xMax = instr.x;
-		}
-		c.xMin = Math.min(instr.x, c.xMin);
-		if (isNaN(c.xMin)) {
-			c.xMin = instr.x;
-		}
+	reduce(measure, toIterator(finalGlyphs), (c, instr) => {
+		c.yMax = Math.max(instr.y, isNaN(c.yMax) ? instr.y : c.yMax);
+		c.yMin = Math.min(instr.y, isNaN(c.yMin) ? instr.y : c.yMin);
+		c.xMax = Math.max(instr.x, isNaN(c.xMax) ? instr.x : c.xMax);
+		c.xMin = Math.min(instr.x, isNaN(c.xMin) ? instr.x : c.xMin);
 		return c;
 	});
 
 	// now we calculate metrics
-	const rc: CustomTextMetrics = {
+	const rc: Text = {
 		instructions: finalGlyphs.flatMap((i) => i),
 		ascents: {
 			actual: {
@@ -461,6 +445,7 @@ export function getFontMetrics(
 		const errorTexts = Array.from(
 			map(localGlyphErrors, (instr) => `invalid instruction: ${JSON.stringify(instr)}`)
 		);
+
 		if (errorTexts.length) {
 			errors.push(new AggregateError(errorTexts, `glyph: ${id}`));
 			continue; // next glyph

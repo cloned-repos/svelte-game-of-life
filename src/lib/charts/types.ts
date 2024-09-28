@@ -44,6 +44,13 @@ export type BoundingBox = {
 	h: number;
 };
 
-export type Matrix = { m11: number, m12: number; m13: number; m21: number; m22: number; m23: number };
+export type Matrix = {
+	m11: number;
+	m12: number;
+	m13: number;
+	m21: number;
+	m22: number;
+	m23: number;
+};
 
 export type Vector = Instruction & { z: 1 };

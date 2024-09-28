@@ -18,7 +18,7 @@ import type {
 	AuxiliaryTextMetrics
 } from './types';
 
-//  '10px sans-serif' is the default for canvas
+// '10px sans-serif' is the default for canvas
 export function getFontSizeAndUnit(shortSH: string): null | { fontSize: number; sizeUnit: string } {
 	const tol = shortSH.toLowerCase();
 	const match = tol.match(regExpSliceFamilyAndFontSize);

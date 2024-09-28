@@ -22,7 +22,7 @@ export type FontMetrics = {
 	unicode: Record<string, number>;
 };
 
-export type CustomTextMetrics = {
+export type Text = {
 	instructions: Instruction[];
 	ascents: {
 		actual: { alphabetic: number };

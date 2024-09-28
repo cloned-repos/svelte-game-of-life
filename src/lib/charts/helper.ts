@@ -44,8 +44,7 @@ export function isCanvasSizeEqual(a: CanvasSize, b: CanvasSize) {
 	);
 }
 
-export function 
-configChartCreator(
+export function configChartCreator(
 	devicePixelAspectRatio: (size?: CanvasSize) => number,
 	pixelDeviceRatioAffect: DeviceRatioAffectOptions
 ) {
@@ -63,7 +62,7 @@ configChartCreator(
 		}
 		chart = new Chart(canvas, devicePixelAspectRatio, pixelDeviceRatioAffect);
 		return {
-			destroy:() => {
+			destroy: () => {
 				chart.destroy();
 			}
 		};
@@ -84,26 +83,25 @@ export const standardAffectOptions: DeviceRatioAffectOptions = {
 	}
 };
 
-
 export function doSkey(c: Matrix, sk12: number, sk21: number): Matrix {
 	return {
-		m11: c.m11 + sk21*c.m12,
-		m12: c.m12 + sk12*c.m11,
+		m11: c.m11 + sk21 * c.m12,
+		m12: c.m12 + sk12 * c.m11,
 		m13: c.m13,
-		m21: c.m21 + sk21*c.m22,
-		m22: c.m22 + sk12*c.m21,
-		m23: c.m23,
-	}
+		m21: c.m21 + sk21 * c.m22,
+		m22: c.m22 + sk12 * c.m21,
+		m23: c.m23
+	};
 }
 
 export function doRotate(c: Matrix, rx: number, ry: number): Matrix {
 	return {
-		m11: rx*c.m11 + ry*c.m12,
-		m21: rx*c.m21 + ry*c.m22,
-		m12: -ry*c.m11 + rx*c.m12,
-		m22: -ry*c.m21 + rx*c.m22,
+		m11: rx * c.m11 + ry * c.m12,
+		m21: rx * c.m21 + ry * c.m22,
+		m12: -ry * c.m11 + rx * c.m12,
+		m22: -ry * c.m21 + rx * c.m22,
 		m13: c.m13,
-		m23: c.m23,
+		m23: c.m23
 	};
 }
 
@@ -113,30 +111,30 @@ export function doTrans(c: Matrix, tx: number, ty: number): Matrix {
 		m21: c.m21,
 		m12: c.m12,
 		m22: c.m22,
-		m13: tx*c.m11 + ty*c.m12 + c.m13,
-		m23: tx*c.m21 + ty*c.m22 + c.m23,
+		m13: tx * c.m11 + ty * c.m12 + c.m13,
+		m23: tx * c.m21 + ty * c.m22 + c.m23
 	};
 }
 
 export function doScale(c: Matrix, sx: number, sy: number): Matrix {
 	return {
-		m11: c.m11*sx,
-		m12: c.m12*sy,
+		m11: c.m11 * sx,
+		m12: c.m12 * sy,
 		m13: c.m13,
-		m21: c.m21*sx,
-		m22: c.m22*sy,
-		m23: c.m23,
+		m21: c.m21 * sx,
+		m22: c.m22 * sy,
+		m23: c.m23
 	};
 }
 
 export function doMirrorOnX(c: Matrix): Matrix {
- 	return {
+	return {
 		m11: c.m11,
 		m12: -c.m12,
 		m13: c.m13,
 		m21: c.m21,
 		m22: -c.m22,
-		m23: c.m23,
+		m23: c.m23
 	};
 }
 
@@ -148,22 +146,21 @@ export function defaultMatrix(): Matrix {
 		m21: 0,
 		m22: 1,
 		m23: 0
-	}
+	};
 }
 
 export function applyVector(c: Matrix, v: Vector): Vector {
 	return {
 		t: v.t,
-		x: c.m11*v.x + c.m12*v.y + c.m13,
-		y: c.m21*v.x + c.m22*v.y + c.m23,
-		z: 1,
-	}
+		x: c.m11 * v.x + c.m12 * v.y + c.m13,
+		y: c.m21 * v.x + c.m22 * v.y + c.m23,
+		z: 1
+	};
 }
 
 export function vector(ins: Instruction): Vector {
 	return {
 		...ins,
-		z: 1,
+		z: 1
 	};
 }
-
