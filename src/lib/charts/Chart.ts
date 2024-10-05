@@ -11,7 +11,7 @@ import type {
 } from './types';
 
 import Context from './Context';
-import BaseRenderer from './BaseRenderer';
+import BaseRenderer from './renderer/BaseRenderer';
 import { getFontMetrics, getTextMetrics } from './fonts/hp1345a';
 
 const debug = createNS('class Chart');

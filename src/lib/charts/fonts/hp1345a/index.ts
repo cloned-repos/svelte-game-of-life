@@ -123,10 +123,10 @@ import _7d from './glyphs/7d';
 import _b9 from './glyphs/b9';
 import _df from './glyphs/df';
 
-import { uknownCharCode } from './constants';
+import { unknownCharCode } from './constants';
 
 import { filterTillNTrue, isInstruction, map, reduce, transform as t, toIterator } from './helpers';
-import type { Text, FontMetrics, Instruction } from './types';
+import type { Text, FontMetrics, Instruction, FontValidation } from './types';
 
 function getUnicodeMapping(): Record<string, number> {
 	// Unicode PUA U+E000–U+F8FF
@@ -255,7 +255,7 @@ function getUnicodeMapping(): Record<string, number> {
 	return map;
 }
 
-function getGlyps(): Record<string, ({} | Instruction)[]> {
+function getGlyps(): Record<string, undefined | Instruction[]> {
 	const glyps = {
 		1: t(_01), // hp glyph
 		2: t(_02), // beta symbol
@@ -428,15 +428,113 @@ export function text2Instructions(text: string, font: FontMetrics): Text | Aggre
 	};
 	return rc;
 }
+export const uknownCharCode = 0xb9;
+export const forxHeight = 'x';
+export const forBottomBaseLine = 'qyj';
+export const forMaxAscent = '[{';
+
+function operator(calculate: (...args: number[]) => number, ...args: number[]): number {
+	return calculate(...args);
+}
+
+function selectYPropFromInstructions(i: Instruction) {
+	return i.y;
+}
+
+function selectLineInstructions(i: Instruction) {
+	return i.t === 'l';
+}
 
 export function getFontMetrics(
-	glyphs: Record<number, ({} | Instruction)[]> = getGlyps()
+	font: FontValidation,
+	unicodeMap: Record<string, number>,
+	dataForXHeight: string,
+	dataForBottomBaseLine: string,
+	dataForTopBaseLine: string,
+	unknownCharCode: number
 ): FontMetrics {
+	const alphabeticBaseline = 0;
+	//
+	const bottomBaseLine = dataForBottomBaseLine.split('').reduce((bbl: number, char: string) => {
+		const internalGlyphCode = unicodeMap[char] ?? unknownCharCode;
+		const instructions = font.glyphs[internalGlyphCode]!;
+		// there could have been a parse error, in that cas just skip
+		if (instructions === undefined) {
+			return bbl;
+		}
+		return (
+			operator(
+				Math.min,
+				...instructions.filter(selectLineInstructions).map(selectYPropFromInstructions)
+			) - alphabeticBaseline
+		);
+	}, 0);
+	const topBaseLine = dataForTopBaseLine.split('').reduce((bbl: number, char: string) => {
+		const internalGlyphCode = unicodeMap[char] ?? unknownCharCode;
+		const instructions = font.glyphs[internalGlyphCode]!;
+		// there could have been a parse error, in that cas just skip
+		if (instructions === undefined) {
+			return bbl;
+		}
+		return (
+			operator(
+				Math.max,
+				...instructions.filter(selectLineInstructions).map(selectYPropFromInstructions)
+			) - alphabeticBaseline
+		);
+	}, 0);
+
+	const middle = Math.round((topBaseLine + bottomBaseLine) / 2);
+
+	const internalGlyphCode = unicodeMap['x']!;
+	const instructions = font.glyphs[internalGlyphCode]!;
+	const xHeight =
+		operator(
+			Math.max,
+			...instructions.filter(selectLineInstructions).map(selectYPropFromInstructions)
+		) - alphabeticBaseline;
+	return {
+		...font,
+		baselines: {
+			alphabetic: 0,
+			middle: middle,
+			top: topBaseLine,
+			bottom: bottomBaseLine,
+			xHeight
+		},
+		ascents: {
+			font: {
+				alphabetic: alphabeticBaseline - topBaseLine,
+				middle: middle - topBaseLine,
+				top: 0,
+				bottom: bottomBaseLine - topBaseLine,
+				xHeight: xHeight - topBaseLine
+			}
+		},
+		descents: {
+			font: {
+				alphabetic: alphabeticBaseline - bottomBaseLine,
+				middle: middle - bottomBaseLine,
+				top: topBaseLine - bottomBaseLine,
+				bottom: 0,
+				xHeight: xHeight - bottomBaseLine
+			}
+		},
+		unicode: unicodeMap
+	};
+}
+
+export function validateFontFromTextFormat(
+	glyphs: Record<number, undefined | Instruction[]> = getGlyps()
+): FontValidation {
 	// glyph cleaning and validation
 	const errors: AggregateError[] = [];
 	const measure = { yMin: NaN, yMax: NaN };
 	for (const [id, glyph] of Object.entries(glyphs)) {
-		// find incorrect draw commands
+		if (!Array.isArray(glyph)) {
+			continue;
+		}
+		// find incorrect draw commands, we only care about the first 3
 		const localGlyphErrors = filterTillNTrue(3, toIterator(glyph), (value) => {
 			return !isInstruction(value);
 		});
@@ -463,29 +561,9 @@ export function getFontMetrics(
 			return c;
 		});
 	}
-
-	const unicode = getUnicodeMapping();
-
-	const rc: FontMetrics = {
+	const rc: FontValidation = {
 		...(errors.length && { errors }),
-		baselines: {
-			alphabetic: 0
-		},
-		ascents: {
-			font: {
-				alphabetic: measure.yMax
-			}
-		},
-		descents: {
-			font: {
-				alphabetic: measure.yMin
-			}
-		},
-		aux: {
-			cellHeightFont: measure.yMax - measure.yMin
-		},
-		glyphs,
-		unicode
+		glyphs
 	};
 
 	return rc;

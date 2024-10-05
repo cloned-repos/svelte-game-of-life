@@ -13,11 +13,18 @@ function trim(line: string): string {
 	return line.trim();
 }
 
-function parseInstruction(line: string): {} | Instruction {
+function findInvalidInstruction(line: string): boolean {
 	const matched = line.match(regExp4Parsing);
 	if (matched === null || !matched.groups) {
-		return {};
+		return true;
 	}
+	return false;
+}
+
+function parseInstruction(line: string): Instruction {
+	const matched = line.match(regExp4Parsing)! as unknown as {
+		groups: { instr: 'l' | 'm' | 'e'; x: string; y: string };
+	};
 	const {
 		groups: { instr: t, x, y }
 	} = matched;
@@ -28,10 +35,13 @@ export function isInstruction(u: any): u is Instruction {
 	return typeof u?.t === 'string' && typeof u?.x === 'number' && typeof u?.y === 'number';
 }
 
-export function transform(raw: string): ({} | Instruction)[] {
+export function transform(raw: string): Instruction[] | undefined {
 	const lines = raw.split('\n').map(trimComments).map(trim).filter(Boolean);
-	const instructions = lines.map(parseInstruction);
-	return instructions;
+	const invalid = lines.find(findInvalidInstruction);
+	if (invalid) {
+		return undefined;
+	}
+	return lines.map(parseInstruction);
 }
 
 export function* toIterator<T>(p: T[] | IterableIterator<T>) {

@@ -4,21 +4,37 @@ export type Instruction = {
 	y: number;
 };
 
-export type FontMetrics = {
+export type FontValidation = {
 	errors?: AggregateError[];
+	glyphs: Record<number, undefined | Instruction[]>;
+};
+
+export type FontMetrics = FontValidation & {
 	baselines: {
 		alphabetic: number;
+		top: number;
+		bottom: number;
+		middle: number;
+		xHeight: number;
 	};
 	ascents: {
-		font: { alphabetic: number };
+		font: {
+			alphabetic: number;
+			top: number;
+			bottom: number;
+			middle: number;
+			xHeight: number;
+		};
 	};
 	descents: {
-		font: { alphabetic: number };
+		font: {
+			alphabetic: number;
+			top: number;
+			bottom: number;
+			middle: number;
+			xHeight: number;
+		};
 	};
-	aux: {
-		cellHeightFont: number;
-	};
-	glyphs: Record<number, ({} | Instruction)[]>;
 	unicode: Record<string, number>;
 };
 
